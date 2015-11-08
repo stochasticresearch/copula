@@ -1,18 +1,154 @@
 % Script explores what different concordance measures do for bivariate
 % generated distributions with different dependencies.
 
-%%
-% Generate samples from different known copula's for different theta's, and
-% compare spearman's rho, and kendall's tau (would be nice to add MIC to
-% this)  for continuous marginal distributions
+clear;
+clc;
+
+% Generate the data
+range = 1.5;
+n = 1000;
+x = -range + 2*range*rand(n,1);       % generate uniform RV's
+
+%% 
+% affine dependence
+fprintf('Processing Affine Dependence\n');
+m = -20:.1:20;
+ktau_affine = zeros(1,length(m));
+srho_affine = zeros(1,length(m));
+ii = 1;
+for mm=m
+    y = mm*x + 1;
+    
+    % calculate kendall's tau
+    ktau = corr(x,y,'type','Kendall');
+    ktau_affine(ii) = ktau;
+    
+    % calculate spearman's rho
+    srho = corr(x,y,'type','Spearman');
+    srho_affine(ii) = srho;
+        
+    ii = ii + 1;
+end
+
+figure;
+subplot(2,3,1);
+plot(m,ktau_affine,'b',m,srho_affine,'ro');
+grid on
+xlabel('\alpha')
+title('Y = \alpha * X + 1')
+legend('Kendall \tau', 'Spearman \rho')
+
+% quadratic dependence
+fprintf('Processing Quadratic Dependence\n');
+ktau_quadratic = zeros(1,length(m));
+srho_quadratic = zeros(1,length(m));
+ii = 1;
+for mm=m
+    y = mm*x.^2;
+    
+    % calculate kendall's tau
+    ktau = corr(x,y,'type','Kendall');
+    ktau_quadratic(ii) = ktau;
+    
+    % calculate spearman's rho
+    srho = corr(x,y,'type','Spearman');
+    srho_quadratic(ii) = srho;
+        
+    ii = ii + 1;
+end
+
+subplot(2,3,2);
+plot(m,ktau_quadratic,'b',m,srho_quadratic,'ro');
+grid on
+xlabel('\alpha')
+title('Y = \alpha * X^2')
+legend('Kendall \tau', 'Spearman \rho')
+
+% 4th order Poly dependence
+fprintf('Processing 4th order polynomial dependence\n');
+ktau_fourthOrder = zeros(1,length(m));
+srho_fourthOrder = zeros(1,length(m));
+ii = 1;
+for mm=m
+    y = mm*(x.^4-2*x.^2);
+    
+    % calculate kendall's tau
+    ktau = corr(x,y,'type','Kendall');
+    ktau_fourthOrder(ii) = ktau;
+    
+    % calculate spearman's rho
+    srho = corr(x,y,'type','Spearman');
+    srho_fourthOrder(ii) = srho;
+        
+    ii = ii + 1;
+end
+
+subplot(2,3,3);
+plot(m,ktau_fourthOrder,'b',m,srho_fourthOrder,'ro');
+grid on
+xlabel('\alpha')
+title('Y=\alpha * (X^4-2X^2)')
+legend('Kendall \tau', 'Spearman \rho')
 
 
 %%
-% Generate samples from different known copula's for different theta's, and
-% compare spearman's rho, and kendall's tau (would be nice to add MIC to
-% this)  for discrete marginal distributions
 
-%%
-% Generate samples from different known copula's for different theta's, and
-% compare spearman's rho, and kendall's tau (would be nice to add MIC to
-% this)  for hybrid marginal distributions
+% sinusoidal dependence
+fprintf('Processing Sinusoidal Dependence\n');
+
+ktau_sinusoidal_amplitude = zeros(1,length(m));
+srho_sinusoidal_amplitude = zeros(1,length(m));
+ktau_sinusoidal_frequency = zeros(1,length(m));
+srho_sinusoidal_frequency = zeros(1,length(m));
+ktau_sinusoidal_phase = zeros(1,length(m));
+srho_sinusoidal_phase = zeros(1,length(m));
+
+ii = 1;
+for mm=m
+    y = mm.*sin(x);
+    % calculate kendall's tau
+    ktau = corr(x,y,'type','Kendall');
+    ktau_sinusoidal_amplitude(ii) = ktau;
+    % calculate spearman's rho
+    srho = corr(x,y,'type','Spearman');
+    srho_sinusoidal_amplitude(ii) = srho;
+    
+    y = sin(mm*x);
+    % calculate kendall's tau
+    ktau = corr(x,y,'type','Kendall');
+    ktau_sinusoidal_frequency(ii) = ktau;
+    % calculate spearman's rho
+    srho = corr(x,y,'type','Spearman');
+    srho_sinusoidal_frequency(ii) = srho;
+    
+    y = sin(x+mm);
+    % calculate kendall's tau
+    ktau = corr(x,y,'type','Kendall');
+    ktau_sinusoidal_phase(ii) = ktau;
+    % calculate spearman's rho
+    srho = corr(x,y,'type','Spearman');
+    srho_sinusoidal_phase(ii) = srho;
+    
+    ii = ii + 1;
+end
+
+subplot(2,3,4);
+plot(m,ktau_sinusoidal_amplitude,'b',m,srho_sinusoidal_amplitude,'ro');
+grid on
+xlabel('\alpha')
+title('Y=\alpha * sin(X)')
+legend('Kendall \tau', 'Spearman \rho')
+
+subplot(2,3,5);
+plot(m,ktau_sinusoidal_frequency,'b',m,srho_sinusoidal_frequency,'ro');
+grid on
+xlabel('\alpha')
+title('Y=sin( \alpha * X)')
+legend('Kendall \tau', 'Spearman \rho')
+
+subplot(2,3,6);
+plot(m,ktau_sinusoidal_phase,'b',m,srho_sinusoidal_phase,'ro');
+grid on
+xlabel('\alpha')
+title('Y=sin(X + \alpha)')
+legend('Kendall \tau', 'Spearman \rho')

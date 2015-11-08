@@ -15,17 +15,8 @@ X_real = [gaminv(U_real(:,1),2,1) tinv(U_real(:,2),5)];
 % calculate the empirical copula & generate samples from this copula
 K = 200;
 D = size(X_real,2);
-[ U_gen, Z_sorted, U_emp ] = emp_copularnd( X_real, n, K );
-
-% apply inverse transform to generate samples from this joint distribution
-X_gen = zeros(n,D);
-for d=1:D
-    for j=1:n
-        un = U_gen(j,d)*n;
-        i = ceil(un);
-        X_gen(j,d) = Z_sorted(d,i);
-    end
-end
+[ U_gen, ~, U_emp ] = emp_copularnd( X_real, n, K );
+X_gen = empdistrnd( U_gen, X_real );
 
 % Setup for Plotting
 U_real = U_real';

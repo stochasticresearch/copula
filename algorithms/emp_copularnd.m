@@ -6,14 +6,16 @@ function [ U_gen, Z_sorted, U_emp ] = emp_copularnd( x, N, K )
 %   x - the D-dimensional distribution function.  This should be in the
 %       format of an [M x D] matrix, where M is the number of samples and D
 %       is the dimensionality of the distribution function.
+%   N - the number of copula samples to generate.  This will be internally
+%       rounded to a multiple of K.
 %   K - the number of subsets of [0,1].  Should be a minimum of 100.  The
 %       generated samples become more accurate as K is increased, but the
 %       tradeoff is time required to compute copula samples.
-%   N - the number of copula samples to generate.  This will be internally
-%       rounded to a multiple of K.
 % Outputs:
-%   u - an [N x D] matrix of copula samples representing the empirical
-%       copula of provided joint distribution x.
+%   U_gen - an [N x D] matrix of generated copula samples representing the 
+%           empirical copula of provided joint distribution x.
+%   Z_sorted - the sorted empirical CDF from the data provided
+%   U_emp - a matrix of extracted copula samples from data provided
 %
 % Credits: The algorithm and prototype code from which this function
 %          was created from the algorithms outlined in the paper:

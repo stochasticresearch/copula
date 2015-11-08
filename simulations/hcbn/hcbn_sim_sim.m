@@ -24,22 +24,7 @@ X_transformed = [X1_continued X_real(:,2)];
 K = n;
 D = size(X_real,2);
 [ U_gen, ~, U_emp ] = emp_copularnd( X_transformed, n, K );
-
-Z_sorted = zeros(n,D);
-for d=1:D
-    [Z_sorted(:,d), ~] = sort(X_real(:,d));
-end
-Z_sorted = Z_sorted';
-
-% apply inverse transform to generate samples from this joint distribution
-X_gen = zeros(n,D);
-for d=1:D
-    for j=1:n
-        un = U_gen(j,d)*n;
-        i = ceil(un);
-        X_gen(j,d) = Z_sorted(d,i);
-    end
-end
+X_gen = empdistrnd(U_gen, X_real);
 
 %%%%%%%%%%%%%% VISUALIZATION %%%%%%%%%%%%%%
 
@@ -94,6 +79,51 @@ title('CLG Generative Model')
 
 fprintf('Copulas WIN\n')
 
+%% 2-D all continuous simulation
+clear;
+clc;
+
+n = 10000;
+rho = .7;
+Z = mvnrnd([0 0], [1 rho; rho 1], n);
+U_real = normcdf(Z);
+X_real = [gaminv(U_real(:,1),2,1) tinv(U_real(:,2),5)];
+
+K = n;
+n_gen = 1000;
+D = size(X_real,2);
+[ U_gen, ~, U_emp ] = emp_copularnd( X_real, n_gen, K );
+X_gen = empdistrnd(U_gen, X_real);
+
+%%%%%%%%%%%%%% VISUALIZATION %%%%%%%%%%%%%%
+subplot(2,2,1)
+scatter(X_real(:,1),X_real(:,2))
+xlabel('X_1')
+ylabel('Y_1')
+grid on
+title('"Real" Joint Distribution')
+
+subplot(2,2,2)
+scatter(U_real(:,1),U_real(:,2))
+xlabel('U_1')
+ylabel('U_2')
+grid on
+title('"Real" Dependency Structure')
+
+subplot(2,2,3);
+scatter(X_gen(:,1),X_gen(:,2));
+grid on
+xlabel('X_1')
+ylabel('X_2')
+title('Copula Generative Model')
+
+subplot(2,2,4);
+scatter(U_gen(:,1),U_gen(:,2));
+grid on
+xlabel('X_1')
+ylabel('X_2')
+title('Generated Dependency Structure')
+
 %% 3-D simulation
 clear;
 clc;
@@ -112,23 +142,7 @@ X_transformed = [X1_continued X_real(:,2) X_real(:,3)];
 K = n;
 D = size(X_real,2);
 [ U_gen, ~, U_emp ] = emp_copularnd( X_transformed, n, K );
-
-Z_sorted = zeros(n,D);
-for d=1:D
-    [Z_sorted(:,d), ~] = sort(X_real(:,d));
-end
-Z_sorted = Z_sorted';
-
-% apply inverse transform to generate samples from this joint distribution
-X_gen = zeros(n,D);
-for d=1:D
-    for j=1:n
-        un = U_gen(j,d)*n;
-        i = ceil(un);
-        X_gen(j,d) = Z_sorted(d,i);
-    end
-end
-
+X_gen = empdistrnd(U_gen, X_real);
 
 % do an R-style "pairs" plot of the empirical data
 subplot(3,3,1)

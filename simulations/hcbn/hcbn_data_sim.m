@@ -87,7 +87,7 @@ end
 
 % [race age fnlwgt]
 X_empirical = [dataMat(:,9) dataMat(:,1) dataMat(:,3)];
-X_empirical = X_empirical(1:1000,:);        % truncate the data for faster processing
+X_empirical = X_empirical(1:10000,:);        % truncate the data for faster processing
 
 n = size(X_empirical,1);
 
@@ -104,22 +104,7 @@ X_transformed = [X1_continued X_empirical(:,2) X_empirical(:,3)];
 K = n_gen;
 D = size(X_transformed,2);
 [ U_gen, ~, U_emp ] = emp_copularnd( X_transformed, n_gen, K );
-
-Z_sorted = zeros(n,D);
-for d=1:D
-    [Z_sorted(:,d), ~] = sort(X_empirical(:,d));
-end
-Z_sorted = Z_sorted';
-
-% apply inverse transform to generate samples from this joint distribution
-X_gen = zeros(n,D);
-for d=1:D
-    for j=1:n_gen
-        un = U_gen(j,d)*n_gen;
-        i = ceil(un);
-        X_gen(j,d) = Z_sorted(d,i);
-    end
-end
+X_gen = empdistrnd(U_gen, X_empirical);
 
 % Visualize Results
 
