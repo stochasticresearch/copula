@@ -5,11 +5,12 @@ clear;
 clc;
 
 % Generate the data
-range = 1.5;
+range = 4;
 n = 1000;
 x = -range + 2*range*rand(n,1);       % generate uniform RV's
 
-%% 
+figtitlestr = sprintf('X ~ Uniform(-%d,%d)',range,range);
+
 % affine dependence
 fprintf('Processing Affine Dependence\n');
 m = -20:.1:20;
@@ -90,9 +91,6 @@ xlabel('\alpha')
 title('Y=\alpha * (X^4-2X^2)')
 legend('Kendall \tau', 'Spearman \rho')
 
-
-%%
-
 % sinusoidal dependence
 fprintf('Processing Sinusoidal Dependence\n');
 
@@ -152,3 +150,5 @@ grid on
 xlabel('\alpha')
 title('Y=sin(X + \alpha)')
 legend('Kendall \tau', 'Spearman \rho')
+
+h = figtitle(figtitlestr);

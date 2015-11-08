@@ -461,3 +461,198 @@ title('$$\hat{C}(F_X,G_Y)$$', 'Interpreter', 'Latex');
 
 h = figtitle(figtitlestr);
 
+%%
+figure;
+
+y = -10*x.^2;
+subplot_idx = 1;
+subplot(2,3,subplot_idx); subplot_idx = subplot_idx + 1;
+[ecop, U1, U2] = ecopula([x y]);
+contour(U1,U2,ecop)
+xlabel('U_1')
+ylabel('U_2')
+title('$$\hat{C}(F_X,G_Y) | Y = -10X^2$$', 'Interpreter', 'Latex');
+
+y = -5*x.^2;
+subplot(2,3,subplot_idx); subplot_idx = subplot_idx + 1;
+[ecop, U1, U2] = ecopula([x y]);
+contour(U1,U2,ecop)
+xlabel('U_1')
+ylabel('U_2')
+title('$$\hat{C}(F_X,G_Y) | Y = -5X^2$$', 'Interpreter', 'Latex');
+
+y = -x.^2;
+subplot(2,3,subplot_idx); subplot_idx = subplot_idx + 1;
+[ecop, U1, U2] = ecopula([x y]);
+contour(U1,U2,ecop)
+xlabel('U_1')
+ylabel('U_2')
+title('$$\hat{C}(F_X,G_Y) | Y = -X^2$$', 'Interpreter', 'Latex');
+
+y = x.^2;
+subplot(2,3,subplot_idx); subplot_idx = subplot_idx + 1;
+[ecop, U1, U2] = ecopula([x y]);
+contour(U1,U2,ecop)
+xlabel('U_1')
+ylabel('U_2')
+title('$$\hat{C}(F_X,G_Y) | Y = X^2$$', 'Interpreter', 'Latex');
+
+y = 5*x.^2;
+subplot(2,3,subplot_idx); subplot_idx = subplot_idx + 1;
+[ecop, U1, U2] = ecopula([x y]);
+contour(U1,U2,ecop)
+xlabel('U_1')
+ylabel('U_2')
+title('$$\hat{C}(F_X,G_Y) | Y = 5X^2$$', 'Interpreter', 'Latex');
+
+y = 10*x.^2;
+subplot(2,3,subplot_idx); subplot_idx = subplot_idx + 1;
+[ecop, U1, U2] = ecopula([x y]);
+contour(U1,U2,ecop)
+xlabel('U_1')
+ylabel('U_2')
+title('$$\hat{C}(F_X,G_Y) | Y = 10X^2$$', 'Interpreter', 'Latex');
+
+h = figtitle(figtitlestr);
+
+figure;
+y = -(x-5).^2;
+subplot_idx = 1;
+subplot(2,3,subplot_idx); subplot_idx = subplot_idx + 1;
+[ecop, U1, U2] = ecopula([x y]);
+contour(U1,U2,ecop)
+xlabel('U_1')
+ylabel('U_2')
+title('$$\hat{C}(F_X,G_Y) | Y = -(X-5)^2$$', 'Interpreter', 'Latex');
+
+y = -x.^2;
+subplot(2,3,subplot_idx); subplot_idx = subplot_idx + 1;
+[ecop, U1, U2] = ecopula([x y]);
+contour(U1,U2,ecop)
+xlabel('U_1')
+ylabel('U_2')
+title('$$\hat{C}(F_X,G_Y) | Y = -X^2$$', 'Interpreter', 'Latex');
+
+y = -(x+5).^2;
+subplot(2,3,subplot_idx); subplot_idx = subplot_idx + 1;
+[ecop, U1, U2] = ecopula([x y]);
+contour(U1,U2,ecop)
+xlabel('U_1')
+ylabel('U_2')
+title('$$\hat{C}(F_X,G_Y) | Y = -(X+5)^2$$', 'Interpreter', 'Latex');
+
+y = (x-5).^2;
+subplot(2,3,subplot_idx); subplot_idx = subplot_idx + 1;
+[ecop, U1, U2] = ecopula([x y]);
+contour(U1,U2,ecop)
+xlabel('U_1')
+ylabel('U_2')
+title('$$\hat{C}(F_X,G_Y) | Y = (X-5)^2$$', 'Interpreter', 'Latex');
+
+y = x.^2;
+subplot(2,3,subplot_idx); subplot_idx = subplot_idx + 1;
+[ecop, U1, U2] = ecopula([x y]);
+contour(U1,U2,ecop)
+xlabel('U_1')
+ylabel('U_2')
+title('$$\hat{C}(F_X,G_Y) | Y = X^2$$', 'Interpreter', 'Latex');
+
+y = (x+5).^2;
+subplot(2,3,subplot_idx); subplot_idx = subplot_idx + 1;
+[ecop, U1, U2] = ecopula([x y]);
+contour(U1,U2,ecop)
+xlabel('U_1')
+ylabel('U_2')
+title('$$\hat{C}(F_X,G_Y) | Y = (X+5)^2$$', 'Interpreter', 'Latex');
+
+h = figtitle(figtitlestr);
+
+%% sinusoidal experiments
+figure;
+
+y = sin(-10*x);
+subplot_idx = 1;
+subplot(2,3,subplot_idx); subplot_idx = subplot_idx + 1;
+[ecop, U1, U2] = ecopula([x y]);
+contour(U1,U2,ecop)
+xlabel('U_1')
+ylabel('U_2')
+title('$$\hat{C}(F_X,G_Y) | Y = sin(-10X)$$', 'Interpreter', 'Latex');
+
+y = sin(-5*x);
+subplot(2,3,subplot_idx); subplot_idx = subplot_idx + 1;
+[ecop, U1, U2] = ecopula([x y]);
+contour(U1,U2,ecop)
+xlabel('U_1')
+ylabel('U_2')
+title('$$\hat{C}(F_X,G_Y) | Y = sin(-5X)$$', 'Interpreter', 'Latex');
+
+y = sin(-x);
+subplot(2,3,subplot_idx); subplot_idx = subplot_idx + 1;
+[ecop, U1, U2] = ecopula([x y]);
+contour(U1,U2,ecop)
+xlabel('U_1')
+ylabel('U_2')
+title('$$\hat{C}(F_X,G_Y) | Y = sin(-X)$$', 'Interpreter', 'Latex');
+
+y = sin(x);
+subplot(2,3,subplot_idx); subplot_idx = subplot_idx + 1;
+[ecop, U1, U2] = ecopula([x y]);
+contour(U1,U2,ecop)
+xlabel('U_1')
+ylabel('U_2')
+title('$$\hat{C}(F_X,G_Y) | Y = sin(X)$$', 'Interpreter', 'Latex');
+
+y = sin(5*x);
+subplot(2,3,subplot_idx); subplot_idx = subplot_idx + 1;
+[ecop, U1, U2] = ecopula([x y]);
+contour(U1,U2,ecop)
+xlabel('U_1')
+ylabel('U_2')
+title('$$\hat{C}(F_X,G_Y) | Y = sin(5X)$$', 'Interpreter', 'Latex');
+
+y = sin(10*x);
+subplot(2,3,subplot_idx); subplot_idx = subplot_idx + 1;
+[ecop, U1, U2] = ecopula([x y]);
+contour(U1,U2,ecop)
+xlabel('U_1')
+ylabel('U_2')
+title('$$\hat{C}(F_X,G_Y) | Y = sin(10X)$$', 'Interpreter', 'Latex');
+
+h = figtitle(figtitlestr);
+
+figure;
+y = sin(x-10);
+subplot_idx = 1;
+subplot(2,2,subplot_idx); subplot_idx = subplot_idx + 1;
+[ecop, U1, U2] = ecopula([x y]);
+contour(U1,U2,ecop)
+xlabel('U_1')
+ylabel('U_2')
+title('$$\hat{C}(F_X,G_Y) | Y = sin(X-10)$$', 'Interpreter', 'Latex');
+
+y = sin(x-5);
+subplot(2,2,subplot_idx); subplot_idx = subplot_idx + 1;
+[ecop, U1, U2] = ecopula([x y]);
+contour(U1,U2,ecop)
+xlabel('U_1')
+ylabel('U_2')
+title('$$\hat{C}(F_X,G_Y) | Y = sin(X-5)$$', 'Interpreter', 'Latex');
+
+y = sin(x+5);
+subplot(2,2,subplot_idx); subplot_idx = subplot_idx + 1;
+[ecop, U1, U2] = ecopula([x y]);
+contour(U1,U2,ecop)
+xlabel('U_1')
+ylabel('U_2')
+title('$$\hat{C}(F_X,G_Y) | Y = sin(X+5)$$', 'Interpreter', 'Latex');
+
+y = sin(x+10);
+subplot(2,2,subplot_idx); subplot_idx = subplot_idx + 1;
+[ecop, U1, U2] = ecopula([x y]);
+contour(U1,U2,ecop)
+xlabel('U_1')
+ylabel('U_2')
+title('$$\hat{C}(F_X,G_Y) | Y = sin(X+10)$$', 'Interpreter', 'Latex');
+
+h = figtitle(figtitlestr);
