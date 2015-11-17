@@ -85,9 +85,90 @@ for ii=1:numDataPts
     end
 end
 
+% Learn the Structure
+% discretize the continuous nodes
+dataTmp = dataMat;
+for ii=continuousIdx
+    x = dataMat(:,ii);
+    % discretize
+    edges = linspace(min(x),max(x),10);
+    nbins = length(edges)-1;
+    [~,bins] = histc(x,edges);
+    bins(bins==nbins+1) = nbins;
+    y = reshape(bins,size(x));
+    dataTmp(:,ii) = y;
+end
+dataTmp = dataTmp';     % the learning algo likes the data in this format
+
+% learn the structure using k2 algorithm
+ns = zeros(1,size(dataTmp,1));
+for ii=1:length(ns)
+    ns(ii) = length(unique(dataTmp(ii,:)));
+end
+
+order = 1:size(dataTmp,1);
+order_str = {'age','workclass','fnlwgt','education','education-num','martial-status','occupation',...
+             'relationship', 'race', 'sex', 'capital-gain', 'capital-loss', 'hours-per-week', 'native-country', 'salary'};
+max_fan_in = 2;
+
+% print out structure
+dag = learn_struct_K2(dataTmp, ns, order, 'max_fan_in', max_fan_in, 'verbose', 'no');
+% print out the connections
+for ii=1:length(order_str)
+    fprintf('Parent = %s\n', order_str{ii});
+    idxs = find(dag(ii,:));
+    for zz=idxs
+        fprintf(' ---> %s\n', order_str{zz});
+    end
+    fprintf('--------------------------------\n');
+end
+
+%% Extract a convenient child & parents for exposition of our technique
+X_empirical = [dataMat(:,7) dataMat(:,11)];
+X_empirical = X_empirical(1:10000,:);        % training data size
+
+n = size(X_empirical,1);
+
+n_gen = 1000;
+
+fprintf('Applying CLG Model\n')
+[x1_domain, x1_multinomial_est, x2_mle_params] = fit_clg_2D( X_empirical );
+X_clg_gen = gen_samples_clg_2D(x1_domain, x1_multinomial_est, x2_mle_params, n_gen);
+
+fprintf('Applying Copula Model\n')
+X1_continued = X_empirical(:,1) + (rand(n,1)-1);
+X_transformed = [X1_continued X_empirical(:,2)];
+K = n_gen;
+D = size(X_transformed,2);
+[ U_gen, ~, U_emp ] = emp_copularnd( X_transformed, n_gen, K );
+X_gen = empdistrnd(U_gen, X_empirical);
+
+% Visualize Results
+subplot(1,3,1);
+scatter(X_empirical(1:1000,1),X_empirical(1:1000,2));
+grid on
+xlabel('Occupation')
+ylabel('Capital Gains')
+title('Empirical Data')
+
+subplot(1,3,2);
+scatter(X_gen(:,1),X_gen(:,2));
+grid on
+xlabel('Occupation')
+ylabel('Capital Gains')
+title('Copula Generative Model')
+
+subplot(1,3,3);
+scatter(X_clg_gen(:,1),X_clg_gen(:,2));
+grid on
+xlabel('Occupation')
+ylabel('Capital Gains')
+title('CLG Generative Model')
+
+%% Some additional extractions for fun
 % [race age fnlwgt]
 X_empirical = [dataMat(:,9) dataMat(:,1) dataMat(:,3)];
-X_empirical = X_empirical(1:10000,:);        % truncate the data for faster processing
+X_empirical = X_empirical(1:10000,:);        % training data size
 
 n = size(X_empirical,1);
 
@@ -108,6 +189,51 @@ X_gen = empdistrnd(U_gen, X_empirical);
 
 % Visualize Results
 
+figure;
+subplot(2,1,1)
+scatter(X_empirical(1:n_gen,1),X_empirical(1:n_gen,2))
+xlabel('Race')
+ylabel('Age')
+grid on
+title('Empirical Data')
+
+subplot(2,1,2)
+scatter(X_empirical(1:n_gen,2),X_empirical(1:n_gen,3))
+xlabel('Age')
+ylabel('fnlwgt')
+grid on
+
+figure;
+subplot(2,1,1)
+scatter(X1X2_clg_gen(:,1),X1X2_clg_gen(:,2))
+xlabel('Race')
+ylabel('Age')
+grid on
+title('CLG Generative Model')
+
+subplot(2,1,2)
+scatter(X2X3_clg_gen(:,1),X2X3_clg_gen(:,2))
+xlabel('Age')
+ylabel('fnlwgt')
+grid on
+
+figure;
+subplot(2,1,1)
+scatter(X_gen(:,1),X_gen(:,2))
+xlabel('Race')
+ylabel('Age')
+grid on
+title('HCBN Model')
+
+subplot(2,1,2)
+scatter(X_gen(:,2),X_gen(:,3))
+xlabel('Age')
+ylabel('fnlwgt')
+grid on
+
+
+%% R - Style Plots
+figure;
 % do an R-style "pairs" plot of the empirical data
 subplot(3,3,1)
 axis([0 1 0 1])
@@ -223,5 +349,3 @@ grid on
 subplot(3,3,9)
 axis([0 1 0 1])
 text(0.5,0.5,'X_3 (fnlwgt)')
-
-fprintf('Copulas WIN Again -- what did you expect?\n')
