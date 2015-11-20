@@ -85,6 +85,7 @@ for ii=1:numDataPts
     end
 end
 
+%% 
 % Learn the Structure
 % discretize the continuous nodes
 dataTmp = dataMat;

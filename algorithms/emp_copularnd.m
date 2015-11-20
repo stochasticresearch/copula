@@ -1,5 +1,4 @@
 function [ U_gen, Z_sorted, U_emp ] = emp_copularnd( x, N, K )
-% function [ U_gen, Z_sorted, U_emp, f, nU ] = emp_copularnd_new( x, N, K )
 %EMP_COPULARND Generates samples of the empirical copula of an underlying
 %d-dimensional joint distribution function
 % Inputs:
