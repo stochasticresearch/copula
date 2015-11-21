@@ -139,9 +139,14 @@ X_clg_gen = gen_samples_clg_2D(x1_domain, x1_multinomial_est, x2_mle_params, n_g
 fprintf('Applying Copula Model\n')
 X1_continued = X_empirical(:,1) + (rand(n,1)-1);
 X_transformed = [X1_continued X_empirical(:,2)];
-K = n_gen;
+% K = n_gen;
+K = 200;
 D = size(X_transformed,2);
-[ U_gen, ~, U_emp ] = emp_copularnd( X_transformed, n_gen, K );
+
+[ U_gen, ~, U_emp ] = emp_copularnd_old2( X_transformed, n_gen, K );
+% [C,U,c] = empcopula(X_transformed,K);    
+% U_gen = empcopularnd(c, n);
+
 X_gen = empdistrnd(U_gen, X_empirical);
 
 % Visualize Results

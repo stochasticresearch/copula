@@ -31,7 +31,7 @@ neg = 0;
 
 
 N = 500;
-K = 250;
+K = 100;
 
 subplot_idx = 1;
 % affine dependence
@@ -50,17 +50,16 @@ ylabel('Y')
 grid on
 
 subplot(4,4,subplot_idx); subplot_idx = subplot_idx + 1;
-%[ecop, U1, U2] = ecopula([x y]);
-[ecop,U] = empcopula([x y],100); U1 = U(:,:,1); U2 = U(:,:,2);
+[ecop,U,c] = empcopula([x y],K); U1 = U(:,:,1); U2 = U(:,:,2);
 contour(U1,U2,ecop)
 xlabel('U_1')
 ylabel('U_2')
 title('$$\hat{C}(F_X,G_Y)$$', 'Interpreter', 'Latex');
 
-[U_gen, Z_sorted, U_emp] = emp_copularnd([x y], N, K);
+U_gen = empcopularnd(c, N);
 subplot(4,4,subplot_idx); subplot_idx = subplot_idx + 1;
-scatter(U_emp(:,1), U_emp(:,2))
-title('Empirical Samples of $$\hat{C}(F_X,G_Y)$$', 'Interpreter', 'Latex');
+scatter(U_gen(:,1), U_gen(:,2))
+title('Genearted Samples from $$\hat{C}(F_X,G_Y)$$', 'Interpreter', 'Latex');
 xlabel('U_1')
 ylabel('U_2')
 grid on
@@ -90,16 +89,15 @@ ylabel('Y')
 grid on
 
 subplot(4,4,subplot_idx); subplot_idx = subplot_idx + 1;
-%[ecop, U1, U2] = ecopula([x y]);
-[ecop,U] = empcopula([x y],100); U1 = U(:,:,1); U2 = U(:,:,2);
+[ecop,U,c] = empcopula([x y],K); U1 = U(:,:,1); U2 = U(:,:,2);
 contour(U1,U2,ecop)
 xlabel('U_1')
 ylabel('U_2')
 title('$$\hat{C}(F_X,G_Y)$$', 'Interpreter', 'Latex');
 
-[U_gen, Z_sorted, U_emp] = emp_copularnd([x y], N, K);
+U_gen = empcopularnd(c, N);
 subplot(4,4,subplot_idx); subplot_idx = subplot_idx + 1;
-scatter(U_emp(:,1), U_emp(:,2))
+scatter(U_gen(:,1), U_gen(:,2))
 title('Samples of $$\hat{C}(F_X,G_Y)$$', 'Interpreter', 'Latex');
 xlabel('U_1')
 ylabel('U_2')
@@ -129,16 +127,15 @@ ylabel('Y')
 grid on
 
 subplot(4,4,subplot_idx); subplot_idx = subplot_idx + 1;
-%[ecop, U1, U2] = ecopula([x y]);
-[ecop,U] = empcopula([x y],100); U1 = U(:,:,1); U2 = U(:,:,2);
+[ecop,U,c] = empcopula([x y],K); U1 = U(:,:,1); U2 = U(:,:,2);
 contour(U1,U2,ecop)
 xlabel('U_1')
 ylabel('U_2')
 title('$$\hat{C}(F_X,G_Y)$$', 'Interpreter', 'Latex');
 
-[U_gen, Z_sorted, U_emp] = emp_copularnd([x y], N, K);
+U_gen = empcopularnd(c, N);
 subplot(4,4,subplot_idx); subplot_idx = subplot_idx + 1;
-scatter(U_emp(:,1), U_emp(:,2))
+scatter(U_gen(:,1), U_gen(:,2))
 title('Samples of $$\hat{C}(F_X,G_Y)$$', 'Interpreter', 'Latex');
 xlabel('U_1')
 ylabel('U_2')
@@ -168,16 +165,15 @@ ylabel('Y')
 grid on
 
 subplot(4,4,subplot_idx); subplot_idx = subplot_idx + 1;
-%[ecop, U1, U2] = ecopula([x y]);
-[ecop,U] = empcopula([x y],100); U1 = U(:,:,1); U2 = U(:,:,2);
+[ecop,U,c] = empcopula([x y],K); U1 = U(:,:,1); U2 = U(:,:,2);
 contour(U1,U2,ecop)
 xlabel('U_1')
 ylabel('U_2')
 title('$$\hat{C}(F_X,G_Y)$$', 'Interpreter', 'Latex');
 
-[U_gen, Z_sorted, U_emp] = emp_copularnd([x y], N, K);
+U_gen = empcopularnd(c, N);
 subplot(4,4,subplot_idx); subplot_idx = subplot_idx + 1;
-scatter(U_emp(:,1), U_emp(:,2))
+scatter(U_gen(:,1), U_gen(:,2))
 title('Samples of $$\hat{C}(F_X,G_Y)$$', 'Interpreter', 'Latex');
 xlabel('U_1')
 ylabel('U_2')
@@ -192,190 +188,6 @@ ylabel('U_2')
 grid on
 
 h = figtitle(figtitlestr);
-
-% % polynomial order 4 dependence
-% figure;
-% subplot_idx = 1;
-% 
-% y = x.^4;
-% titStr = 'Y=X^4';
-% if(neg)
-%     y = y*-1;
-%     titStr = 'Y=-X^4';
-% end
-% [U_gen, Z_sorted, U_emp] = emp_copularnd([x y], N, K);
-% subplot(3,3,subplot_idx); subplot_idx = subplot_idx + 1;
-% scatter(U_emp(:,1), U_emp(:,2))
-% title(sprintf('%s %s', 'Samples of C(F_X,G_Y) | ', titStr));
-% xlabel('U_1')
-% ylabel('U_2')
-% grid on
-% 
-% subplot(3,3,subplot_idx); subplot_idx = subplot_idx + 1;
-% scatter(x, y, 'r')
-% title(titStr);
-% xlabel('X')
-% ylabel('Y')
-% grid on
-% 
-% subplot(3,3,subplot_idx); subplot_idx = subplot_idx + 1;
-% [ecop, U1, U2] = ecopula([x y]);
-% contour(U1,U2,ecop)
-% xlabel('U_1')
-% ylabel('U_2')
-% title(sprintf('%s %s','C(F_X,G_Y) | ', titStr));
-% 
-% % polynomial order 4 dependence
-% y = (x.^2-0.25).*(x.^2-1);
-% titStr = 'Y=(X^2-0.25)*(X^2-1)';
-% if(neg)
-%     y = y*-1;
-%     titStr = 'Y=-(X^2-0.25)*(X^2-1)';
-% end
-% [U_gen, Z_sorted, U_emp] = emp_copularnd([x y], N, K);
-% subplot(3,3,subplot_idx); subplot_idx = subplot_idx + 1;
-% scatter(U_emp(:,1), U_emp(:,2))
-% title(sprintf('%s %s', 'Samples of C(F_X,G_Y) | ', titStr));
-% xlabel('U_1')
-% ylabel('U_2')
-% grid on
-% 
-% subplot(3,3,subplot_idx); subplot_idx = subplot_idx + 1;
-% scatter(x, y, 'r')
-% title(titStr);
-% xlabel('X')
-% ylabel('Y')
-% grid on
-% 
-% subplot(3,3,subplot_idx); subplot_idx = subplot_idx + 1;
-% [ecop, U1, U2] = ecopula([x y]);
-% contour(U1,U2,ecop)
-% xlabel('U_1')
-% ylabel('U_2')
-% title(sprintf('%s %s','C(F_X,G_Y) | ', titStr));
-% 
-% % sinusoidal dependence
-% titStr = 'Y=sin(X)';
-% if(neg)
-%     y = y*-1;
-%     titStr = 'Y= -sin(X)';
-% end
-% y = sin(x);
-% [U_gen, Z_sorted, U_emp] = emp_copularnd([x y], N, K);
-% subplot(3,3,subplot_idx); subplot_idx = subplot_idx + 1;
-% scatter(U_emp(:,1), U_emp(:,2))
-% title(sprintf('%s %s', 'Samples of C(F_X,G_Y) | ', titStr));
-% xlabel('U_1')
-% ylabel('U_2')
-% grid on
-% 
-% subplot(3,3,subplot_idx); subplot_idx = subplot_idx + 1;
-% scatter(x, y, 'r')
-% title(titStr);
-% xlabel('X')
-% ylabel('Y')
-% grid on
-% 
-% subplot(3,3,subplot_idx); subplot_idx = subplot_idx + 1;
-% [ecop, U1, U2] = ecopula([x y]);
-% contour(U1,U2,ecop)
-% xlabel('U_1')
-% ylabel('U_2')
-% title(sprintf('%s %s','C(F_X,G_Y) | ', titStr));
-% 
-% h = figtitle(figtitlestr);
-% 
-% % exponential dependence
-% figure;
-% subplot_idx = 1;
-% 
-% y = exp(x);
-% titStr = 'Y=e^X';
-% if(neg)
-%     y = y*-1;
-%     titStr = 'Y=-e^X';
-% end
-% [U_gen, Z_sorted, U_emp] = emp_copularnd([x y], N, K);
-% subplot(3,3,subplot_idx); subplot_idx = subplot_idx + 1;
-% scatter(U_emp(:,1), U_emp(:,2))
-% title(sprintf('%s %s', 'Samples of C(F_X,G_Y) | ', titStr));
-% xlabel('U_1')
-% ylabel('U_2')
-% grid on
-% 
-% subplot(3,3,subplot_idx); subplot_idx = subplot_idx + 1;
-% scatter(x, y, 'r')
-% title(titStr);
-% xlabel('X')
-% ylabel('Y')
-% grid on
-% 
-% subplot(3,3,subplot_idx); subplot_idx = subplot_idx + 1;
-% [ecop, U1, U2] = ecopula([x y]);
-% contour(U1,U2,ecop)
-% xlabel('U_1')
-% ylabel('U_2')
-% title(sprintf('%s %s','C(F_X,G_Y) | ', titStr));
-% 
-% % circular dependence
-% y = sqrt(x.^2+1);
-% titStr = 'Y=sqrt(X^2+1)';
-% if(neg)
-%     y = y*-1;
-%     titStr = 'Y=-sqrt(X^2+1)';
-% end
-% [U_gen, Z_sorted, U_emp] = emp_copularnd([x y], N, K);
-% subplot(3,3,subplot_idx); subplot_idx = subplot_idx + 1;
-% scatter(U_emp(:,1), U_emp(:,2))
-% title(sprintf('%s %s', 'Samples of C(F_X,G_Y) | ', titStr));
-% xlabel('U_1')
-% ylabel('U_2')
-% grid on
-% 
-% subplot(3,3,subplot_idx); subplot_idx = subplot_idx + 1;
-% scatter(x, y, 'r')
-% title(titStr);
-% xlabel('X')
-% ylabel('Y')
-% grid on
-% 
-% subplot(3,3,subplot_idx); subplot_idx = subplot_idx + 1;
-% [ecop, U1, U2] = ecopula([x y]);
-% contour(U1,U2,ecop)
-% xlabel('U_1')
-% ylabel('U_2')
-% title(sprintf('%s %s','C(F_X,G_Y) | ', titStr));
-% 
-% % circular dependence
-% y = real(log(x));
-% titStr = 'Y=Re[log(X)]';
-% if(neg)
-%     y = y*-1;
-%     titStr = 'Y=-Re[log(X)]';
-% end
-% [U_gen, Z_sorted, U_emp] = emp_copularnd([x y], N, K);
-% subplot(3,3,subplot_idx); subplot_idx = subplot_idx + 1;
-% scatter(U_emp(:,1), U_emp(:,2))
-% title(sprintf('%s %s', 'Samples of C(F_X,G_Y) | ', titStr));
-% xlabel('U_1')
-% ylabel('U_2')
-% grid on
-% 
-% subplot(3,3,subplot_idx); subplot_idx = subplot_idx + 1;
-% scatter(x, y, 'r')
-% title(titStr);
-% xlabel('X')
-% ylabel('Y')
-% grid on
-% 
-% subplot(3,3,subplot_idx); subplot_idx = subplot_idx + 1;
-% [ecop, U1, U2] = ecopula([x y]);
-% contour(U1,U2,ecop)
-% xlabel('U_1')
-% ylabel('U_2')
-% title(sprintf('%s %s','C(F_X,G_Y) | ', titStr));
-% 
-% h = figtitle(figtitlestr);
 
 %%  Experiment w/ Polynomial functions only to understand effect of slope
 % quadratic dependence
@@ -394,8 +206,7 @@ ylabel('Y')
 grid on
 
 subplot(2,4,subplot_idx); subplot_idx = subplot_idx + 1;
-%[ecop, U1, U2] = ecopula([x y]);
-[ecop,U] = empcopula([x y],100); U1 = U(:,:,1); U2 = U(:,:,2);
+[ecop,U,c] = empcopula([x y],K); U1 = U(:,:,1); U2 = U(:,:,2);
 contour(U1,U2,ecop)
 xlabel('U_1')
 ylabel('U_2')
@@ -416,7 +227,7 @@ ylabel('Y')
 grid on
 
 subplot(2,4,subplot_idx); subplot_idx = subplot_idx + 1;
-[ecop, U1, U2] = ecopula([x y]);
+[ecop,U,c] = empcopula([x y],K); U1 = U(:,:,1); U2 = U(:,:,2);
 contour(U1,U2,ecop)
 xlabel('U_1')
 ylabel('U_2')
@@ -437,8 +248,7 @@ ylabel('Y')
 grid on
 
 subplot(2,4,subplot_idx); subplot_idx = subplot_idx + 1;
-%[ecop, U1, U2] = ecopula([x y]);
-[ecop,U] = empcopula([x y],100); U1 = U(:,:,1); U2 = U(:,:,2);
+[ecop,U,c] = empcopula([x y],K); U1 = U(:,:,1); U2 = U(:,:,2);
 contour(U1,U2,ecop)
 xlabel('U_1')
 ylabel('U_2')
@@ -474,8 +284,7 @@ figure;
 y = -10*x.^2;
 subplot_idx = 1;
 subplot(2,3,subplot_idx); subplot_idx = subplot_idx + 1;
-%[ecop, U1, U2] = ecopula([x y]);
-[ecop,U] = empcopula([x y],100); U1 = U(:,:,1); U2 = U(:,:,2);
+[ecop,U,c] = empcopula([x y],K); U1 = U(:,:,1); U2 = U(:,:,2);
 contour(U1,U2,ecop)
 xlabel('U_1')
 ylabel('U_2')
@@ -483,8 +292,7 @@ title('$$\hat{C}(F_X,G_Y) | Y = -10X^2$$', 'Interpreter', 'Latex');
 
 y = -5*x.^2;
 subplot(2,3,subplot_idx); subplot_idx = subplot_idx + 1;
-%[ecop, U1, U2] = ecopula([x y]);
-[ecop,U] = empcopula([x y],100); U1 = U(:,:,1); U2 = U(:,:,2);
+[ecop,U,c] = empcopula([x y],K); U1 = U(:,:,1); U2 = U(:,:,2);
 contour(U1,U2,ecop)
 xlabel('U_1')
 ylabel('U_2')
@@ -492,8 +300,7 @@ title('$$\hat{C}(F_X,G_Y) | Y = -5X^2$$', 'Interpreter', 'Latex');
 
 y = -x.^2;
 subplot(2,3,subplot_idx); subplot_idx = subplot_idx + 1;
-%[ecop, U1, U2] = ecopula([x y]);
-[ecop,U] = empcopula([x y],100); U1 = U(:,:,1); U2 = U(:,:,2);
+[ecop,U,c] = empcopula([x y],K); U1 = U(:,:,1); U2 = U(:,:,2);
 contour(U1,U2,ecop)
 xlabel('U_1')
 ylabel('U_2')
@@ -501,8 +308,7 @@ title('$$\hat{C}(F_X,G_Y) | Y = -X^2$$', 'Interpreter', 'Latex');
 
 y = x.^2;
 subplot(2,3,subplot_idx); subplot_idx = subplot_idx + 1;
-%[ecop, U1, U2] = ecopula([x y]);
-[ecop,U] = empcopula([x y],100); U1 = U(:,:,1); U2 = U(:,:,2);
+[ecop,U,c] = empcopula([x y],K); U1 = U(:,:,1); U2 = U(:,:,2);
 contour(U1,U2,ecop)
 xlabel('U_1')
 ylabel('U_2')
@@ -510,8 +316,7 @@ title('$$\hat{C}(F_X,G_Y) | Y = X^2$$', 'Interpreter', 'Latex');
 
 y = 5*x.^2;
 subplot(2,3,subplot_idx); subplot_idx = subplot_idx + 1;
-%[ecop, U1, U2] = ecopula([x y]);
-[ecop,U] = empcopula([x y],100); U1 = U(:,:,1); U2 = U(:,:,2);
+[ecop,U,c] = empcopula([x y],K); U1 = U(:,:,1); U2 = U(:,:,2);
 contour(U1,U2,ecop)
 xlabel('U_1')
 ylabel('U_2')
@@ -519,8 +324,7 @@ title('$$\hat{C}(F_X,G_Y) | Y = 5X^2$$', 'Interpreter', 'Latex');
 
 y = 10*x.^2;
 subplot(2,3,subplot_idx); subplot_idx = subplot_idx + 1;
-%[ecop, U1, U2] = ecopula([x y]);
-[ecop,U] = empcopula([x y],100); U1 = U(:,:,1); U2 = U(:,:,2);
+[ecop,U,c] = empcopula([x y],K); U1 = U(:,:,1); U2 = U(:,:,2);
 contour(U1,U2,ecop)
 xlabel('U_1')
 ylabel('U_2')
@@ -532,8 +336,7 @@ figure;
 y = -(x-5).^2;
 subplot_idx = 1;
 subplot(2,3,subplot_idx); subplot_idx = subplot_idx + 1;
-%[ecop, U1, U2] = ecopula([x y]);
-[ecop,U] = empcopula([x y],100); U1 = U(:,:,1); U2 = U(:,:,2);
+[ecop,U,c] = empcopula([x y],K); U1 = U(:,:,1); U2 = U(:,:,2);
 contour(U1,U2,ecop)
 xlabel('U_1')
 ylabel('U_2')
@@ -541,8 +344,7 @@ title('$$\hat{C}(F_X,G_Y) | Y = -(X-5)^2$$', 'Interpreter', 'Latex');
 
 y = -x.^2;
 subplot(2,3,subplot_idx); subplot_idx = subplot_idx + 1;
-%[ecop, U1, U2] = ecopula([x y]);
-[ecop,U] = empcopula([x y],100); U1 = U(:,:,1); U2 = U(:,:,2);
+[ecop,U,c] = empcopula([x y],K); U1 = U(:,:,1); U2 = U(:,:,2);
 contour(U1,U2,ecop)
 xlabel('U_1')
 ylabel('U_2')
@@ -550,8 +352,7 @@ title('$$\hat{C}(F_X,G_Y) | Y = -X^2$$', 'Interpreter', 'Latex');
 
 y = -(x+5).^2;
 subplot(2,3,subplot_idx); subplot_idx = subplot_idx + 1;
-%[ecop, U1, U2] = ecopula([x y]);
-[ecop,U] = empcopula([x y],100); U1 = U(:,:,1); U2 = U(:,:,2);
+[ecop,U,c] = empcopula([x y],K); U1 = U(:,:,1); U2 = U(:,:,2);
 contour(U1,U2,ecop)
 xlabel('U_1')
 ylabel('U_2')
@@ -559,8 +360,7 @@ title('$$\hat{C}(F_X,G_Y) | Y = -(X+5)^2$$', 'Interpreter', 'Latex');
 
 y = (x-5).^2;
 subplot(2,3,subplot_idx); subplot_idx = subplot_idx + 1;
-%[ecop, U1, U2] = ecopula([x y]);
-[ecop,U] = empcopula([x y],100); U1 = U(:,:,1); U2 = U(:,:,2);
+[ecop,U,c] = empcopula([x y],K); U1 = U(:,:,1); U2 = U(:,:,2);
 contour(U1,U2,ecop)
 xlabel('U_1')
 ylabel('U_2')
@@ -568,8 +368,7 @@ title('$$\hat{C}(F_X,G_Y) | Y = (X-5)^2$$', 'Interpreter', 'Latex');
 
 y = x.^2;
 subplot(2,3,subplot_idx); subplot_idx = subplot_idx + 1;
-%[ecop, U1, U2] = ecopula([x y]);
-[ecop,U] = empcopula([x y],100); U1 = U(:,:,1); U2 = U(:,:,2);
+[ecop,U,c] = empcopula([x y],K); U1 = U(:,:,1); U2 = U(:,:,2);
 contour(U1,U2,ecop)
 xlabel('U_1')
 ylabel('U_2')
@@ -577,8 +376,7 @@ title('$$\hat{C}(F_X,G_Y) | Y = X^2$$', 'Interpreter', 'Latex');
 
 y = (x+5).^2;
 subplot(2,3,subplot_idx); subplot_idx = subplot_idx + 1;
-%[ecop, U1, U2] = ecopula([x y]);
-[ecop,U] = empcopula([x y],100); U1 = U(:,:,1); U2 = U(:,:,2);
+[ecop,U,c] = empcopula([x y],K); U1 = U(:,:,1); U2 = U(:,:,2);
 contour(U1,U2,ecop)
 xlabel('U_1')
 ylabel('U_2')
@@ -592,8 +390,7 @@ figure;
 y = sin(-10*x);
 subplot_idx = 1;
 subplot(2,3,subplot_idx); subplot_idx = subplot_idx + 1;
-%[ecop, U1, U2] = ecopula([x y]);
-[ecop,U] = empcopula([x y],100); U1 = U(:,:,1); U2 = U(:,:,2);
+[ecop,U,c] = empcopula([x y],K); U1 = U(:,:,1); U2 = U(:,:,2);
 contour(U1,U2,ecop)
 xlabel('U_1')
 ylabel('U_2')
@@ -601,8 +398,7 @@ title('$$\hat{C}(F_X,G_Y) | Y = sin(-10X)$$', 'Interpreter', 'Latex');
 
 y = sin(-5*x);
 subplot(2,3,subplot_idx); subplot_idx = subplot_idx + 1;
-%[ecop, U1, U2] = ecopula([x y]);
-[ecop,U] = empcopula([x y],100); U1 = U(:,:,1); U2 = U(:,:,2);
+[ecop,U,c] = empcopula([x y],K); U1 = U(:,:,1); U2 = U(:,:,2);
 contour(U1,U2,ecop)
 xlabel('U_1')
 ylabel('U_2')
@@ -610,8 +406,7 @@ title('$$\hat{C}(F_X,G_Y) | Y = sin(-5X)$$', 'Interpreter', 'Latex');
 
 y = sin(-x);
 subplot(2,3,subplot_idx); subplot_idx = subplot_idx + 1;
-%[ecop, U1, U2] = ecopula([x y]);
-[ecop,U] = empcopula([x y],100); U1 = U(:,:,1); U2 = U(:,:,2);
+[ecop,U,c] = empcopula([x y],K); U1 = U(:,:,1); U2 = U(:,:,2);
 contour(U1,U2,ecop)
 xlabel('U_1')
 ylabel('U_2')
@@ -619,8 +414,7 @@ title('$$\hat{C}(F_X,G_Y) | Y = sin(-X)$$', 'Interpreter', 'Latex');
 
 y = sin(x);
 subplot(2,3,subplot_idx); subplot_idx = subplot_idx + 1;
-%[ecop, U1, U2] = ecopula([x y]);
-[ecop,U] = empcopula([x y],100); U1 = U(:,:,1); U2 = U(:,:,2);
+[ecop,U,c] = empcopula([x y],K); U1 = U(:,:,1); U2 = U(:,:,2);
 contour(U1,U2,ecop)
 xlabel('U_1')
 ylabel('U_2')
@@ -628,8 +422,7 @@ title('$$\hat{C}(F_X,G_Y) | Y = sin(X)$$', 'Interpreter', 'Latex');
 
 y = sin(5*x);
 subplot(2,3,subplot_idx); subplot_idx = subplot_idx + 1;
-%[ecop, U1, U2] = ecopula([x y]);
-[ecop,U] = empcopula([x y],100); U1 = U(:,:,1); U2 = U(:,:,2);
+[ecop,U,c] = empcopula([x y],K); U1 = U(:,:,1); U2 = U(:,:,2);
 contour(U1,U2,ecop)
 xlabel('U_1')
 ylabel('U_2')
@@ -637,8 +430,7 @@ title('$$\hat{C}(F_X,G_Y) | Y = sin(5X)$$', 'Interpreter', 'Latex');
 
 y = sin(10*x);
 subplot(2,3,subplot_idx); subplot_idx = subplot_idx + 1;
-%[ecop, U1, U2] = ecopula([x y]);
-[ecop,U] = empcopula([x y],100); U1 = U(:,:,1); U2 = U(:,:,2);
+[ecop,U,c] = empcopula([x y],K); U1 = U(:,:,1); U2 = U(:,:,2);
 contour(U1,U2,ecop)
 xlabel('U_1')
 ylabel('U_2')
@@ -650,8 +442,7 @@ figure;
 y = sin(x-10);
 subplot_idx = 1;
 subplot(2,2,subplot_idx); subplot_idx = subplot_idx + 1;
-%[ecop, U1, U2] = ecopula([x y]);
-[ecop,U] = empcopula([x y],100); U1 = U(:,:,1); U2 = U(:,:,2);
+[ecop,U,c] = empcopula([x y],K); U1 = U(:,:,1); U2 = U(:,:,2);
 contour(U1,U2,ecop)
 xlabel('U_1')
 ylabel('U_2')
@@ -659,8 +450,7 @@ title('$$\hat{C}(F_X,G_Y) | Y = sin(X-10)$$', 'Interpreter', 'Latex');
 
 y = sin(x-5);
 subplot(2,2,subplot_idx); subplot_idx = subplot_idx + 1;
-%[ecop, U1, U2] = ecopula([x y]);
-[ecop,U] = empcopula([x y],100); U1 = U(:,:,1); U2 = U(:,:,2);
+[ecop,U,c] = empcopula([x y],K); U1 = U(:,:,1); U2 = U(:,:,2);
 contour(U1,U2,ecop)
 xlabel('U_1')
 ylabel('U_2')
@@ -668,8 +458,7 @@ title('$$\hat{C}(F_X,G_Y) | Y = sin(X-5)$$', 'Interpreter', 'Latex');
 
 y = sin(x+5);
 subplot(2,2,subplot_idx); subplot_idx = subplot_idx + 1;
-%[ecop, U1, U2] = ecopula([x y]);
-[ecop,U] = empcopula([x y],100); U1 = U(:,:,1); U2 = U(:,:,2);
+[ecop,U,c] = empcopula([x y],K); U1 = U(:,:,1); U2 = U(:,:,2);
 contour(U1,U2,ecop)
 xlabel('U_1')
 ylabel('U_2')
@@ -677,8 +466,7 @@ title('$$\hat{C}(F_X,G_Y) | Y = sin(X+5)$$', 'Interpreter', 'Latex');
 
 y = sin(x+10);
 subplot(2,2,subplot_idx); subplot_idx = subplot_idx + 1;
-%[ecop, U1, U2] = ecopula([x y]);
-[ecop,U] = empcopula([x y],100); U1 = U(:,:,1); U2 = U(:,:,2);
+[ecop,U,c] = empcopula([x y],K); U1 = U(:,:,1); U2 = U(:,:,2);
 contour(U1,U2,ecop)
 xlabel('U_1')
 ylabel('U_2')

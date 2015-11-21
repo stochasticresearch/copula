@@ -1,44 +1,86 @@
-function [ C, U ] = empcopula( X, n )
+function [ C, U, c ] = empcopula( X, K )
 %EMPCOPULA Calculates the empiricial copula in a unit hypercube
 % Inputs:
 %  X - a [M x D] matrix, where M is the number of samples, and D is the
 %      dimensionality of the data
-%  n - the number of evenly spaced points in the unit hypercube to
-%      calculate the empirical copula over
+%  K - the number of evenly spaced points in the unit hypercube to
+%      calculate the empirical copula over.  Should be a minimum of 100 for
+%      reasonable accuracy.
 %
 % Outputs:
 %  C - the empirical copula, which is a [n x D] matrix
 %  U - the points over which the copula was calculated
+%  c - A cell array of the copula density.  The format of the cell array is
+%      as follows: c{1} = dC(u_1 ... u_D)/du_1
+%                  c{2} = dC(u_1 ... u_D)/(du_1 du_2)
+%                  c{3} = dC(u_1 ... u_D)/(du_1 du_2 du_3)
+%                           ...
+%                  c{D} = dC(u_1 ... u_D)/(du_1 ... du_D)
+%      Resultingly, c{D} will be the "copula density."
 
-R = tiedrank(X);
 M = size(X,1);
 D = size(X,2);
 
-if(D<2)
-    error('D must be >= 2!');
+U = zeros(K,K,D);
+% TODO: figure out a less cumbersome method of doing this?
+ux = linspace(0,1,K);
+if(D==2)
+    [UU1,UU2] = ndgrid(ux);
+    U(:,:,1) = UU1;
+    U(:,:,2) = UU2;
+    U(1,:,1) = 0; U(:,1,1) = 0;
+    U(1,:,2) = 0; U(:,1,2) = 0;
+else
+    warning('U will be 0s. It is the responsiblity of the caller to manually assign U.');
 end
 
-bounds = linspace(0,1,n);
-bounds = bounds';
+X = X';
 
-C = zeros(length(bounds),length(bounds));
-U = zeros(length(bounds),length(bounds),D);
+n_by_K = floor(M/K);
+n = n_by_K * K;         %sample size = floor(n_whole_sample/K)*K
 
-% scale the ranks to create pseudoobservations
-u_i = R(:,1)/(M+1); v_i = R(:,2)/(M+1);
+% truncate the data to n
+X = X(:,1:n);
 
-% TODO: improve this to become n-dimensional, for now we handle 2
-for ii=2:length(bounds)     % start from 2, b/c of copula grounded property
-    for jj=2:length(bounds)
-        u = bounds(ii);
-        v = bounds(jj);
-                
-        total = sum( (u_i<=u).*(v_i<=v) );
-        C(ii,jj) = total/M;
-        
-        U(ii,jj,1) = u;
-        U(ii,jj,2) = v;
+[~, nU] = empVF_v3(n,D,X); 
+
+j=zeros(1,D);
+
+summand = 1*realpow(K,D)/n;
+
+c = cell(1,D);
+c{1} = [];
+for ii=2:D
+    sz = K*ones(1,ii);
+    c{ii} = zeros(sz);
+end
+    
+for jj=1:n
+    for d=1:D
+        j(d) = ceil( (nU(d,jj)-0.00001)/n_by_K );   % compensate for rounding errors
+    end
+
+    for ii=2:D
+        access_vec = j(1:ii);
+        linear_idx = access_vec(1);
+        for kk=2:length(access_vec)
+            linear_idx = linear_idx + (access_vec(kk)-1)*(K.^(kk-1));
+        end
+
+        c{ii}(linear_idx) = c{ii}(linear_idx) + summand;
     end
 end
+
+% scale the copula densities
+for dd=2:D
+    c{dd} = c{dd}/(K^dd);
+end
+
+% Generate C
+C = cumsum(c{D},1);
+for dd=2:D
+    C = cumsum(C, dd);
+end
+
 
 end

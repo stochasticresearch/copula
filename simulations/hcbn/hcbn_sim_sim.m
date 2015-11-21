@@ -21,9 +21,13 @@ X_clg_gen = gen_samples_clg_2D(x1_domain, x1_multinomial_est, x2_mle_params, n);
 % first continue the random variable
 X1_continued = X_real(:,1) + (rand(n,1)-1);
 X_transformed = [X1_continued X_real(:,2)];
-K = n;
+K = 100;
 D = size(X_real,2);
-[ U_gen, ~, U_emp ] = emp_copularnd( X_transformed, n, K );
+
+% [ U_gen, ~, U_emp ] = emp_copularnd( X_transformed, n, K );
+[C,U,c] = empcopula(X_transformed,K);    
+U_gen = empcopularnd(c, n);
+
 X_gen = empdistrnd(U_gen, X_real);
 
 %%%%%%%%%%%%%% VISUALIZATION %%%%%%%%%%%%%%
@@ -83,16 +87,20 @@ fprintf('Copulas WIN\n')
 clear;
 clc;
 
-n = 10000;
+n = 1000;
 rho = .7;
 Z = mvnrnd([0 0], [1 rho; rho 1], n);
 U_real = normcdf(Z);
 X_real = [gaminv(U_real(:,1),2,1) tinv(U_real(:,2),5)];
 
-K = n;
+K = 100;
 n_gen = 1000;
 D = size(X_real,2);
-[ U_gen, ~, U_emp ] = emp_copularnd( X_real, n_gen, K );
+
+% [ U_gen, ~, U_emp ] = emp_copularnd( X_real, n_gen, K );
+[C,U,c] = empcopula(X_real,K);    
+U_gen = empcopularnd(c, n_gen);
+
 X_gen = empdistrnd(U_gen, X_real);
 
 %%%%%%%%%%%%%% VISUALIZATION %%%%%%%%%%%%%%
@@ -139,9 +147,13 @@ D = 3;
 
 X1_continued = X_real(:,1) + (rand(n,1)-1);
 X_transformed = [X1_continued X_real(:,2) X_real(:,3)];
-K = n;
+K = 100;
 D = size(X_real,2);
-[ U_gen, ~, U_emp ] = emp_copularnd( X_transformed, n, K );
+
+% [ U_gen, ~, U_emp ] = emp_copularnd_old( X_transformed, n, K );
+[C,U,c] = empcopula(X_transformed,K);    
+U_gen = empcopularnd(c, n);
+
 X_gen = empdistrnd(U_gen, X_real);
 
 % do an R-style "pairs" plot of the empirical data
