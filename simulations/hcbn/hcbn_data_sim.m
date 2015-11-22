@@ -125,12 +125,14 @@ for ii=1:length(order_str)
 end
 
 %% Extract a convenient child & parents for exposition of our technique
-X_empirical = [dataMat(:,7) dataMat(:,11)];
-X_empirical = X_empirical(1:10000,:);        % training data size
+n = 10000;
+X_empirical = [dataMat(:,9) dataMat(:,1)];
+X_empirical = X_empirical(1:n,:);        % training data size
 
 n = size(X_empirical,1);
 
 n_gen = 1000;
+empirical_idxs = randperm(n,n_gen);     % TODO: figure out fi this si best way to sample data for comparison?
 
 fprintf('Applying CLG Model\n')
 [x1_domain, x1_multinomial_est, x2_mle_params] = fit_clg_2D( X_empirical );
@@ -143,15 +145,16 @@ X_transformed = [X1_continued X_empirical(:,2)];
 K = 200;
 D = size(X_transformed,2);
 
-[ U_gen, ~, U_emp ] = emp_copularnd_old2( X_transformed, n_gen, K );
-% [C,U,c] = empcopula(X_transformed,K);    
-% U_gen = empcopularnd(c, n);
+% [ U_gen, ~, U_emp ] = emp_copularnd_old2( X_transformed, n_gen, K );
+[C,U,c,U_emp] = empcopula(X_transformed,K);    
+U_gen = empcopularnd(c, n);
 
 X_gen = empdistrnd(U_gen, X_empirical);
 
 % Visualize Results
 subplot(1,3,1);
-scatter(X_empirical(1:1000,1),X_empirical(1:1000,2));
+% scatter(X_empirical(1:n_gen,1),X_empirical(1:n_gen,2));
+scatter(X_empirical(empirical_idxs,1),X_empirical(empirical_idxs,2));
 grid on
 xlabel('Occupation')
 ylabel('Capital Gains')
@@ -171,6 +174,16 @@ xlabel('Occupation')
 ylabel('Capital Gains')
 title('CLG Generative Model')
 
+figure;
+subplot(1,2,1);
+scatter(U_emp(:,1),U_emp(:,2));
+grid on
+title('Real Dependency Structure')
+subplot(1,2,2);
+scatter(U_gen(:,1),U_gen(:,2));
+grid on
+title('Generated Dependency Structure')
+
 %% Some additional extractions for fun
 % [race age fnlwgt]
 X_empirical = [dataMat(:,9) dataMat(:,1) dataMat(:,3)];
@@ -179,6 +192,7 @@ X_empirical = X_empirical(1:10000,:);        % training data size
 n = size(X_empirical,1);
 
 n_gen = 1000;
+empirical_idxs = randperm(n,n_gen); % TODO: figure out fi this si best way to sample data for comparison?
 
 fprintf('Applying CLG Model\n')
 [ x1_domain, x1_multinomial_est, mle_params ] = fit_clg_3D( X_empirical );
@@ -188,16 +202,20 @@ fprintf('Applying CLG Model\n')
 fprintf('Applying Copula Model\n')
 X1_continued = X_empirical(:,1) + (rand(n,1)-1);
 X_transformed = [X1_continued X_empirical(:,2) X_empirical(:,3)];
-K = n_gen;
+K = 200;
 D = size(X_transformed,2);
-[ U_gen, ~, U_emp ] = emp_copularnd( X_transformed, n_gen, K );
+
+% [ U_gen, ~, U_emp ] = emp_copularnd_old2( X_transformed, n_gen, K );
+[C,U,c,U_emp] = empcopula(X_transformed,K);    
+U_gen = empcopularnd(c, n);
 X_gen = empdistrnd(U_gen, X_empirical);
 
 % Visualize Results
 
 figure;
 subplot(2,1,1)
-scatter(X_empirical(1:n_gen,1),X_empirical(1:n_gen,2))
+% scatter(X_empirical(1:n_gen,1),X_empirical(1:n_gen,2))
+scatter(X_empirical(empirical_idxs,1),X_empirical(empirical_idxs,2))
 xlabel('Race')
 ylabel('Age')
 grid on

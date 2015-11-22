@@ -1,4 +1,4 @@
-function [ C, U, c ] = empcopula( X, K )
+function [ C, U, c, u_emp ] = empcopula( X, K )
 %EMPCOPULA Calculates the empiricial copula in a unit hypercube
 % Inputs:
 %  X - a [M x D] matrix, where M is the number of samples, and D is the
@@ -82,5 +82,7 @@ for dd=2:D
     C = cumsum(C, dd);
 end
 
+u_emp=nU/n;
+u_emp = u_emp';
 
 end
