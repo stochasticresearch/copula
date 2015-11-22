@@ -31,6 +31,7 @@ if(D==2)
     U(1,:,1) = 0; U(:,1,1) = 0;
     U(1,:,2) = 0; U(:,1,2) = 0;
 else
+    % TODO: would be nice to fix this :)
     warning('U will be 0s. It is the responsiblity of the caller to manually assign U.');
 end
 
