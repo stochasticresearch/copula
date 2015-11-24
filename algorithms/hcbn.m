@@ -48,6 +48,10 @@ classdef hcbn
             %         If this is not specified, it is assumed that the user
             %         will learn the structure through an available
             %         learning algorithm
+            %
+            %  TODO
+            %   [ ] - 
+            %
             obj.D = D;      
             
             obj.nodeNames = nodes;
@@ -102,7 +106,7 @@ classdef hcbn
             %CALCEMPINFO - calculates the empirical distribution function
             %              and the empirical density function via kernel
             %              based methods
-            for ii=1:D
+            for ii=1:obj.D
                 % estimate the ECDF
                 M = size(obj.X,1);
                 [F,x] = ecdf(obj.X(:,ii));
@@ -192,21 +196,38 @@ classdef hcbn
                 end
                 fprintf('\n');
                 
-                % grab the appropriate values 
-                X_in = zeros(size(obj.X_xform,1), 1+length(parentNames));
-                X_in(:,1) = obj.X_xform(:,nodeIdx);
-                
-                kk = 2;
-                for jj=parentIdxs
-                    X_in(:,kk) = obj.X_xform(:,jj);
-                    kk = kk + 1;
+                if(isempty(parentIdxs))
+                    % no parents situation
+                    obj.copulaFamilies{nodeIdx} = [];
+                else
+                    % grab the appropriate values 
+                    X_in = zeros(size(obj.X_xform,1), 1+length(parentNames));
+                    X_in(:,1) = obj.X_xform(:,nodeIdx);
+
+                    kk = 2;
+                    for jj=parentIdxs
+                        X_in(:,kk) = obj.X_xform(:,jj);
+                        kk = kk + 1;
+                    end
+
+                    [ C, U, c ] = empcopula(X_in, obj.K);
+                    copFam = copulafamily(node, nodeIdx, parentNames, parentIdxs, C, U, c);
+                    obj.copulaFamilies{nodeIdx} = copFam;
                 end
-                
-                [ C, U, c ] = empcopula(X_in, obj.K);
-                copFam = copulafamily(node, nodeIdx, parentNames, parentIdxs, C, U, c);
-                obj.copulaFamilies{nodeIdx} = copFam;
             end
             
+        end
+        
+        function [ ll_val ] = hcbnLogLikelihood(obj, X)
+            %HCBNLOGLIKELIHOOD - calculates the log-likelihood of the HCBN
+            %                    model to the provided data
+            % 
+            % Inputs
+            %  X - the data for which to calculate the log-likelihood for
+            ll_val = 0;
+            for ii=1:obj.D
+                ll_val = ll_val + obj.copulall(ii,X);
+            end
         end
         
         function [ ll_val ] = copulall(obj, nodeIdx, X )
@@ -238,29 +259,30 @@ classdef hcbn
                 kk = kk + 1;
             end
             
-            % get the copula family associated with this node
-            copFam = obj.copulaFamilies{nodeIdx};
-            c = copFam.c{end};  % extract the appropriate copula density
+            allIdxs = [nodeIdx parentIdxs];
             
             % compute the copularatio for each data point
             M = size(X_in,1);
             ll_val = 0;
+            u = zeros(size(X_in,2),1);
             for m=1:M
-                % call rvEmpiricalInfo.queryDensity to get value for
-                % empirical density
-                
-                % call rvEmpiricalInfo.queryDistribution to get value for
-                % empirical distribution
-                
+                ll_val = 0;
                 % compute empirical distribution log likelihood
+                colIdx = 1;
+                for jj=allIdxs
+                    ll_val = ll_val + log(obj.empInfo{jj}.queryDensity(X_in(m,colIdx)));
+                    colIdx = colIdx + 1;
+                end
+                
+                % generate u
+                uIdx = 1;
+                for jj=allIdxs
+                    u(uIdx) = obj.empInfo{jj}.queryDistribution(X_in(m,uIdx));
+                    uIdx = uIdx + 1;
+                end
                 
                 % compute copula ratio value
-                
-                % sum
-                ll_tmp = 0;
-                
-                % add to cumulative total log likelihood
-                ll_val = ll_val + ll_tmp;
+                ll_val = ll_val + log(obj.copularatio_val(nodeIdx, u));
             end
         end
         
@@ -279,14 +301,21 @@ classdef hcbn
             % find the associated copula family
             copFam = obj.copulaFamilies{nodeIdx};
             
-            % get the copula density for this family
-            C = copFam.C; c = copFam.c{end};
-            
-            % query it for the specified point with empcopula_val
-            [~, c_val_numerator] = empcopula_val(C,c,u);
-            u_denom = u; u_denom(1) = 1;
-            [~, c_val_denominator] = empcopula_val(C,c,u_denom);
-            c_val = c_val_numerator/c_val_denominator;
+            if(isempty(copFam))
+                % if copFam is empty, this means this node has no parents
+                % and thus by defintion the copula ratio here is defined to
+                % be 1
+                c_val = 1;
+            else
+                % get the copula density for this family
+                C = copFam.C; c = copFam.c{end};
+
+                % query it for the specified point with empcopula_val
+                [~, c_val_numerator] = empcopula_val(C,c,u);
+                u_denom = u; u_denom(1) = 1;
+                [~, c_val_denominator] = empcopula_val(C,c,u_denom);
+                c_val = c_val_numerator/c_val_denominator;
+            end
         end
     end
     
