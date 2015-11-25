@@ -6,7 +6,7 @@ function [ C_u, c_u ] = empcopula_val( C, c, U )
 %      points
 %  c - the empirical copula density, defined over an evenly spaced grid of 
 %      points
-%  U - A column vector [U_1, U_2, ... U_d]', where d is the dimensionality
+%  U - A vector [U_1, U_2, ... U_d], where d is the dimensionality
 %      of the copula (distribution and density functions)
 %
 % Outputs:

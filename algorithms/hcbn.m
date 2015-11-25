@@ -6,6 +6,8 @@ classdef hcbn
                     % the DAG is an adjancency matrix.  Element (i,j)
                     % represents a connection from the ith random variable
                     % to the jth random variable
+                    % TODO: consider changing this to a sparse matrix
+                    % representation
         nodeNames;  % a cell array of the list of node names  
         nodeVals;   % an array of the topological order of the nodes w.r.t
                     % the DAG
@@ -136,9 +138,14 @@ classdef hcbn
             %
             % Output:
             %  res - 1 if it is acyclic, 0 if it is not
-            
-            % TODO: actually check the adjacency matrix
-            res = 1;
+            %
+            % TODO
+            %  [ ] - I know this requires the bioinformatics toobox, which
+            %        is unfortunate, but for now this is the fastest path 
+            %        so I took it. Will need to change it later.
+
+            dagSparse = sparse(obj.dag);
+            res = graphisdag(dagSparse);
         end
         
         function [parentIdxs, parentNames] = getParents(obj, node)
@@ -209,13 +216,37 @@ classdef hcbn
                         X_in(:,kk) = obj.X_xform(:,jj);
                         kk = kk + 1;
                     end
-
-                    [ C, U, c ] = empcopula(X_in, obj.K);
-                    copFam = copulafamily(node, nodeIdx, parentNames, parentIdxs, C, U, c);
+                    
+                    % check to see if any of the indices that we extracted
+                    % from were discrete, if so, we calculate the empirical
+                    % copula, if not we fit to a copula model (for now only
+                    % Gaussian copula)
+                    allIdxs = [nodeIdx parentIdxs];
+                    if(sum(ismember(allIdxs, obj.discNodeIdxs)))
+                        [ C, U, c ] = empcopula(X_in, obj.K);
+                        type = 'empirical';
+                        Rho = [];
+                    else
+                        % all continuous marginals, lets fit to a copula
+                        % model (for now, we only do Gaussian)
+                        type = 'model';
+                        C = []; U = []; c = [];
+                        u = zeros(size(X_in));
+                        M = size(X_in,1);
+                        for m=1:M
+                            uIdx = 1;
+                            for jj=allIdxs
+                                u(uIdx) = obj.empInfo{jj}.queryDistribution(X_in(m,uIdx));
+                                uIdx = uIdx + 1;
+                            end
+                        end
+                        Rho = copulafit('Gaussian', u);
+                    end
+                    copFam = copulafamily(node, nodeIdx, parentNames, parentIdxs, ...
+                            type, C, U, c, Rho);
                     obj.copulaFamilies{nodeIdx} = copFam;
                 end
             end
-            
         end
         
         function [ ll_val ] = hcbnLogLikelihood(obj, X)
@@ -264,7 +295,7 @@ classdef hcbn
             % compute the copularatio for each data point
             M = size(X_in,1);
             ll_val = 0;
-            u = zeros(size(X_in,2),1);
+            u = zeros(1, size(X_in,2));
             for m=1:M
                 ll_val = 0;
                 % compute empirical distribution log likelihood
@@ -292,7 +323,7 @@ classdef hcbn
             % Inputs:
             %  nodeIdx - the node for which the copula ratio is to be
             %            calculated.  This is the node index.
-            %  u - a column vector of a point in the unit-hypercube where
+            %  u - a vector of a point in the unit-hypercube where
             %      the copula ratio will be calculated
             
             fprintf('Calculating Copula Ratio for Node %s\n', ...
@@ -306,7 +337,7 @@ classdef hcbn
                 % and thus by defintion the copula ratio here is defined to
                 % be 1
                 c_val = 1;
-            else
+            elseif(strcmp(copFam.type, 'empirical'))
                 % get the copula density for this family
                 C = copFam.C; c = copFam.c{end};
 
@@ -314,6 +345,12 @@ classdef hcbn
                 [~, c_val_numerator] = empcopula_val(C,c,u);
                 u_denom = u; u_denom(1) = 1;
                 [~, c_val_denominator] = empcopula_val(C,c,u_denom);
+                c_val = c_val_numerator/c_val_denominator;
+            else
+                % assume we fit the Gaussian model to the data
+                c_val_numerator = copulapdf('Gaussian', u, copFam.Rho);
+                u_denom = u; u_denom(1) = 1;
+                c_val_denominator = copulapdf('Gaussian', u_denom, copFam.Rho);
                 c_val = c_val_numerator/c_val_denominator;
             end
         end
