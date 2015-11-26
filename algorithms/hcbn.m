@@ -1,4 +1,4 @@
-classdef hcbn
+classdef hcbn < handle
     %HCBN Definition of a Hybrid Copula Bayesian Network
     
     properties
@@ -38,7 +38,7 @@ classdef hcbn
     end
     
     methods
-        function obj = hcbn(bntPath, D, X, nodes, discreteNodes, varargin)
+        function obj = hcbn(bntPath, X, nodes, discreteNodes, varargin)
             % HCBN - Constructs a HCBN object
             %  Inputs:
             %   X - a N x D matrix of the the observable data which the
@@ -58,14 +58,14 @@ classdef hcbn
             % add BNT to the path
             addpath(genpath(bntPath));
             
-            obj.D = D;      
+            obj.D = size(X,2);      
             
             obj.nodeNames = nodes;
             obj.nodeVals = 1:obj.D;     % TODO: need to topologically order the nodeVals
             obj.copulaFamilies = cell(1,obj.D);
             obj.empInfo = cell(1,obj.D);
             
-            obj.dag = zeros(D,D);
+            obj.dag = zeros(obj.D,obj.D);
             
             obj.K = 200;    % hard coded to 200, which seems to be a
                             % reasonable tradeoff between accuracy and
@@ -81,10 +81,6 @@ classdef hcbn
                 obj.estFamilyCopula();
             end
             
-            % ensure X is the correct dimensionality
-            if(size(X,2)~=D)
-                error('Specified data matrix dimensionality does not match D!\n');
-            end
             obj.X = X;
             obj.X_xform = X;
             
@@ -102,13 +98,13 @@ classdef hcbn
             
             % continue the discrete random variables.  X* = X + (U - 1)
             for idx=obj.discNodeIdxs
-                obj.X_xform(:,idx) = obj.X(:,idx) + (rand(size(X,1),1)-1);
+                obj.X_xform(:,idx) = continueRv(obj.X(:,idx));
             end
             
             obj.calcEmpInfo();
         end
         
-        function [] = calcEmpInfo(obj)
+        function calcEmpInfo(obj)
             %CALCEMPINFO - calculates the empirical distribution function
             %              and the empirical density function via kernel
             %              based methods
@@ -125,14 +121,15 @@ classdef hcbn
                     % means this is a discrete node, we handle separately
                     f = zeros(1,length(x));
                     idx = 1;
-                    for ii=x
-                        f(idx) = sum(obj.X(:,ii)==ii)/M;
+                    for jj=1:length(x)
+                        f(idx) = sum(obj.X(:,ii)==x(jj))/M;
                         idx = idx + 1;
                     end
                 else
                     f = ksdensity(obj.X(:,ii),x);
                 end
-                obj.empInfo{ii} = rvEmpiricalInfo(x, f, F);
+                empInfoObj = rvEmpiricalInfo(x, f, F);
+                obj.empInfo{ii} = empInfoObj;
             end
         end
         
@@ -255,9 +252,13 @@ classdef hcbn
             % 
             % Inputs
             %  X - the data for which to calculate the log-likelihood for
-            ll_val = 0;
-            for ii=1:obj.D
-                ll_val = ll_val + obj.copulall(ii,X);
+            if(isempty(obj.dag))
+                ll_val = -Inf;
+            else
+                ll_val = 0;
+                for ii=1:obj.D
+                    ll_val = ll_val + obj.copulall(ii,X);
+                end
             end
         end
         
@@ -313,13 +314,13 @@ classdef hcbn
                 end
                 
                 % compute copula ratio value
-                ll_val = ll_val + log(obj.copularatio_val(nodeIdx, u));
+                ll_val = ll_val + log(obj.copulaRatioVal(nodeIdx, u));
             end
         end
         
-        function [c_val] = copularatio_val(obj, nodeIdx, u)
-            %COPULARATIO_VAL - calculates the copula ratio for a node at a
-            %                  location in the unit hypercube
+        function [c_val] = copulaRatioVal(obj, nodeIdx, u)
+            %COPULARATIOVAL - calculates the copula ratio for a node at a
+            %                 location in the unit hypercube
             % Inputs:
             %  nodeIdx - the node for which the copula ratio is to be
             %            calculated.  This is the node index.
@@ -354,7 +355,64 @@ classdef hcbn
                 c_val = c_val_numerator/c_val_denominator;
             end
         end
+        
+        function [] = learnStruct_hc(obj, seeddag)
+            %LEARNSTRUCT_HC learn the structure of the HCBN network using
+            %               the hill climbing algorithm as described in 
+            %               Koller and Friedman (2009).  The code for this 
+            %               is based off the structure learning toolbox 
+            %               within BNT.  See BNT/SLP/learn_struct_hc.m.
+            %               This will use the X dataset that was passed to 
+            %               the constructor to learn the structure.
+            %
+            % Inputs:
+            %  seeddag - a DAG which can be used as a reference DAG as a
+            %            starting point for the search process.  This is
+            %            optional, and can be an empty array if no seed is
+            %            desired.
+            
+            % ensure that the seeddag is acyclic
+            if(~obj.acyclic(seeddag))
+                obj.dag = zeros(obj.D,obj.D);
+            else
+                obj.dag = seeddag;
+            end
+            
+            % get the baseline score
+            bestScore = obj.hcbnLogLikelihood(obj.X);
+            done = 0;
+            while ~done
+                % make dag's which are addition, reversal, and subtraction
+                % of edges
+                [candidateDags,~,~] = mk_nbrs_of_dag(obj.dag);
+                
+                % score all the dags
+                scores = -Inf*ones(1,length(candidateDags));
+                for ii=1:length(candidateDags)
+                    obj.dag = candidateDags{ii};
+                    scores(ii) = obj.hcbnLogLikelihood(obj.X);
+                end
+                
+                % find the maximum scoring DAG, and see if it is better
+                % than the current best
+                maxScore = max(scores);
+                % see if multiple candidate dag's had the same maximum
+                % score, and if so, choose randomely among those dag's
+                new = find(scores == maxScore );
+                % update best candidate dag as new dag and continue search
+                if ~isempty(new) && (maxScore > bestScore)
+                    p = sample_discrete(normalise(ones(1, length(new))));
+                    bestScore = maxScore;
+                    obj.dag = candidateDags{new(p)};
+                else
+                    done = 1;
+                end 
+            end
+            
+            % TODO: topo-sort the DAG, and sort the names cell array to
+            % match the topologically sorted DAG
+            
+        end
     end
-    
 end
 
