@@ -38,7 +38,7 @@ classdef hcbn
     end
     
     methods
-        function obj = hcbn(D, X, nodes, discreteNodes, varargin)
+        function obj = hcbn(bntPath, D, X, nodes, discreteNodes, varargin)
             % HCBN - Constructs a HCBN object
             %  Inputs:
             %   X - a N x D matrix of the the observable data which the
@@ -54,6 +54,10 @@ classdef hcbn
             %  TODO
             %   [ ] - 
             %
+            
+            % add BNT to the path
+            addpath(genpath(bntPath));
+            
             obj.D = D;      
             
             obj.nodeNames = nodes;
@@ -139,13 +143,9 @@ classdef hcbn
             % Output:
             %  res - 1 if it is acyclic, 0 if it is not
             %
-            % TODO
-            %  [ ] - I know this requires the bioinformatics toobox, which
-            %        is unfortunate, but for now this is the fastest path 
-            %        so I took it. Will need to change it later.
-
-            dagSparse = sparse(obj.dag);
-            res = graphisdag(dagSparse);
+            % NOTE - this requires code from BNT, so make sure BNT is in
+            %        the path
+            res = acyclic(obj.dag);
         end
         
         function [parentIdxs, parentNames] = getParents(obj, node)
