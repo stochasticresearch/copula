@@ -8,6 +8,18 @@ classdef rvEmpiricalInfo
         distribution;
     end
     
+    methods(Static)
+        function [v_out] = adjustVal(v_in)
+            if(v_in==0)
+                v_out = v_in + eps;
+            elseif(v_in==1)
+                v_out = v_in - eps;
+            else
+                v_out = v_in;
+            end
+        end
+    end
+    
     methods
         function obj = rvEmpiricalInfo(domain, density, distribution)
             obj.domain = domain;
@@ -15,7 +27,7 @@ classdef rvEmpiricalInfo
             obj.distribution = distribution;
         end
         
-        function [idx, domainVal] = findClosestDomainVal(q)
+        function [idx, domainVal] = findClosestDomainVal(obj, q)
             % find the closest value in the domain
             
             % TODO: currently, in discrete RV's it assumes that the query
@@ -31,7 +43,7 @@ classdef rvEmpiricalInfo
             else
                 tmp = abs(obj.domain-q);
                 [~, idx] = min(tmp); %index of closest value
-                domainVal = f(idx); %closest value
+                domainVal = obj.domain(idx); %closest value
             end
         end
         
@@ -42,8 +54,9 @@ classdef rvEmpiricalInfo
         
         function [val] = queryDistribution(obj, q)
             idx = obj.findClosestDomainVal(q);
-            val = obj.distribution(idx);
+            val = rvEmpiricalInfo.adjustVal(obj.distribution(idx));
         end
+        
     end
     
 end

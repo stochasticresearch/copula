@@ -71,19 +71,9 @@ classdef hcbn < handle
                             % reasonable tradeoff between accuracy and
                             % memory/computational requirements
             
-            nVarargs = length(varargin);
-            if(nVarargs>0)
-                obj.dag = varargin{1};
-                if(~obj.acyclicCheck())
-                    error('Specified DAG is not acyclic!\n');
-                end
-                % since the DAG is specified, we can estimate the copulas
-                obj.estFamilyCopula();
-            end
-            
             obj.X = X;
             obj.X_xform = X;
-            
+
             obj.discreteNodes = discreteNodes;
             obj.discNodeIdxs = zeros(1,length(obj.discreteNodes));
             for ii=1:length(obj.discNodeIdxs)
@@ -102,9 +92,18 @@ classdef hcbn < handle
             end
             
             obj.calcEmpInfo();
+            
+            nVarargs = length(varargin);
+            if(nVarargs>0)
+                candidateDag = varargin{1};
+                if(~acyclic(candidateDag))
+                    error('Specified DAG is not acyclic!\n');
+                end
+                obj.setDag(candidateDag);
+            end
         end
         
-        function calcEmpInfo(obj)
+        function [] = calcEmpInfo(obj)
             %CALCEMPINFO - calculates the empirical distribution function
             %              and the empirical density function via kernel
             %              based methods
@@ -131,18 +130,6 @@ classdef hcbn < handle
                 empInfoObj = rvEmpiricalInfo(x, f, F);
                 obj.empInfo{ii} = empInfoObj;
             end
-        end
-        
-        function [res] = acyclicCheck(obj)
-            %ACYCLICCHECK - checks to see if the specified graph is
-            %               acyclic.
-            %
-            % Output:
-            %  res - 1 if it is acyclic, 0 if it is not
-            %
-            % NOTE - this requires code from BNT, so make sure BNT is in
-            %        the path
-            res = acyclic(obj.dag);
         end
         
         function [parentIdxs, parentNames] = getParents(obj, node)
@@ -174,11 +161,16 @@ classdef hcbn < handle
             end
             
             % find the node's parents
-            parentIdxs = find(obj.dag(nodeIdx,:));
+            parentIdxs = find(obj.dag(:,nodeIdx))';
             parentNames = cell(1,length(parentIdxs));
-            for jj=1:parentIdxs
-                parentNames{jj} = obj.nodeNames{jj};
+            for jj=1:length(parentIdxs)
+                parentNames{jj} = obj.nodeNames{parentIdxs(jj)};
             end
+        end
+        
+        function [] = setDag(obj, candidateDag)
+            obj.dag = candidateDag;
+            obj.estFamilyCopula();
         end
         
         function [] = estFamilyCopula(obj)
@@ -190,15 +182,15 @@ classdef hcbn < handle
             % parents
             for ii=1:obj.D
                 node = obj.nodeNames{ii};
-                nodeIdx = obj.nodeVals{ii};
+                nodeIdx = obj.nodeVals(ii);
+                [parentIdxs, parentNames] = obj.getParents(nodeIdx);
                 
-                [parentIdxs, parentNames] = obj.getParents(node);
-                
-                fprintf('Estimating Copula for Node=%s <-- ', node);
-                for jj=1:length(parentNames)
-                    fprintf(' %s ', parentNames{jj});
-                end
-                fprintf('\n');
+                % TODO: if debug flag, print this
+%                 fprintf('Estimating Copula for Node=%s <-- ', node);
+%                 for jj=1:length(parentNames)
+%                     fprintf('%d:%s ', parentIdxs(jj), parentNames{jj});
+%                 end
+%                 fprintf('\n');
                 
                 if(isempty(parentIdxs))
                     % no parents situation
@@ -233,7 +225,7 @@ classdef hcbn < handle
                         for m=1:M
                             uIdx = 1;
                             for jj=allIdxs
-                                u(uIdx) = obj.empInfo{jj}.queryDistribution(X_in(m,uIdx));
+                                u(m,uIdx) = obj.empInfo{jj}.queryDistribution(X_in(m,uIdx));
                                 uIdx = uIdx + 1;
                             end
                         end
@@ -373,9 +365,9 @@ classdef hcbn < handle
             
             % ensure that the seeddag is acyclic
             if(~obj.acyclic(seeddag))
-                obj.dag = zeros(obj.D,obj.D);
+                obj.setDag(zeros(obj.D,obj.D));
             else
-                obj.dag = seeddag;
+                obj.setDag(seeddag);
             end
             
             % get the baseline score
@@ -389,7 +381,7 @@ classdef hcbn < handle
                 % score all the dags
                 scores = -Inf*ones(1,length(candidateDags));
                 for ii=1:length(candidateDags)
-                    obj.dag = candidateDags{ii};
+                    obj.setDag(candidateDags{ii});
                     scores(ii) = obj.hcbnLogLikelihood(obj.X);
                 end
                 
@@ -403,7 +395,7 @@ classdef hcbn < handle
                 if ~isempty(new) && (maxScore > bestScore)
                     p = sample_discrete(normalise(ones(1, length(new))));
                     bestScore = maxScore;
-                    obj.dag = candidateDags{new(p)};
+                    obj.setDag(candidateDags{new(p)});
                 else
                     done = 1;
                 end 
