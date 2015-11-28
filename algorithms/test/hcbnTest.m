@@ -214,7 +214,7 @@ classdef hcbnTest < matlab.unittest.TestCase
             % ensure that we calculate the copula ratio properly (easy to
             % check w/ closed form values provided by matlab function
             % copulapdf this way :D )
-            M = 1000;
+            M = 100;
             D = 5;
             
             % Generate samples from C1 (A,B,C) [Gaussian Copula]
@@ -255,11 +255,11 @@ classdef hcbnTest < matlab.unittest.TestCase
             % parents (defined by Elidan 2010). (the value of u shouldn't
             % matter here)
             nodeA_Rc_u1_expect = 1; 
-            nodeA_Rc_u1_actual = hcbnObj.copulaRatioVal(aa, [.1 .1]);
+            nodeA_Rc_u1_actual = hcbnObj.copulaRatioVal(aa, [.1 .1], []);
             testCase.verifyEqual(nodeA_Rc_u1_actual, nodeA_Rc_u1_expect);
             
             nodeB_Rc_u1_expect = 1; 
-            nodeB_Rc_u1_actual = hcbnObj.copulaRatioVal(bb, [.3 .3]);
+            nodeB_Rc_u1_actual = hcbnObj.copulaRatioVal(bb, [.3 .3], []);
             testCase.verifyEqual(nodeB_Rc_u1_actual, nodeB_Rc_u1_expect);
             
             % Test node's D and E.  For this, we need to fit the families
@@ -269,20 +269,23 @@ classdef hcbnTest < matlab.unittest.TestCase
             % above)
             Rho_C2_fit = copulafit('Gaussian', U_C2);
             Rho_C3_fit = copulafit('Gaussian', U_C3);
-            nn = 5;
-            ux = linspace(0,1,nn);
-            [UU1, UU2] = ndgrid(ux);
-            for ii=1:nn
-                for jj=1:nn
-                    u = [UU1(ii,jj) UU2(ii,jj)]; 
-                    nodeD_Rc_u_actual = hcbnObj.copulaRatioVal(dd, u);
-                    nodeE_Rc_u_actual = hcbnObj.copulaRatioVal(ee, u);
-                    
-                    nodeD_c_numerator = copulapdf('Gaussian', u, Rho_C2);
-                    nodeE_c_numerator = copulapdf('Gaussian', u, Rho_C3);
-                    
-                    
-                end
+            
+            for ii=1:M
+                x_d = [X(ii,dd) X(ii,bb)];
+                u_d = [hcbnObj.empInfo{dd}.queryDistribution(X(ii,dd)) hcbnObj.empInfo{bb}.queryDistribution(X(ii,bb))];
+                x_e = [X(ii,ee) X(ii,cc)];
+                u_e = [hcbnObj.empInfo{ee}.queryDistribution(X(ii,ee)) hcbnObj.empInfo{cc}.queryDistribution(X(ii,cc))];
+                
+                nodeD_Rc_u_actual = hcbnObj.copulaRatioVal(dd, u_d, x_d);
+                nodeE_Rc_u_actual = hcbnObj.copulaRatioVal(ee, u_e, x_e);
+                
+                % calculate expected copula ratio
+                nodeD_c_numerator = copulapdf('Gaussian', u_d, Rho_C2_fit);
+                nodeE_c_numerator = copulapdf('Gaussian', u_e, Rho_C3_fit);
+
+                % TODO: calculate denominator manually
+
+                % compare 
             end
             
             % Test node C

@@ -21,7 +21,7 @@ d = length(size(C));
 dprime = length(size(c));
 
 if(length(U)~=d || (d~=dprime))
-    error('Error in dimensionality matching of provided arguments!');
+        error('Error in dimensionality matching of provided arguments!');
 end
 if(~isequal(size(C),size(c)))
     error('The grid over which C and c are defined need to be equal!');

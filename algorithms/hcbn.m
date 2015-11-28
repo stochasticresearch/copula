@@ -215,11 +215,24 @@ classdef hcbn < handle
                         [ C, U, c ] = empcopula(X_in, obj.K);
                         type = 'empirical';
                         Rho = [];
+                        Rho_parents = [];
+                        if(length(parentIdxs)==1)
+                            % the density will be used directly, so there
+                            % is no need to calculate these copula's (they
+                            % don't actually make sense because 
+                            C_parents = [];
+                            U_parents = [];
+                            c_parents = [];
+                        else
+                            X_in_parents = X_in(:,2:end);
+                            [ C_parents, U_parents, c_parents] = empcopula(X_in_parents, obj.K);
+                        end
                     else
                         % all continuous marginals, lets fit to a copula
                         % model (for now, we only do Gaussian)
                         type = 'model';
                         C = []; U = []; c = [];
+                        C_parents = []; c_parents = []; U_parents = [];
                         u = zeros(size(X_in));
                         M = size(X_in,1);
                         for m=1:M
@@ -230,9 +243,14 @@ classdef hcbn < handle
                             end
                         end
                         Rho = copulafit('Gaussian', u);
+                        if(length(parentIdxs)==1)
+                            Rho_parents = [];
+                        else
+                            Rho_parents = copulafit('Gaussian', u);
+                        end
                     end
-                    copFam = copulafamily(node, nodeIdx, parentNames, parentIdxs, ...
-                            type, C, U, c, Rho);
+                    copFam = copulafamily(node, nodeIdx, parentNames, parentIdxs, type, ...
+                            C, U, c, Rho, C_parents, U_parents, c_parents, Rho_parents);
                     obj.copulaFamilies{nodeIdx} = copFam;
                 end
             end
@@ -309,11 +327,11 @@ classdef hcbn < handle
                 end
                 
                 % compute copula ratio value
-                ll_val = ll_val + log(obj.copulaRatioVal(nodeIdx, u));
+                ll_val = ll_val + log(obj.copulaRatioVal(nodeIdx, u, X_in(m,:)));
             end
         end
         
-        function [Rc_val] = copulaRatioVal(obj, nodeIdx, u)
+        function [Rc_val] = copulaRatioVal(obj, nodeIdx, u, x)
             %COPULARATIOVAL - calculates the copula ratio for a node at a
             %                 location in the unit hypercube
             % Inputs:
@@ -321,6 +339,7 @@ classdef hcbn < handle
             %            calculated.  This is the node index.
             %  u - a vector of a point in the unit-hypercube where
             %      the copula ratio will be calculated
+            %  x - the corresponding x from which u was calculated
 
             % TODO: if debug output, then print
 %             fprintf('Calculating Copula Ratio for Node %s\n', ...
@@ -342,7 +361,12 @@ classdef hcbn < handle
                 % query it for the specified point with empcopula_val
                 [~, c_val_numerator] = empcopula_val(C,c,u);
                 u_denom = u(2:end);
-                [~, c_val_denominator] = empcopula_val([],c_parents,u_denom);
+                if(length(u_denom)==1)
+                    c_val_denominator = obj.empInfo{copFam.parentNodeIdxs}.queryDensity(x(2));
+                else
+                    [~, c_val_denominator] = empcopula_val(C_parents,c_parents,u_denom);
+                end
+                
                 
                 Rc_val = c_val_numerator/c_val_denominator;
             else
@@ -350,8 +374,11 @@ classdef hcbn < handle
                 c_val_numerator = copulapdf('Gaussian', u, copFam.Rho);
                 
                 u_denom = u(2:end);
-                Rho_denom = choFam.Rho(2:end,2:end);
-                c_val_denominator = copulapdf('Gaussian', u_denom, Rho_denom);
+                if(length(u_denom)==1)
+                    c_val_denominator = obj.empInfo{copFam.parentNodeIdxs}.queryDensity(x(2));
+                else
+                    c_val_denominator = copulapdf('Gaussian', u_denom, copFam.Rho_parents);
+                end
                 
                 Rc_val = c_val_numerator/c_val_denominator;
             end
