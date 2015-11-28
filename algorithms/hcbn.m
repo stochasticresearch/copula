@@ -35,6 +35,13 @@ classdef hcbn < handle
                         % discrete random variables
         discNodeIdxs;   % the indices of of the nodes of the discrete
                         % random variables
+                        
+        dagLL_scalingFactor;    % a scaling factor for the log-likelihood
+                                % of the DAG with the training data.  This
+                                % scaling factor will make the likelihood
+                                % 1, and when we compare this against
+                                % "test" datasets, we will see how well the
+                                % model holds against the other datasets
     end
     
     methods
@@ -171,6 +178,8 @@ classdef hcbn < handle
         function [] = setDag(obj, candidateDag)
             obj.dag = candidateDag;
             obj.estFamilyCopula();
+            llTrain = hcbnLogLikelihood(obj, obj.X);
+            obj.dagLL_scalingFactor = llTrain;
         end
         
         function [] = estFamilyCopula(obj)
@@ -295,9 +304,9 @@ classdef hcbn < handle
             %                    sum(1,M, log(f(x_1[m]))
 
             % get the parents associated w/ this node
-            [parentIdxs, parentNodes] = obj.getParents(nodeIdx);
+            parentIdxs = obj.getParents(nodeIdx);
             % grab the appropriate values 
-            X_in = zeros(size(X,1), 1+length(parentNames));
+            X_in = zeros(size(X,1), 1+length(parentIdxs));
             X_in(:,1) = X(:,nodeIdx);
 
             kk = 2;
@@ -305,7 +314,6 @@ classdef hcbn < handle
                 X_in(:,kk) = X(:,jj);
                 kk = kk + 1;
             end
-            
             allIdxs = [nodeIdx parentIdxs];
             
             % compute the copularatio for each data point
