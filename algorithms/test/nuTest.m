@@ -29,16 +29,18 @@ D = size(x,2);
 
 [C_new,U_new,c_new] = empcopula(x,K);     
 
-% make sure U_new and U are the same
-U1_new = U_new(:,:,1);
-U2_new = U_new(:,:,2);
-u1_check = isequal(U1,U1_new);
-u2_check = isequal(U2,U2_new);
-if(u1_check && u2_check)
-    fprintf('U checks passed!\n');
-else
-    fprintf('U checks failed!\n');
-end
+% This is incorrect checks, b/c before we misunderstood how to understand
+% U1 and U2
+% % make sure U_new and U are the same
+% U1_new = U_new{1};
+% U2_new = U_new{2};
+% u1_check = isequal(U1,U1_new);
+% u2_check = isequal(U2,U2_new);
+% if(u1_check && u2_check)
+%     fprintf('U checks passed!\n');
+% else
+%     fprintf('U checks failed!\n');
+% end
 
 figure;
 subplot(1,3,1); surf(U1,U2,C);
@@ -95,20 +97,27 @@ subplot(1,3,3); scatter(U_gen_new(:,1),U_gen_new(:,2)); title('U_GEN_NEW');
 X = [X1(:) X2(:)];
 p = mvncdf(X);
 pp = reshape(p,25,25);
-subplot(1,2,1);
-surf(X1,X2,pp);
+% subplot(1,2,1);
+% surf(X1,X2,pp);
 
 aa = diff(pp,1,1);
 aa_tmp = diff(pp,1,2);
 bb = diff(aa,1,2);
-subplot(1,2,2);
-surf(bb);
+% subplot(1,2,2);
+% surf(bb);
 
 [cc] = gradient(pp);
 [~,dd] = gradient(cc);
 
 figure; 
-subplot(1,2,1);
+subplot(1,3,1);
 surf(bb);
-subplot(1,2,2);
+title('Diff version')
+subplot(1,3,2);
 surf(dd)
+title('Gradient version #1')
+
+dd2 = gradient(cc');
+subplot(1,3,3);
+surf(dd2)
+title('Gradient version #2')

@@ -20,13 +20,15 @@ function [ C_u, c_u ] = empcopula_val( C, c, U )
 d = length(size(C));
 dprime = length(size(c));
 
-if(length(U)~=d || (d~=dprime) || d<2)
+if(length(U)~=d || (d~=dprime))
     error('Error in dimensionality matching of provided arguments!');
 end
 if(~isequal(size(C),size(c)))
     error('The grid over which C and c are defined need to be equal!');
 end
-
+if(range(size(C)) || range(size(c)))
+    error('The grid over which C and c are defined should be a square!');
+end
 
 C_u = 0;
 c_u = 0;

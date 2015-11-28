@@ -21,18 +21,14 @@ function [ C, U, c, u_emp ] = empcopula( X, K )
 M = size(X,1);
 D = size(X,2);
 
-U = zeros(K,K,D);
-% TODO: figure out a less cumbersome method of doing this?
+U = cell(1,D);
 ux = linspace(0,1,K);
-if(D==2)
-    [UU1,UU2] = ndgrid(ux);
-    U(:,:,1) = UU1;
-    U(:,:,2) = UU2;
-    U(1,:,1) = 0; U(:,1,1) = 0;
-    U(1,:,2) = 0; U(:,1,2) = 0;
-else
-    % TODO: would be nice to fix this :)
-    warning('U will be 0s. It is the responsiblity of the caller to manually assign U.');
+UU = ndgrid(ux);
+idxShiftArr = 1:D;
+shiftAmt = 0;
+for ii=1:D
+    U{ii} = permute(UU, circshift(idxShiftArr',shiftAmt)');
+    shiftAmt = shiftAmt + 1;
 end
 
 X = X';

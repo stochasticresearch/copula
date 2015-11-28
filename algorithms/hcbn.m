@@ -252,6 +252,9 @@ classdef hcbn < handle
                     ll_val = ll_val + obj.copulall(ii,X);
                 end
             end
+            % TODO: scale the LL val of the reference DAG and training data 
+            % to 1, so we can relatively compare the performance of
+            % different dags and see how train/test performance is
         end
         
         function [ ll_val ] = copulall(obj, nodeIdx, X )
@@ -310,7 +313,7 @@ classdef hcbn < handle
             end
         end
         
-        function [c_val] = copulaRatioVal(obj, nodeIdx, u)
+        function [Rc_val] = copulaRatioVal(obj, nodeIdx, u)
             %COPULARATIOVAL - calculates the copula ratio for a node at a
             %                 location in the unit hypercube
             % Inputs:
@@ -318,9 +321,10 @@ classdef hcbn < handle
             %            calculated.  This is the node index.
             %  u - a vector of a point in the unit-hypercube where
             %      the copula ratio will be calculated
-            
-            fprintf('Calculating Copula Ratio for Node %s\n', ...
-                obj.nodeNames{nodeIdx});
+
+            % TODO: if debug output, then print
+%             fprintf('Calculating Copula Ratio for Node %s\n', ...
+%                 obj.nodeNames{nodeIdx});
             
             % find the associated copula family
             copFam = obj.copulaFamilies{nodeIdx};
@@ -329,22 +333,27 @@ classdef hcbn < handle
                 % if copFam is empty, this means this node has no parents
                 % and thus by defintion the copula ratio here is defined to
                 % be 1
-                c_val = 1;
+                Rc_val = 1;
             elseif(strcmp(copFam.type, 'empirical'))
                 % get the copula density for this family
                 C = copFam.C; c = copFam.c{end};
+                C_parents = copFam.C_parents; c_parents = copFam.c_parents;
 
                 % query it for the specified point with empcopula_val
                 [~, c_val_numerator] = empcopula_val(C,c,u);
-                u_denom = u; u_denom(1) = 1;
-                [~, c_val_denominator] = empcopula_val(C,c,u_denom);
-                c_val = c_val_numerator/c_val_denominator;
+                u_denom = u(2:end);
+                [~, c_val_denominator] = empcopula_val([],c_parents,u_denom);
+                
+                Rc_val = c_val_numerator/c_val_denominator;
             else
                 % assume we fit the Gaussian model to the data
                 c_val_numerator = copulapdf('Gaussian', u, copFam.Rho);
-                u_denom = u; u_denom(1) = 1;
-                c_val_denominator = copulapdf('Gaussian', u_denom, copFam.Rho);
-                c_val = c_val_numerator/c_val_denominator;
+                
+                u_denom = u(2:end);
+                Rho_denom = choFam.Rho(2:end,2:end);
+                c_val_denominator = copulapdf('Gaussian', u_denom, Rho_denom);
+                
+                Rc_val = c_val_numerator/c_val_denominator;
             end
         end
         

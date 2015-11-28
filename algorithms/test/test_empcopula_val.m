@@ -12,13 +12,13 @@ U_real = normcdf(Z);
 X_real = [gaminv(U_real(:,1),2,1) tinv(U_real(:,2),5)];
 
 K = 200;
-[C,U,c] = empcopula(X_real,K);    
+[C,U,c] = empcopula(X_real,K); U1 = U{1}; U2 = U{2};
 cc = c{end};
 % reconstruct C and c from empcopula_val function, and compare the plots
 % and errors between the two to verify accuracy of empcopula_val function
 for ii=1:K
     for jj=1:K
-        U_1 = U(ii,jj,1); U_2 = U(ii,jj,2);
+        U_1 = U1(ii,jj); U_2 = U2(ii,jj);
         U_query = [U_1 U_2]';
         [C_u, c_u] = empcopula_val(C,cc,U_query);
         if( abs(C(ii,jj)-C_u) > error_tol )  
@@ -32,3 +32,4 @@ for ii=1:K
         end
     end
 end
+fprintf('Test complete!\n');
