@@ -23,12 +23,29 @@ D = size(X,2);
 
 U = cell(1,D);
 ux = linspace(0,1,K);
-UU = ndgrid(ux);
-idxShiftArr = 1:D;
-shiftAmt = 0;
-for ii=1:D
-    U{ii} = permute(UU, circshift(idxShiftArr',shiftAmt)');
-    shiftAmt = shiftAmt + 1;
+% UU = ndgrid(ux);
+% idxShiftArr = 1:D;
+% shiftAmt = 0;
+% for ii=1:D
+%     U{ii} = permute(UU, circshift(idxShiftArr',shiftAmt)');
+%     shiftAmt = shiftAmt + 1;
+% end
+% TODO: figure out more elegant way of doing this!!
+if(D==2)
+    [UU1,UU2] = ndgrid(ux);
+    U{1} = UU1; U{2} = UU2;
+elseif(D==3)
+    [UU1,UU2,UU3] = ndgrid(ux);
+    U{1} = UU1; U{2} = UU2; U{3} = UU3;
+elseif(D==4)
+    [UU1,UU2,UU3,UU4] = ndgrid(ux);
+    U{1} = UU1; U{2} = UU2; U{3} = UU3; U{4} = UU4;
+elseif(D==5)
+    [UU1,UU2,UU3,UU4,UU5] = ndgrid(ux);
+    U{1} = UU1; U{2} = UU2; U{3} = UU3; U{4} = UU4; U{5} = UU5;
+elseif(D==6)
+    [UU1,UU2,UU3,UU4,UU5,UU6] = ndgrid(ux);
+    U{1} = UU1; U{2} = UU2; U{3} = UU3; U{4} = UU4; U{5} = UU5; U{6}= UU6;
 end
 
 X = X';

@@ -61,7 +61,7 @@ classdef hcbn < handle
             obj.D = size(X,2);      
             
             obj.nodeNames = nodes;
-            obj.nodeVals = 1:obj.D;     % TODO: need to topologically order the nodeVals
+            obj.nodeVals = 1:obj.D;
             obj.copulaFamilies = cell(1,obj.D);
             obj.empInfo = cell(1,obj.D);
             
@@ -185,7 +185,7 @@ classdef hcbn < handle
                 nodeIdx = obj.nodeVals(ii);
                 [parentIdxs, parentNames] = obj.getParents(nodeIdx);
                 
-                % TODO: if debug flag, print this
+%                 % TODO: if debug flag, print this
 %                 fprintf('Estimating Copula for Node=%s <-- ', node);
 %                 for jj=1:length(parentNames)
 %                     fprintf('%d:%s ', parentIdxs(jj), parentNames{jj});
@@ -226,6 +226,7 @@ classdef hcbn < handle
                         else
                             X_in_parents = X_in(:,2:end);
                             [ C_parents, U_parents, c_parents] = empcopula(X_in_parents, obj.K);
+                            c_parents = c_parents{end};
                         end
                     else
                         % all continuous marginals, lets fit to a copula
@@ -246,7 +247,8 @@ classdef hcbn < handle
                         if(length(parentIdxs)==1)
                             Rho_parents = [];
                         else
-                            Rho_parents = copulafit('Gaussian', u);
+                            u_parents = u(:,2:end);
+                            Rho_parents = copulafit('Gaussian', u_parents);
                         end
                     end
                     copFam = copulafamily(node, nodeIdx, parentNames, parentIdxs, type, ...

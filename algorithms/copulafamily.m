@@ -43,8 +43,6 @@ classdef copulafamily
             
             obj.Rho = RR;
             
-%             obj.D = 1+length(obj.parentNodeIdxs);
-            
             % default definitions, if the type is 'model', then we can
             % evaluate these values using built in matlab functions, so
             % these don't need to be updated
@@ -53,6 +51,10 @@ classdef copulafamily
             obj.U_parents = UU_parents;
             obj.Rho_parents = RR_parents;
             
+            % Leave this code in here for now, it works but we found a
+            % simpler way of doing this estimation, instead of taking
+            % derivatives etc...
+%             obj.D = 1+length(obj.parentNodeIdxs);
 %             if(strcmp(obj.type,'empirical'))
 %                 % marginalize C
 %                 sz = size(obj.C);
