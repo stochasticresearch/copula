@@ -32,7 +32,7 @@ classdef rvEmpiricalInfo
             
             % TODO: currently, in discrete RV's it assumes that the query
             %       will be in the domain of the empirical density already
-            %       created.  Do we want some error protection here?
+            %       created.  error protection here?
             
             if(q > obj.domain(end))
                 domainVal = obj.domain(end);

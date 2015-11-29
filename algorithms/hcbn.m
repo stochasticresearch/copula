@@ -42,6 +42,9 @@ classdef hcbn < handle
                                 % 1, and when we compare this against
                                 % "test" datasets, we will see how well the
                                 % model holds against the other datasets
+                                
+        DEBUG_MODE; % if turned on, will print out extra stuff to screen to
+                    % monitor what is going on
     end
     
     methods
@@ -61,6 +64,8 @@ classdef hcbn < handle
             %  TODO
             %   [ ] - 
             %
+            
+            obj.DEBUG_MODE = 1;
             
             % add BNT to the path
             addpath(genpath(bntPath));
@@ -178,7 +183,7 @@ classdef hcbn < handle
         function [] = setDag(obj, candidateDag)
             obj.dag = candidateDag;
             obj.estFamilyCopula();
-            llTrain = hcbnLogLikelihood(obj, obj.X);
+            llTrain = obj.hcbnLogLikelihood(obj.X);
             obj.dagLL_scalingFactor = llTrain;
         end
         
@@ -194,12 +199,13 @@ classdef hcbn < handle
                 nodeIdx = obj.nodeVals(ii);
                 [parentIdxs, parentNames] = obj.getParents(nodeIdx);
                 
-%                 % TODO: if debug flag, print this
-%                 fprintf('Estimating Copula for Node=%s <-- ', node);
-%                 for jj=1:length(parentNames)
-%                     fprintf('%d:%s ', parentIdxs(jj), parentNames{jj});
-%                 end
-%                 fprintf('\n');
+                if(obj.DEBUG_MODE)
+                    fprintf('Estimating Copula for Node=%s <-- ', node);
+                    for jj=1:length(parentNames)
+                        fprintf('%d:%s ', parentIdxs(jj), parentNames{jj});
+                    end
+                    fprintf('\n');
+                end
                 
                 if(isempty(parentIdxs))
                     % no parents situation
@@ -281,12 +287,9 @@ classdef hcbn < handle
                     ll_val = ll_val + obj.copulall(ii,X);
                 end
             end
-            % TODO: scale the LL val of the reference DAG and training data 
-            % to 1, so we can relatively compare the performance of
-            % different dags and see how train/test performance is
         end
         
-        function [ ll_val ] = copulall(obj, nodeIdx, X )
+        function [ ll_val, Rc_val_vec ] = copulall(obj, nodeIdx, X )
             %COPULALL Computes the log-likelihood of a copula density matching the
             %         given data
             %
@@ -302,7 +305,7 @@ classdef hcbn < handle
             %  ll_val - the log likelihood, defined as follows:
             %           ll_val = sum(1,M, log(c(u_1[m], ..., u_n[m])/c(1,u_2[m], ..., u_n[m])) +
             %                    sum(1,M, log(f(x_1[m]))
-
+            
             % get the parents associated w/ this node
             parentIdxs = obj.getParents(nodeIdx);
             % grab the appropriate values 
@@ -320,14 +323,16 @@ classdef hcbn < handle
             M = size(X_in,1);
             ll_val = 0;
             u = zeros(1, size(X_in,2));
+            %%%%%%%%%%%%%%%%%%%% DEBUGGING %%%%%%%%%%%%%%%%%%%%%%%
+            if(nargout>1)
+                Rc_val_vec = zeros(1,M);
+            end
+            %%%%%%%%%%%%%%%%%%%% DEBUGGING %%%%%%%%%%%%%%%%%%%%%%%
+            
             for m=1:M
-                ll_val = 0;
-                % compute empirical distribution log likelihood
-                colIdx = 1;
-                for jj=allIdxs
-                    ll_val = ll_val + log(obj.empInfo{jj}.queryDensity(X_in(m,colIdx)));
-                    colIdx = colIdx + 1;
-                end
+                % compute empirical distribution log likelihood (for just
+                % the child node)
+                ll_val = ll_val + log(obj.empInfo{allIdxs(1)}.queryDensity(X_in(m,1)));
                 
                 % generate u
                 uIdx = 1;
@@ -337,7 +342,19 @@ classdef hcbn < handle
                 end
                 
                 % compute copula ratio value
-                ll_val = ll_val + log(obj.copulaRatioVal(nodeIdx, u, X_in(m,:)));
+                Rc = obj.copulaRatioVal(nodeIdx, u, X_in(m,:));
+                % prevent low values from throwing off likelihood
+                if(Rc<1)
+                    Rc = 1;
+                end
+                
+                %%%%%%%%%%%%%%%%%%%% DEBUGGING %%%%%%%%%%%%%%%%%%%%%%%
+                if(nargout>1)
+                    Rc_val_vec(m) = Rc; % for DEBUG purposes
+                end
+                %%%%%%%%%%%%%%%%%%%% DEBUGGING %%%%%%%%%%%%%%%%%%%%%%%
+                
+                ll_val = ll_val + log(Rc);
             end
         end
         
@@ -350,10 +367,6 @@ classdef hcbn < handle
             %  u - a vector of a point in the unit-hypercube where
             %      the copula ratio will be calculated
             %  x - the corresponding x from which u was calculated
-
-            % TODO: if debug output, then print
-%             fprintf('Calculating Copula Ratio for Node %s\n', ...
-%                 obj.nodeNames{nodeIdx});
             
             % find the associated copula family
             copFam = obj.copulaFamilies{nodeIdx};
@@ -362,7 +375,8 @@ classdef hcbn < handle
                 % if copFam is empty, this means this node has no parents
                 % and thus by defintion the copula ratio here is defined to
                 % be 1
-                Rc_val = 1;
+                c_val_numerator = 1;
+                c_val_denominator = 1;
             elseif(strcmp(copFam.type, 'empirical'))
                 % get the copula density for this family
                 C = copFam.C; c = copFam.c{end};
@@ -376,9 +390,6 @@ classdef hcbn < handle
                 else
                     [~, c_val_denominator] = empcopula_val(C_parents,c_parents,u_denom);
                 end
-                
-                
-                Rc_val = c_val_numerator/c_val_denominator;
             else
                 % assume we fit the Gaussian model to the data
                 c_val_numerator = copulapdf('Gaussian', u, copFam.Rho);
@@ -389,9 +400,9 @@ classdef hcbn < handle
                 else
                     c_val_denominator = copulapdf('Gaussian', u_denom, copFam.Rho_parents);
                 end
-                
-                Rc_val = c_val_numerator/c_val_denominator;
             end
+            
+            Rc_val = c_val_numerator/c_val_denominator;
         end
         
         function [] = learnStruct_hc(obj, seeddag)
@@ -450,6 +461,7 @@ classdef hcbn < handle
             % TODO: topo-sort the DAG, and sort the names cell array to
             % match the topologically sorted DAG
             
+            % TODO: print out DAG structure
         end
     end
 end
