@@ -234,14 +234,15 @@ classdef hcbn < handle
                         if(length(parentIdxs)==1)
                             % the density will be used directly, so there
                             % is no need to calculate these copula's (they
-                            % don't actually make sense because 
+                            % don't actually make sense because there is
+                            % only one dimension, no concept of "joint"
+                            % distribution)
                             C_parents = [];
                             U_parents = [];
                             c_parents = [];
                         else
                             X_in_parents = X_in(:,2:end);
                             [ C_parents, U_parents, c_parents] = empcopula(X_in_parents, obj.K);
-                            c_parents = c_parents{end};
                         end
                     else
                         % all continuous marginals, lets fit to a copula
@@ -343,10 +344,10 @@ classdef hcbn < handle
                 
                 % compute copula ratio value
                 Rc = obj.copulaRatioVal(nodeIdx, u, X_in(m,:));
-                % prevent low values from throwing off likelihood
-                if(Rc<1)
-                    Rc = 1;
-                end
+%                 % prevent low values from throwing off likelihood
+%                 if(Rc<1)
+%                     Rc = 1;
+%                 end
                 
                 %%%%%%%%%%%%%%%%%%%% DEBUGGING %%%%%%%%%%%%%%%%%%%%%%%
                 if(nargout>1)
@@ -380,13 +381,13 @@ classdef hcbn < handle
             elseif(strcmp(copFam.type, 'empirical'))
                 % get the copula density for this family
                 C = copFam.C; c = copFam.c{end};
-                C_parents = copFam.C_parents; c_parents = copFam.c_parents;
+                C_parents = copFam.C_parents; c_parents = copFam.c_parents{end};
 
                 % query it for the specified point with empcopula_val
                 [~, c_val_numerator] = empcopula_val(C,c,u);
                 u_denom = u(2:end);
                 if(length(u_denom)==1)
-                    c_val_denominator = obj.empInfo{copFam.parentNodeIdxs}.queryDensity(x(2));
+                    c_val_denominator = 1;
                 else
                     [~, c_val_denominator] = empcopula_val(C_parents,c_parents,u_denom);
                 end
@@ -396,7 +397,7 @@ classdef hcbn < handle
                 
                 u_denom = u(2:end);
                 if(length(u_denom)==1)
-                    c_val_denominator = obj.empInfo{copFam.parentNodeIdxs}.queryDensity(x(2));
+                    c_val_denominator = 1;
                 else
                     c_val_denominator = copulapdf('Gaussian', u_denom, copFam.Rho_parents);
                 end

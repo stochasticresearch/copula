@@ -18,17 +18,17 @@ function [ C_u, c_u ] = empcopula_val( C, c, U )
 
 
 d = length(size(C));
-dprime = length(size(c));
-
-if(length(U)~=d || (d~=dprime))
-        error('Error in dimensionality matching of provided arguments!');
-end
-if(~isequal(size(C),size(c)))
-    error('The grid over which C and c are defined need to be equal!');
-end
-if(range(size(C)) || range(size(c)))
-    error('The grid over which C and c are defined should be a square!');
-end
+% dprime = length(size(c));
+% 
+% if(length(U)~=d || (d~=dprime))
+%         error('Error in dimensionality matching of provided arguments!');
+% end
+% if(~isequal(size(C),size(c)))
+%     error('The grid over which C and c are defined need to be equal!');
+% end
+% if(range(size(C)) || range(size(c)))
+%     error('The grid over which C and c are defined should be a square!');
+% end
 
 C_u = 0;
 c_u = 0;
@@ -36,7 +36,14 @@ c_u = 0;
 % calculate which grid points land in the U values of interest
 linearIdx = 0;
 for ii=1:d
-    K_ii = size(C,ii);
+    if(~isempty(C))
+        K_ii = size(C,ii);
+    elseif(~isempty(c))
+        K_ii = size(c,ii);
+    else
+        error('Need to specify atleast one of the two: C or c');
+    end
+    
     idx = round(U(ii)*K_ii);
     if(idx>K_ii)
         idx = K_ii;
@@ -52,10 +59,10 @@ for ii=1:d
 end
 
 % extract value of C_u and c_u from those
-if(~isempty(C_u))
+if(~isempty(C))
     C_u = C(linearIdx);
 end
-if(~isempty(c_u))
+if(~isempty(c))
     c_u = c(linearIdx);
 end
 

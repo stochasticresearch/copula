@@ -442,16 +442,103 @@ classdef hcbnTest < matlab.unittest.TestCase
 %                 testCase.verifyEqual(F_actual, F_expect, 'AbsTol', 0.1);
 %             end
 %         end
-
-        function testCopulall_allContinuous(testCase)
+% 
+%         function testCopulall_allContinuous(testCase)
+%             % make a hybrid network as follows w/ simulated data.
+%             %  A    B
+%             %   \ /  
+%             %    C 
+%             % All arrows point downwards.  All nodes will be continuous to
+%             % ensure that we calculate the copula ratio properly (easy to
+%             % check w/ closed form values provided by matlab function
+%             % copulapdf this way :D )
+%             M = 1000;
+%             D = 3;
+%             
+%             % Generate samples from C1 (A,B,C) [Gaussian Copula]
+%             Rho_C1 = [1 .4 .2; .4 1 -.8; .2 -.8 1];
+%             Z = mvnrnd([0 0 0], Rho_C1, M);
+%             U = normcdf(Z,0,1);
+%             
+%             X = [norminv(U(:,1),0,1) ...
+%                  norminv(U(:,2),0,1) ...
+%                  norminv(U(:,3),0,1)];
+%                         
+%             nodes = {'A', 'B', 'C'};
+%             discreteNodes = {};
+%             
+%             % make a dag that is correct (not acyclic)
+%             dag = zeros(D,D);
+%             aa = 1; bb = 2; cc = 3;
+%             dag(aa,cc) = 1;
+%             dag(bb,cc) = 1;
+%             hcbnObj = hcbn(testCase.bntPath, X, nodes, discreteNodes, dag);
+%             
+%             % for this test, we choose to use the exact same approximated
+%             % rho matrices to prevent propagation of error.  The above
+%             % tests compare how the fit of the hcbn code versus our fit
+%             % here match up.
+%             Rho_C1_est = hcbnObj.copulaFamilies{cc}.Rho;         
+%             Rho_C1_parents_est = hcbnObj.copulaFamilies{cc}.Rho_parents;
+%             
+%             % first test to see if the copula ratio's are within the range
+%             % of expected values
+%             Rc_expect_nodeA = 1;
+%             Rc_expect_nodeB = 1;
+%             [~,Rc_val_actual_nodeA_vec] = hcbnObj.copulall(aa,X);
+%             [~,Rc_val_actual_nodeB_vec] = hcbnObj.copulall(bb,X);
+%             [~,Rc_val_actual_nodeC_vec] = hcbnObj.copulall(cc,X);
+%             Rc_expect_nodeC_vec = zeros(1,M);
+%             for m=1:M
+%                 numVal = mvnpdf([X(m,3) X(m,1) X(m,2)], [0 0 0], Rho_C1_est);
+%                 denVal = ( mvnpdf([X(m,1) X(m,2)], [0 0], Rho_C1_parents_est)*normpdf(X(m,3)) );
+%                 Rc_expect_nodeC_vec(m) = numVal/denVal;
+%             end
+%             Rc_actual_nodeA = mean(Rc_val_actual_nodeA_vec);
+%             Rc_actual_nodeB = mean(Rc_val_actual_nodeB_vec);
+%             testCase.verifyEqual(Rc_actual_nodeA, Rc_expect_nodeA);
+%             testCase.verifyEqual(Rc_actual_nodeB, Rc_expect_nodeB);
+%             % NOTE: we expect some errors here, the conversion X->U->X->U
+%             % will have some effects on the error
+%             testCase.verifyEqual(Rc_val_actual_nodeC_vec, Rc_expect_nodeC_vec, 'RelTol', 0.25);
+%             
+%             % manually calculate copula likelihood value for nodes A,B,C
+%             ll_val_expect_nodeA = 0;
+%             ll_val_expect_nodeB = 0;
+%             ll_val_expect_nodeC = 0;
+%             for m=1:M
+%                 ll_val_expect_nodeA = ll_val_expect_nodeA + log(normpdf(X(m,1)));
+%                 ll_val_expect_nodeB = ll_val_expect_nodeB + log(normpdf(X(m,2)));
+%                 % the order here matters b/c we defined Rho_C1 for this
+%                 % order (X3,X1,X2)
+%                 Rc = mvnpdf([X(m,3) X(m,1) X(m,2)], [0 0 0], Rho_C1_est)/( mvnpdf([X(m,1) X(m,2)], [0 0], Rho_C1_parents_est)*normpdf(X(m,3)) );
+%                 ll_val_expect_nodeC = ll_val_expect_nodeC + log(normpdf(X(m,3))) + log(Rc);
+%             end
+%             ll_val_actual_nodeA = hcbnObj.copulall(aa,X);
+%             ll_val_actual_nodeB = hcbnObj.copulall(bb,X);
+%             ll_val_actual_nodeC = hcbnObj.copulall(cc,X);
+%             
+%             testCase.verifyEqual(ll_val_actual_nodeA, ll_val_expect_nodeA, 'RelTol', 0.25);
+%             testCase.verifyEqual(ll_val_actual_nodeB, ll_val_expect_nodeB, 'RelTol', 0.25);
+%             % again, we expect some errors here, there is variabilty but I
+%             % have verified the general operation, it seems to be working.
+%             % Comforting, right? :D
+%             testCase.verifyEqual(ll_val_actual_nodeC, ll_val_expect_nodeC, 'RelTol', 0.5);
+%             
+%             % some experiments
+% %             for m=randperm(M,10)
+% %                 e1e = copulapdf('Gaussian', [U(m,3) U(m,1) U(m,2)], Rho_C1_est)/copulapdf('Gaussian', [U(m,1) U(m,2)], Rho_C1_parents_est);
+% %                 e2e = mvnpdf([X(m,3) X(m,1) X(m,2)], [0 0 0], Rho_C1_est)/( mvnpdf([X(m,1) X(m,2)], [0 0], Rho_C1_parents_est)*normpdf(X(m,3)) );
+% %                 fprintf('e1e=%d \t e2e=%d\n', e1e, e2e);
+% %             end
+%         end
+            
+        function testCopulall_allEmpirical(testCase)
             % make a hybrid network as follows w/ simulated data.
             %  A    B
             %   \ /  
             %    C 
-            % All arrows point downwards.  All nodes will be continuous to
-            % ensure that we calculate the copula ratio properly (easy to
-            % check w/ closed form values provided by matlab function
-            % copulapdf this way :D )
+            % All arrows point downwards.  All nodes are discrete;
             M = 1000;
             D = 3;
             
@@ -460,12 +547,12 @@ classdef hcbnTest < matlab.unittest.TestCase
             Z = mvnrnd([0 0 0], Rho_C1, M);
             U = normcdf(Z,0,1);
             
-            X = [norminv(U(:,1),0,1) ...
-                 norminv(U(:,2),0,1) ...
-                 norminv(U(:,3),0,1)];
+            X = [unidinv(U(:,1),3) ...
+                 unidinv(U(:,2),4) ...
+                 unidinv(U(:,3),5)];
                         
             nodes = {'A', 'B', 'C'};
-            discreteNodes = {};
+            discreteNodes = {'A', 'B', 'C'};
             
             % make a dag that is correct (not acyclic)
             dag = zeros(D,D);
@@ -474,66 +561,43 @@ classdef hcbnTest < matlab.unittest.TestCase
             dag(bb,cc) = 1;
             hcbnObj = hcbn(testCase.bntPath, X, nodes, discreteNodes, dag);
             
-            % for this test, we choose to use the exact same approximated
-            % rho matrices to prevent propagation of error.  The above
-            % tests compare how the fit of the hcbn code versus our fit
-            % here match up.
-            Rho_C1_est = hcbnObj.copulaFamilies{cc}.Rho;         
-            Rho_C1_parents_est = hcbnObj.copulaFamilies{cc}.Rho_parents;
-            
             % first test to see if the copula ratio's are within the range
             % of expected values
             Rc_expect_nodeA = 1;
             Rc_expect_nodeB = 1;
-            [~,Rc_val_actual_nodeA_vec] = hcbnObj.copulall(aa,X);
-            [~,Rc_val_actual_nodeB_vec] = hcbnObj.copulall(aa,X);
-            [~,Rc_val_actual_nodeC_vec] = hcbnObj.copulall(cc,X);
-            Rc_expect_nodeC_vec = zeros(1,M);
-            for m=1:M
-                numVal = mvnpdf([X(m,3) X(m,1) X(m,2)], [0 0 0], Rho_C1_est);
-                denVal = ( mvnpdf([X(m,1) X(m,2)], [0 0], Rho_C1_parents_est)*normpdf(X(m,3)) );
-                Rc_expect_nodeC_vec(m) = numVal/denVal;
-            end
-            Rc_actual_nodeA = mean(Rc_val_actual_nodeA_vec);
-            Rc_actual_nodeB = mean(Rc_val_actual_nodeB_vec);
+            [~,Rc_actual_nodeA_vec] = hcbnObj.copulall(aa,X);
+            [~,Rc_actual_nodeB_vec] = hcbnObj.copulall(bb,X);
+            Rc_actual_nodeA = mean(Rc_actual_nodeA_vec);
+            Rc_actual_nodeB = mean(Rc_actual_nodeB_vec);
             testCase.verifyEqual(Rc_actual_nodeA, Rc_expect_nodeA);
             testCase.verifyEqual(Rc_actual_nodeB, Rc_expect_nodeB);
-            % NOTE: we expect some errors here, the conversion X->U->X->U
-            % will have some effects on the error
-            testCase.verifyEqual(Rc_val_actual_nodeC_vec, Rc_expect_nodeC_vec, 'RelTol', 0.25);
             
-            % manually calculate copula likelihood value for nodes A,B,C
-            ll_val_expect_nodeA = 0;
-            ll_val_expect_nodeB = 0;
-            ll_val_expect_nodeC = 0;
+            % calculate Node C Rc and compare against expected Rc
+            [~,Rc_actual_nodeC_vec] = hcbnObj.copulall(cc,X);
+            Rc_expect_nodeC_vec = zeros(1,M);
+            [f_CAB, domain_CAB] = hist_discrete([X(:,3) X(:,1) X(:,2)]);
+            [f_AB, domain_AB] = hist_discrete(X(:,1:2));
+            [f_C, domain_C] = hist_discrete(X(:,3));
             for m=1:M
-                ll_val_expect_nodeA = ll_val_expect_nodeA + log(normpdf(X(m,1)));
-                ll_val_expect_nodeB = ll_val_expect_nodeB + log(normpdf(X(m,2)));
-                % the order here matters b/c we defined Rho_C1 for this
-                % order (X3,X1,X2)
-                Rc = mvnpdf([X(m,3) X(m,1) X(m,2)], [0 0 0], Rho_C1_est)/( mvnpdf([X(m,1) X(m,2)], [0 0], Rho_C1_parents_est)*normpdf(X(m,3)) );
-                ll_val_expect_nodeC = ll_val_expect_nodeC + log(normpdf(X(m,3))) + log(Rc);
+                % find which idx we need to query
+                yy = [X(m,3) X(m,1) X(m,2)];
+                numIdx = find(yy(1)==domain_CAB(1,:) & yy(2)==domain_CAB(2,:) & yy(3)==domain_CAB(3,:));
+                
+                yy = [X(m,1) X(m,2)];
+                denIdx1 = find(yy(1)==domain_AB(1,:) & yy(2)==domain_AB(2,:));
+                yy = [X(m,3)];
+                denIdx2 = find(yy(1)==domain_C(1,:));
+                
+                numVal = f_CAB(numIdx);
+                denVal1 = f_AB(denIdx1);
+                denVal2 = f_C(denIdx2);
+                Rc_expect_nodeC_vec(m) = numVal/(denVal1*denVal2);
             end
-            ll_val_actual_nodeA = hcbnObj.copulall(aa,X);
-            ll_val_actual_nodeB = hcbnObj.copulall(bb,X);
-            ll_val_actual_nodeC = hcbnObj.copulall(cc,X);
             
-            testCase.verifyEqual(ll_val_actual_nodeA, ll_val_expect_nodeA, 'RelTol', 0.25);
-            testCase.verifyEqual(ll_val_actual_nodeB, ll_val_expect_nodeB, 'RelTol', 0.25);
-            % again, we expect some errors here, there is variabilty but I
-            % have verified the general operation, it seems to be working.
-            % Comforting, right? :D
-            testCase.verifyEqual(ll_val_actual_nodeC, ll_val_expect_nodeC, 'RelTol', 0.5);
-            
-            % some experiments
-%             for m=randperm(M,10)
-%                 e1e = copulapdf('Gaussian', [U(m,3) U(m,1) U(m,2)], Rho_C1_est)/copulapdf('Gaussian', [U(m,1) U(m,2)], Rho_C1_parents_est);
-%                 e2e = mvnpdf([X(m,3) X(m,1) X(m,2)], [0 0 0], Rho_C1_est)/( mvnpdf([X(m,1) X(m,2)], [0 0], Rho_C1_parents_est)*normpdf(X(m,3)) );
-%                 fprintf('e1e=%d \t e2e=%d\n', e1e, e2e);
-%             end
-        end
-            
-        function testCopulall_allEmpirical(testCase)
+            plot(1:M,Rc_expect_nodeC_vec, 1:M, Rc_actual_nodeC_vec, 'r*');
+            Rc_expect_nodeC_vec(1:10)
+            Rc_actual_nodeC_vec(1:10)
+            pause;
             
         end
         
