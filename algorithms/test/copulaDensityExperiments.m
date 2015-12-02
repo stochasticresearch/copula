@@ -172,7 +172,6 @@ contour(kde_construct)
 % conditional density values to see which smoothing method we should use
 % for the HCBN
 clear;
-clc;
 
 % 2-D test
 M = 1000;
@@ -213,19 +212,21 @@ empInfoX2 = rvEmpiricalInfo(x2,f2,F2);
 
 
 % Estimate copula density w/ empcoupla, and smoothing
-mses = zeros(5,20,5);   % zz1 = K, zz2 = h, zz3 = [mse_smooth mse_p9 mse_p14 mse_p14v2 mse_betak]
+mses = zeros(5,10,5);   % zz1 = K, zz2 = h, zz3 = [mse_smooth mse_p9 mse_p14 mse_p14v2 mse_betak]
 zz1 = 1;
 zz2 = 1;
-for K=[100,200,250,500]
+% for K=[100,200,250,500]
+for K=[25]
     [ C, ~, c ] = empcopula(X_in, K);
     c_emp_smooth = smoothn(c{end});
     % rescale to ensure it is a density
-    c_emp_smooth = c_emp_smooth/sum(c_emp_smooth(:));
+%     c_emp_smooth = c_emp_smooth/sum(c_emp_smooth(:));
+%     fprintf('sum(c_emp_smooth)=%f\n', sum(c_emp_smooth(:)));
 
     % Estimate the copula density w/ p9 technique
     % h = .5;        % kernel bandwidth
 
-    for h=linspace(0.1,10,20);
+    for h=linspace(0.01,10,10)
 
         rankedObs = tiedrank(X_in)/(M+1);
         c_dens_kde_p9 = zeros(K,K);
@@ -239,6 +240,7 @@ for K=[100,200,250,500]
                 c_dens_kde_p9(uu,vv) = sumVal;
             end
         end
+%         fprintf('sum(c_dens_kde_p9)=%f\n', sum(c_dens_kde_p9(:)));
 
         % Estimate the copula density w/ p14 technique
         c_dens_kde_p14 = zeros(K,K);
@@ -262,6 +264,7 @@ for K=[100,200,250,500]
                 c_dens_kde_p14(uu,vv) = sumVal;
             end
         end
+%         fprintf('sum(c_dens_kde_p14)=%f\n', sum(c_dens_kde_p14(:)));
         
         c_dens_kde_p14_v2 = zeros(K,K);
         for uu=1:K
@@ -279,21 +282,12 @@ for K=[100,200,250,500]
                 c_dens_kde_p14_v2(uu,vv) = sumVal;
             end
         end
+%         fprintf('sum(c_dens_kde_p14v2)=%f\n', sum(c_dens_kde_p14_v2(:)));
 
         % estimate the copula density w/ beta kernels
-        c_dens_betak = zeros(K,K);
-        for uu=1:K
-            for vv=1:K
-                u = uu/K;
-                v = vv/K;
-
-                K1 = betapdf(X_in(:,1),(u/h)+1,((1-u)/h) + 1);
-                K2 = betapdf(X_in(:,2),v/h+1,((1-v)/h) + 1);
-
-                c_dens_betak(uu,vv) = sum(K1.*K2)/(M*h.^2);
-            end
-        end
-
+        c_dens_betak = empcopdens_betak_v2(rankedObs(:,1), rankedObs(:,2), h, K);
+%         fprintf('sum(c_dens_betak)=%f\n', sum(c_dens_betak(:)));
+        
         % now compare the actual Rc w/ the expected Rc
         Rc_vals = zeros(6,M);     % row 1 = actual
                                     % row 2 = c_emp_smooth
@@ -334,7 +328,7 @@ for K=[100,200,250,500]
             Rc_vals(:,ii) = [Rc_expect Rc_c_emp_smooth Rc_c_dens_kde_p9 Rc_c_dens_kde_p14 Rc_c_dens_kde_p14v2 Rc_c_dens_betak]';
             ii = ii + 1;
         end
-        Rc_vals = log(Rc_vals);
+%         Rc_vals = log(Rc_vals);
         % subplot(3,2,1); plot(Rc_vals(1,:)); grid on; title('Rc Expect');
         % subplot(3,2,2); plot(Rc_vals(2,:)); grid on; title('Rc Smooth');
         % subplot(3,2,3); plot(Rc_vals(3,:)); grid on; title('Rc P9 Technique');
@@ -354,8 +348,8 @@ for K=[100,200,250,500]
         mses(zz1,zz2,4) = mse_p14v2;
         mses(zz1,zz2,5) = mse_betak;
         
-        fprintf('2D-->Kernel K=%d BW=%f MSE_SMOOTH=%f MSE_P9=%f MSE_P14=%f MSE_BETAK=%f\n', ...
-            K, h, mse_smooth, mse_p9, mse_p14, mse_betak);
+        fprintf('2D-->Kernel K=%d BW=%f MSE_SMOOTH=%f MSE_P9=%f MSE_P14=%f MSE_P14_V2=%f MSE_BETAK=%f\n', ...
+            K, h, mse_smooth, mse_p9, mse_p14, mse_p14v2, mse_betak);
         zz2 = zz2 + 1;
     end
     zz1 = zz1 + 1;
@@ -363,7 +357,7 @@ end
 
 save('mses_2d.mat', 'mses')
 
-
+%%
 % In this section, we generate 3-D multivariate discrete
 % distributions, and then compare the copula ratio's to the actual
 % conditional density values to see which smoothing method we should use
@@ -420,12 +414,8 @@ for jj=1:length(x3)
 end
 empInfoX3 = rvEmpiricalInfo(x3,f3,F3);
 
-% Estimate copula density w/ empcoupla, and smoothing
-mses = zeros(5,20,4);   % zz1 = K, zz2 = h, zz3 = [mse_smooth mse_p9 mse_p14 mse_betak]
-zz1 = 1;
-zz2 = 1;
-zz3 = 1;
-for K=[100,200,250,500]
+% for K=[100,200,250,500]
+for K=[25]
     [ C, ~, c ] = empcopula(X_in, K);
     c_emp_smooth_num = smoothn(c{end});
     c_emp_smooth_num = c_emp_smooth_num/sum(c_emp_smooth_num(:));
@@ -433,118 +423,14 @@ for K=[100,200,250,500]
     c_emp_smooth_den = smoothn(c_den{end});
     c_emp_smooth_den = c_emp_smooth_den/sum(c_emp_smooth_den(:));
 
-
-    % Estimate the copula density w/ p9 technique
-    % h = .5;        % kernel bandwidth
-
-    for h=linspace(0.1,10,20);
-
-        rankedObs = tiedrank(X_in)/(M+1);
-        c_dens_kde_p9_num = zeros(K,K,K);
-        for uu=1:K
-            for vv=1:K
-                for ww=1:K
-                    u = uu/K;
-                    v = vv/K;
-                    w = ww/K;
-
-                    sumVal = sum( mvnpdf([ (u-rankedObs(:,1))/h (v-rankedObs(:,2))/h (w-rankedObs(:,3))/h ])  );
-                    sumVal = sumVal/(M*h.^3);
-                    c_dens_kde_p9_num(uu,vv,ww) = sumVal;
-                end
-            end
-        end
-        c_dens_kde_p9_den = zeros(K,K);
-        for uu=1:K
-            for vv=1:K
-                u = uu/K;
-                v = vv/K;
-
-                sumVal = sum( mvnpdf([ (v-rankedObs(:,2))/h (w-rankedObs(:,3))/h ])  );
-                sumVal = sumVal/(M*h.^2);
-                c_dens_kde_p9_den(uu,vv) = sumVal;
-            end
-        end
-
-        % Estimate the copula density w/ p14 technique
-        c_dens_kde_p14_num = zeros(K,K,K);
-        for uu=1:K
-            for vv=1:K
-                for ww=1:K
-                    u = uu/K;
-                    v = vv/K;
-                    w = ww/K;
-
-                    K1 = normpdf( (u-rankedObs(:,1))/h ) .* normpdf( (v-rankedObs(:,2))/h ) .* normpdf( (w-rankedObs(:,3))/h );
-                    K2 = normpdf( (u+rankedObs(:,1))/h ) .* normpdf( (v-rankedObs(:,2))/h ) .* normpdf( (w-rankedObs(:,3))/h );
-                    K3 = normpdf( (u-rankedObs(:,1))/h ) .* normpdf( (v+rankedObs(:,2))/h ) .* normpdf( (w-rankedObs(:,3))/h );
-                    K4 = normpdf( (u+rankedObs(:,1))/h ) .* normpdf( (v+rankedObs(:,2))/h ) .* normpdf( (w-rankedObs(:,3))/h );
-                    K5 = normpdf( (u-rankedObs(:,1))/h ) .* normpdf( (v-rankedObs(:,2))/h ) .* normpdf( (w+rankedObs(:,3))/h );
-                    K6 = normpdf( (u+rankedObs(:,1))/h ) .* normpdf( (v-rankedObs(:,2))/h ) .* normpdf( (w+rankedObs(:,3))/h );
-                    K7 = normpdf( (u-rankedObs(:,1))/h ) .* normpdf( (v+rankedObs(:,2))/h ) .* normpdf( (w+rankedObs(:,3))/h );
-                    K8 = normpdf( (u+rankedObs(:,1))/h ) .* normpdf( (v+rankedObs(:,2))/h ) .* normpdf( (w+rankedObs(:,3))/h );
-
-                    sumVal = sum( K1 + K2 + K3 + K4 + K5 + K6 + K7 + K8 );
-                    sumVal = sumVal/(M*h.^3);
-                    c_dens_kde_p14_num(uu,vv,ww) = sumVal;
-                end
-            end
-        end
-        
-        c_dens_kde_p14_den = zeros(K,K);
-        for uu=1:K
-            for vv=1:K
-                u = uu/K;
-                v = vv/K;
-
-                K1 = normpdf( (u-rankedObs(:,2))/h ) .* normpdf( (v-rankedObs(:,3))/h );
-                K2 = normpdf( (u+rankedObs(:,2))/h ) .* normpdf( (v-rankedObs(:,3))/h );
-                K3 = normpdf( (u-rankedObs(:,2))/h ) .* normpdf( (v+rankedObs(:,3))/h );
-                K4 = normpdf( (u+rankedObs(:,2))/h ) .* normpdf( (v+rankedObs(:,3))/h );
-
-                sumVal = sum( K1 + K2 + K3 + K4 );
-                sumVal = sumVal/(M*h.^2);
-                c_dens_kde_p14_den(uu,vv) = sumVal;
-            end
-        end
-
-        % estimate the copula density w/ beta kernels
-        c_dens_betak_num = zeros(K,K,K);
-        for uu=1:K
-            for vv=1:K
-                for ww=1:K
-                    u = uu/K;
-                    v = vv/K;
-                    w = ww/K;
-
-                    K1 = betapdf(X_in(:,1),(u/h)+1,((1-u)/h) + 1);
-                    K2 = betapdf(X_in(:,2),v/h+1,((1-v)/h) + 1);
-                    K3 = betapdf(X_in(:,3),w/h+1,((1-w)/h) + 1);
-
-                    c_dens_betak_num(uu,vv) = sum(K1.*K2.*K3)/(M*h.^3);
-                end
-            end
-        end
-        
-        c_dens_betak_den = zeros(K,K);
-        for uu=1:K
-            for vv=1:K
-                u = uu/K;
-                v = vv/K;
-
-                K1 = betapdf(X_in(:,2),(u/h)+1,((1-u)/h) + 1);
-                K2 = betapdf(X_in(:,3),v/h+1,((1-v)/h) + 1);
-
-                c_dens_betak_den(uu,vv) = sum(K1.*K2)/(M*h.^2);
-            end
-        end
+    rankedObs = tiedrank(X_in)/(M+1);
+    for h=linspace(0.01,10,10);
+        c_dens_betak_num = empcopdens_betak_3d_v2(rankedObs(:,1), rankedObs(:,2), rankedObs(:,3), h, K);
+        c_dens_betak_den = empcopdens_betak_v2(rankedObs(:,2), rankedObs(:,3), h, K);
 
         % now compare the actual Rc w/ the expected Rc
-        Rc_vals = zeros(5,M);     % row 1 = actual
-                                    % row 2 = c_emp_smooth
-                                    % row 3 = c_dens_kde_p9
-                                    % row 4 = c_dens_kde_p14
-                                    % row 5 = c_dens_betak
+        Rc_vals = zeros(2,M);     % row 1 = actual
+                                    % row 2 = c_dens_betak
         ii = 1;
         for m=1:M
             yy = [X(m,1) X(m,2) X(m,3)];
@@ -557,54 +443,21 @@ for K=[100,200,250,500]
             uu_num = [empInfoX1.queryDistribution(X(m,1)) empInfoX2.queryDistribution(X(m,2)) empInfoX2.queryDistribution(X(m,3))];
             uu_den = [empInfoX2.queryDistribution(X(m,2)) empInfoX2.queryDistribution(X(m,3))];
             
-            %%% NOTE: all den's will be the same b/c only 1 parent
-            % actual copula ratio for c_emp_smooth
-            [~,Rc_c_emp_smooth_num] = empcopula_val([], c_emp_smooth_num, uu_num);
-            [~,Rc_c_emp_smooth_den] = empcopula_val([], c_emp_smooth_den, uu_den);
-            Rc_c_emp_smooth = Rc_c_emp_smooth_num/Rc_c_emp_smooth_den;
-
-            % actual copula ratio for c_dens_kde_p9
-            [~,Rc_c_dens_kde_p9_num] = empcopula_val([], c_dens_kde_p9_num, uu_num);
-            [~,Rc_c_dens_kde_p9_den] = empcopula_val([], c_dens_kde_p9_den, uu_den);
-            Rc_c_dens_kde_p9 = Rc_c_dens_kde_p9_num/Rc_c_dens_kde_p9_den;
-
-            % actual copula ratio for c_dens_kde_p14
-            [~,Rc_c_dens_kde_p14_num] = empcopula_val([], c_dens_kde_p14_num, uu_num);
-            [~,Rc_c_dens_kde_p14_den] = empcopula_val([], c_dens_kde_p14_den, uu_den);
-            Rc_c_dens_kde_p14 = Rc_c_dens_kde_p14_num/Rc_c_dens_kde_p14_den;
-
             % actual copula ratio for c_dens_betak
             [~,Rc_c_dens_betak_num] = empcopula_val([], c_dens_betak_num, uu_num);
             [~,Rc_c_dens_betak_den] = empcopula_val([], c_dens_betak_den, uu_den);
             Rc_c_dens_betak = Rc_c_dens_betak_num/Rc_c_dens_betak_den;
 
-            Rc_vals(:,ii) = [Rc_expect Rc_c_emp_smooth Rc_c_dens_kde_p9 Rc_c_dens_kde_p14 Rc_c_dens_betak]';
+            Rc_vals(:,ii) = [Rc_expect Rc_c_dens_betak]';
             ii = ii + 1;
         end
-        Rc_vals = log(Rc_vals);
-        % subplot(3,2,1); plot(Rc_vals(1,:)); grid on; title('Rc Expect');
-        % subplot(3,2,2); plot(Rc_vals(2,:)); grid on; title('Rc Smooth');
-        % subplot(3,2,3); plot(Rc_vals(3,:)); grid on; title('Rc P9 Technique');
-        % subplot(3,2,4); plot(Rc_vals(4,:)); grid on; title('Rc P14 Technique');
-        % subplot(3,2,5); plot(Rc_vals(5,:)); grid on; title('Rc Beta Kernels');
+%         Rc_vals = log(Rc_vals);
 
         % Calculate MSE for expect versus different density estimates
-        mse_smooth = mean((Rc_vals(1,:)-Rc_vals(2,:)).^2);
-        mse_p9 = mean((Rc_vals(1,:)-Rc_vals(3,:)).^2);
-        mse_p14 = mean((Rc_vals(1,:)-Rc_vals(4,:)).^2);
-        mse_betak = mean((Rc_vals(1,:)-Rc_vals(5,:)).^2);
+        mse_betak = mean((Rc_vals(1,:)-Rc_vals(2,:)).^2);
         
-        mses(zz1,zz2,1) = mse_smooth;
-        mses(zz1,zz2,2) = mse_p9;
-        mses(zz1,zz2,3) = mse_p14;
-        mses(zz1,zz2,4) = mse_betak;
+        fprintf('3D-->Kernel K=%d BW=%f MSE_BETAK=%f\n', ...
+            K, h, mse_betak);
         
-        fprintf('3D-->Kernel K=%d BW=%f MSE_SMOOTH=%f MSE_P9=%f MSE_P14=%f MSE_BETAK=%f\n', ...
-            K, h, mse_smooth, mse_p9, mse_p14, mse_betak);
-        
-        zz2 = zz2 + 1;
     end
-    zz1 = zz1 + 1;
 end
-
-save('mses_3d.mat', 'mses')
