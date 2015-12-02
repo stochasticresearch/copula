@@ -4,11 +4,13 @@ function [ U_gen ] = empcopularnd( c, N )
 % Inputs:
 %   c - The conditional densities of the copula function.  This should be a
 %       cell array with the format:
-%                  c{1} = dC(u_1 ... u_D)/du_1
-%                  c{2} = dC(u_1 ... u_D)/(du_1 du_2)
-%                  c{3} = dC(u_1 ... u_D)/(du_1 du_2 du_3)
-%                           ...
-%                  c{D} = dC(u_1 ... u_D)/(du_1 ... du_D)
+%                  c{1} = []
+%                  c{2} = C(u_2|u_1)
+%                  c{3} = C(u_3|u_1,u_2)
+%                           .
+%                           .
+%                           .
+%                  c{D} = C(u_D|u_1,u_2,...,u_{d-1})
 %       Resultingly, c{D} will be the "copula density."
 %   N - the number of copula samples to generate.  This will be internally
 %       rounded to a multiple of K.
