@@ -88,3 +88,96 @@ title('Generated')
 
 hlink = linkprop([h1,h2],{'CameraPosition','CameraUpVector'});
 rotate3d on
+
+%% 
+% Test full integration as follows:
+%  1.) Generate samples from a copula using copularnd
+%  2.) Compute the empirical copula density using empcopuladensity
+%  3.) Generate samples from the empirical copula density
+%  4.) Compare the outputs of Steps #1 and #3
+
+% random sample generation parameters
+M = 1000;
+alpha = 10;
+copType = 'Frank';
+
+% copula density estimation parameters
+h = 0.1; 
+K = 25;
+
+% generate "true" random samples
+uu = copularnd(copType,alpha,M);
+
+% generate samples by first computing empirical density
+c_density_hat = empcopuladensity(uu, h, K, 'betak');
+uu_gen = empcopularnd(c_density_hat, M);
+
+subplot(1,2,1); scatter(uu(:,1),uu(:,2)); grid on; title(sprintf('Built-in %s Samples', copType))
+subplot(1,2,2); scatter(uu(:,1),uu(:,2)); grid on; title(sprintf('Generated %s Samples', copType))
+pause;
+
+% generate "true" random samples
+copType = 'Gumbel';
+uu = copularnd(copType,alpha,M);
+
+% generate samples by first computing empirical density
+c_density_hat = empcopuladensity(uu, h, K, 'betak');
+uu_gen = empcopularnd(c_density_hat, M);
+
+subplot(1,2,1); scatter(uu(:,1),uu(:,2)); grid on; title(sprintf('Built-in %s Samples', copType))
+subplot(1,2,2); scatter(uu(:,1),uu(:,2)); grid on; title(sprintf('Generated %s Samples', copType))
+pause;
+
+% generate "true" random samples
+copType = 'Clayton';
+uu = copularnd(copType,alpha,M);
+
+% generate samples by first computing empirical density
+c_density_hat = empcopuladensity(uu, h, K, 'betak');
+uu_gen = empcopularnd(c_density_hat, M);
+
+subplot(1,2,1); scatter(uu(:,1),uu(:,2)); grid on; title(sprintf('Built-in %s Samples', copType))
+subplot(1,2,2); scatter(uu(:,1),uu(:,2)); grid on; title(sprintf('Generated %s Samples', copType))
+pause;
+
+copType = 'Gaussian';
+Rho = [1 0.8; 0.8 1];
+uu = copularnd(copType,Rho,M);
+
+% generate samples by first computing empirical density
+c_density_hat = empcopuladensity(uu, h, K, 'betak');
+uu_gen = empcopularnd(c_density_hat, M);
+
+subplot(1,2,1); scatter(uu(:,1),uu(:,2)); grid on; title(sprintf('Built-in %s Samples', copType))
+subplot(1,2,2); scatter(uu(:,1),uu(:,2)); grid on; title(sprintf('Generated %s Samples', copType))
+pause;
+
+%% 
+M = 1000;
+copType = 'Gaussian';
+Rho = [1 .4 .2; .4 1 -.8; .2 -.8 1];
+uu = copularnd(copType,Rho,M);
+h = .01; K = 50;
+c_density_hat = empcopuladensity(uu, h, K, 'betak');
+uu_gen = empcopularnd(c_density_hat, M);
+
+h1 = subplot(1,2,1);
+plot3(uu(:,1),uu(:,2),uu(:,3),'.')
+grid on
+view([-55, 15])
+xlabel('U1')
+ylabel('U2')
+zlabel('U3')
+title('Built-in Gaussian Samples')
+
+h2 = subplot(1,2,2);
+plot3(uu_gen(:,1),uu_gen(:,2),uu_gen(:,3),'.')
+grid on
+view([-55, 15])
+xlabel('U1')
+ylabel('U2')
+zlabel('U3')
+title('Generated Gaussian Samples')
+
+hlink = linkprop([h1,h2],{'CameraPosition','CameraUpVector'});
+rotate3d on

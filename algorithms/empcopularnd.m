@@ -44,23 +44,21 @@ function [ U ] = empcopularnd( c, M )
 
 end
 
-function [linearIdx] = getLinearIdx(arrIdx,K)
-    linearIdx = arrIdx(1);
+function [colLinearIdx] = getLinearIdx(arrIdx,K)
+    colLinearIdx = arrIdx(:,1);
     multiplyFactor = K;
-    for ii=2:length(arrIdx)
-        linearIdx = linearIdx + (arrIdx(ii)-1)*multiplyFactor;
+    for ii=2:size(arrIdx,2)
+        colLinearIdx = colLinearIdx + (arrIdx(:,ii)-1)*multiplyFactor;
         multiplyFactor = multiplyFactor*K;
     end
 end
 
-function [y] = getMarginalIntegral(c, idxVec, K)
-    y = zeros(1,K);
-    % extract the desired dimension
-    for ii=1:K
-        arrIdx = [idxVec ii];
-        linearIdx = getLinearIdx(arrIdx,K);
-        y(ii) = c(linearIdx);
-    end
+function [y] = getMarginalIntegral(c, valVec, K)
+    linearIdxs = zeros(K, length(valVec)+1);
+    linearIdxs(:,length(valVec)+1) = 1:K;
+    linearIdxs(:,1:length(valVec)) = repmat(valVec,K,1);
+    linearIdxs = getLinearIdx(linearIdxs,K);
+    y = c(linearIdxs);
     y = cumsum(y);      % integrate
 end
 
