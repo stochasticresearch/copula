@@ -1,4 +1,4 @@
-function [ U_gen ] = empcopularnd( c, N )
+function [ U_gen ] = empcopularnd_old( c, N )
 %EMPCOPULARND Generates samples of the empirical copula of an underlying
 %d-dimensional joint distribution function
 % Inputs:
