@@ -446,8 +446,6 @@ classdef hcbnTest < matlab.unittest.TestCase
             M = 1000;
             D = 3;
             
-            rng(12345);     % TODO: remove, for debugging
-            
             % Generate samples from C1 (A,B,C) [Gaussian Copula]
             Rho_C1 = [1 .4 .2; .4 1 -.8; .2 -.8 1];
             Z = mvnrnd([0 0 0], Rho_C1, M);
