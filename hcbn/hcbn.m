@@ -306,7 +306,7 @@ classdef hcbn < handle
             end
         end
         
-        function [ ll_val, Rc_val_vec ] = copulall(obj, nodeIdx, X )
+        function [ ll_val, Rc_val_vec, Rc_num_vec, Rc_den_vec ] = copulall(obj, nodeIdx, X )
             %COPULALL Computes the log-likelihood of a copula density matching the
             %         given data
             %
@@ -343,6 +343,8 @@ classdef hcbn < handle
             %%%%%%%%%%%%%%%%%%%% DEBUGGING %%%%%%%%%%%%%%%%%%%%%%%
             if(nargout>1)
                 Rc_val_vec = zeros(1,M);
+                Rc_num_vec = zeros(1,M);
+                Rc_den_vec = zeros(1,M);
             end
             %%%%%%%%%%%%%%%%%%%% DEBUGGING %%%%%%%%%%%%%%%%%%%%%%%
             
@@ -365,11 +367,13 @@ classdef hcbn < handle
                 end
                 
                 % compute copula ratio value
-                Rc = obj.copulaRatioVal(nodeIdx, u);
+                [Rc, num_val, den_val] = obj.copulaRatioVal(nodeIdx, u);
                 
                 %%%%%%%%%%%%%%%%%%%% DEBUGGING %%%%%%%%%%%%%%%%%%%%%%%
                 if(nargout>1)
                     Rc_val_vec(m) = Rc; % for DEBUG purposes
+                    Rc_num_vec(m) = num_val;
+                    Rc_den_vec(m) = den_val;
                 end
                 %%%%%%%%%%%%%%%%%%%% DEBUGGING %%%%%%%%%%%%%%%%%%%%%%%
                 
@@ -377,7 +381,7 @@ classdef hcbn < handle
             end
         end
         
-        function [Rc_val] = copulaRatioVal(obj, nodeIdx, u)
+        function [Rc_val, c_val_numerator, c_val_denominator] = copulaRatioVal(obj, nodeIdx, u)
             %COPULARATIOVAL - calculates the copula ratio for a node at a
             %                 location in the unit hypercube
             % Inputs:

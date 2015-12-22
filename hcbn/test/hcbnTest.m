@@ -563,30 +563,50 @@ classdef hcbnTest < matlab.unittest.TestCase
             
             % calculate Node C Rc and compare against expected Rc
             Rc_expect_nodeC_vec = zeros(1,M);
+            Rc_expect_nodeC_num_vec = zeros(1,M);
+            Rc_expect_nodeC_den_vec = zeros(1,M);
             [f_CAB, domain_CAB] = hist_discrete([X(:,3) X(:,1) X(:,2)]);
             [f_AB, domain_AB] = hist_discrete(X(:,1:2));
+            [f_A, domain_A] = hist_discrete(X(:,1));
+            [f_B, domain_B] = hist_discrete(X(:,2));
             [f_C, domain_C] = hist_discrete(X(:,3));
             for m=1:M
                 % find which idx we need to query
                 yy = [X(m,3) X(m,1) X(m,2)];
-                numIdx = find(yy(1)==domain_CAB(1,:) & yy(2)==domain_CAB(2,:) & yy(3)==domain_CAB(3,:));
+                CABidx = find(yy(1)==domain_CAB(1,:) & yy(2)==domain_CAB(2,:) & yy(3)==domain_CAB(3,:));
                 
                 yy = [X(m,1) X(m,2)];
-                denIdx1 = find(yy(1)==domain_AB(1,:) & yy(2)==domain_AB(2,:));
+                ABidx = find(yy(1)==domain_AB(1,:) & yy(2)==domain_AB(2,:));
+                yy = [X(m,1)];
+                Aidx = find(yy(1)==domain_A(1,:));
+                yy = [X(m,2)];
+                Bidx = find(yy(1)==domain_B(1,:));
                 yy = [X(m,3)];
-                denIdx2 = find(yy(1)==domain_C(1,:));
+                Cidx = find(yy(1)==domain_C(1,:));
                 
-                numVal = f_CAB(numIdx);
-                denVal1 = f_AB(denIdx1);
-                denVal2 = f_C(denIdx2);
+                numVal = f_CAB(CABidx);
+                denVal1 = f_AB(ABidx);
+                denVal2 = f_C(Cidx);
+                
                 Rc_expect_nodeC_vec(m) = numVal/(denVal1*denVal2);
+                Rc_expect_nodeC_num_vec(m) = f_CAB(CABidx)/( f_A(Aidx)*f_B(Bidx)*f_C(Cidx) );
+                Rc_expect_nodeC_den_vec(m) = f_AB(ABidx)/( f_A(Aidx)*f_B(Bidx) );
             end
             
-            [~,Rc_actual_nodeC_vec] = hcbnObj.copulall(cc,X);
+            [~,Rc_actual_nodeC_vec, Rc_actual_nodeC_num_vec, Rc_actual_nodeC_den_vec] = hcbnObj.copulall(cc,X);
             
-            plot(1:M,Rc_expect_nodeC_vec, 1:M, Rc_actual_nodeC_vec, 'r*');
-            Rc_expect_nodeC_vec(1:10)
-            Rc_actual_nodeC_vec(1:10)
+            numPtsToPlot = 50;
+            subplot(3,1,1);
+            plot(1:numPtsToPlot, Rc_expect_nodeC_vec(1:numPtsToPlot), 'b*', 1:numPtsToPlot, Rc_actual_nodeC_vec(1:numPtsToPlot), 'r*'); 
+            title('Rc'); grid on; legend('Expected', 'Actual');
+            
+            subplot(3,1,2);
+            plot(1:numPtsToPlot, Rc_expect_nodeC_num_vec(1:numPtsToPlot), 'b*', 1:numPtsToPlot, Rc_actual_nodeC_num_vec(1:numPtsToPlot), 'r*'); 
+            title('c(A,B,C)'); grid on; legend('Expected', 'Actual');
+            
+            subplot(3,1,3);
+            plot(1:numPtsToPlot, Rc_expect_nodeC_den_vec(1:numPtsToPlot), 'b*', 1:numPtsToPlot, Rc_actual_nodeC_den_vec(1:numPtsToPlot), 'r*'); 
+            title('c(A,B)'); grid on; legend('Expected', 'Actual');
             pause;
             
         end
