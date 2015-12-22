@@ -218,30 +218,32 @@ classdef hcbn < handle
                     obj.copulaFamilies{nodeIdx} = [];
                 else
                     % grab the appropriate values 
-                    ecdfNumPts = 100;
                     X_in = zeros(size(obj.X_xform,1), 1+length(parentNames));
-                    FX_in = zeros(ecdfNumPts, 1+length(parentNames));
                     X_in(:,1) = obj.X_xform(:,nodeIdx);
-                    
                     kk = 2:2+length(parentIdxs)-1;
                     X_in(:,kk) = obj.X_xform(:,parentIdxs);
-                    
-                    % generate pseudo-observations
-                    for jj=1:size(X_in,2)
-                        FX_in(:,jj) = ksdensity(X_in(:,jj),...
-                            linspace(min(X_in(:,jj)),max(X_in(:,jj)),ecdfNumPts),...
-                            'function','cdf')';
-                    end
-                    
                     % check to see if any of the indices that we extracted
                     % from were discrete, if so, we calculate the empirical
                     % copula, if not we fit to a copula model (for now only
                     % Gaussian copula)
                     allIdxs = [nodeIdx parentIdxs];
                     if(sum(ismember(allIdxs, obj.discNodeIdxs)))
+                        ecdfNumPts = 100;
+                        FX = zeros(ecdfNumPts, 1+length(parentNames));
+                        U_in = zeros(size(X_in));
+                        % generate pseudo-observations
+                        for jj=1:size(X_in,2)
+                            domain = linspace(min(X_in(:,jj)),max(X_in(:,jj)),ecdfNumPts);
+                            FX(:,jj) = ksdensity(X_in(:,jj), domain, 'function', 'cdf')';
+                            empInfoObj = rvEmpiricalInfo(domain, [], FX(:,jj));
+                            for kk=1:size(X_in,1)
+                                U_in(kk,jj) = empInfoObj.queryDistribution(X_in(kk,jj));
+                            end
+                        end
+                        
                         M = size(X_in,1);
                         C = [];         % TODO: estimate this, but not necessary for hcbn
-                        c = empcopuladensity(FX_in, obj.h, obj.K, 'betak');
+                        c = empcopuladensity(U_in, obj.h, obj.K, 'betak');
                         type = 'empirical';
                         Rho = [];
                         Rho_parents = [];
@@ -254,9 +256,9 @@ classdef hcbn < handle
                             C_parents = [];
                             c_parents = [];
                         else
-                            FX_in_parents = FX_in(:,2:end);
+                            U_in_parents = U_in(:,2:end);
                             C_parents = []; % TODO: estimate this, but not necessary for hcbn
-                            c_parents = empcopuladensity(FX_in_parents, obj.h, obj.K, 'betak');
+                            c_parents = empcopuladensity(U_in_parents, obj.h, obj.K, 'betak');
                         end
                     else
                         % all continuous marginals, lets fit to a copula

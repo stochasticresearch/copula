@@ -562,7 +562,6 @@ classdef hcbnTest < matlab.unittest.TestCase
             testCase.verifyEqual(Rc_actual_nodeB, Rc_expect_nodeB);
             
             % calculate Node C Rc and compare against expected Rc
-            [~,Rc_actual_nodeC_vec] = hcbnObj.copulall(cc,X);
             Rc_expect_nodeC_vec = zeros(1,M);
             [f_CAB, domain_CAB] = hist_discrete([X(:,3) X(:,1) X(:,2)]);
             [f_AB, domain_AB] = hist_discrete(X(:,1:2));
@@ -583,14 +582,12 @@ classdef hcbnTest < matlab.unittest.TestCase
                 Rc_expect_nodeC_vec(m) = numVal/(denVal1*denVal2);
             end
             
+            [~,Rc_actual_nodeC_vec] = hcbnObj.copulall(cc,X);
+            
             plot(1:M,Rc_expect_nodeC_vec, 1:M, Rc_actual_nodeC_vec, 'r*');
             Rc_expect_nodeC_vec(1:10)
             Rc_actual_nodeC_vec(1:10)
             pause;
-            
-        end
-        
-        function testHcbnLogLikelihood(testCase)
             
         end
         

@@ -8,11 +8,10 @@ copulaType = 'Clayton';
 
 u = linspace(0,1,K);
 [U1,U2] = ndgrid(u);
-c3 = copulapdf(copulaType, [U1(:) U2(:)],5);
-c3 = reshape(c3, K,K);
-% c3 = c3./sum(c3(:));
+c2 = copulapdf(copulaType, [U1(:) U2(:)],5);
+c2 = reshape(c2, K,K);
 h3 = subplot(1,3,3);
-surf(U1,U2,c3);
+surf(U1,U2,c2);
 xlabel('u1')
 ylabel('u2')
 
@@ -20,20 +19,18 @@ X = copularnd(copulaType,5,1000);
 
 h = .05;
 [c1] = empcopdens_betak_v2(X(:,1), X(:,2), h, K);
-% c1 = c1./sum(c1(:));
 h1 = subplot(1,3,1);
 surf(U1,U2,c1);
 xlabel('u1')
 ylabel('u2')
 
-c2 = empcopuladensity(X, h, K, 'betak');
-% c2 = c2./sum(c2(:));
+c1 = empcopuladensity(X, h, K, 'betak');
 h2 = subplot(1,3,2);
-surf(U1,U2,c2);
+surf(U1,U2,c1);
 xlabel('u1')
 ylabel('u2')
 
-mse = mean((c2(:)-c3(:)).^2);
+mse = mean((c1(:)-c2(:)).^2);
 fprintf('MSE = %f\n', mse);
 
 hlink = linkprop([h1,h2,h3],{'CameraPosition','CameraUpVector'});
@@ -50,14 +47,13 @@ D = 3;
 Rho = [1 .4 .2; .4 1 -.8; .2 -.8 1];
 Z = mvnrnd([0 0 0], Rho, M);
 U = normcdf(Z,0,1);
-% c1 = empcopdens_betak_3d_v2(U(:,1), U(:,2), U(:,3), h, K);
 
-c2 = empcopuladensity(U, h, K, 'betak');
+c1 = empcopuladensity(U, h, K, 'betak');
 
 u = linspace(0,1,K);
 [U1,U2,U3] = ndgrid(u);
-c3 = copulapdf('Gaussian', [U1(:) U2(:) U3(:)],Rho);
-c3 = reshape(c3, [K,K,K]);
+c2 = copulapdf('Gaussian', [U1(:) U2(:) U3(:)],Rho);
+c2 = reshape(c2, [K,K,K]);
 
 % make sure we have our orientation properly by manually generating 2-D
 % copula also
@@ -67,20 +63,20 @@ c3_u2u3 = copulapdf('Gaussian', [UU1(:) UU2(:)], [1 -0.8; -0.8 1]); c3_u2u3 = re
 c3_u1u3 = copulapdf('Gaussian', [UU1(:) UU2(:)], [1 0.2; 0.2 1]); c3_u1u3 = reshape(c3_u1u3,[K,K]);
 
 h1 = subplot(3,3,1);
-surf(UU1,UU2,squeeze(sum(c2,3))); xlabel('u_1'); ylabel('u_2')
+surf(UU1,UU2,squeeze(sum(c1,3))); xlabel('u_1'); ylabel('u_2')
 h2 = subplot(3,3,2);
-surf(UU1,UU2,squeeze(sum(c2,2))); xlabel('u_1'); ylabel('u_3')
+surf(UU1,UU2,squeeze(sum(c1,2))); xlabel('u_1'); ylabel('u_3')
 title('EMPCOPULADENSITY')
 h3 = subplot(3,3,3);
-surf(UU1,UU2,squeeze(sum(c2,1))); xlabel('u_2'); ylabel('u_3')
+surf(UU1,UU2,squeeze(sum(c1,1))); xlabel('u_2'); ylabel('u_3')
 
 h4 = subplot(3,3,4);
-surf(squeeze(sum(c3,3))); xlabel('u_1'); ylabel('u_2')
+surf(squeeze(sum(c2,3))); xlabel('u_1'); ylabel('u_2')
 h5 = subplot(3,3,5);
-surf(squeeze(sum(c3,2))); xlabel('u_1'); ylabel('u_3')
+surf(squeeze(sum(c2,2))); xlabel('u_1'); ylabel('u_3')
 title('ACTUAL')
 h6 = subplot(3,3,6);
-surf(squeeze(sum(c3,1))); xlabel('u_2'); ylabel('u_3')
+surf(squeeze(sum(c2,1))); xlabel('u_2'); ylabel('u_3')
 
 h7 = subplot(3,3,7);
 surf(UU1,UU2,c3_u1u2); xlabel('u_1'); ylabel('u_2')
@@ -108,12 +104,12 @@ M = 1000;
 D = 5;
 
 % Generate samples from C1 (A,B,C) [Gaussian Copula]
-Rho_C1 = [1 .4 .2; .4 1 -.8; .2 -.8 1];
-Z = mvnrnd([0 0 0], Rho_C1, M);
+Rho = [1 .4 .2; .4 1 -.8; .2 -.8 1];
+Z = mvnrnd([0 0 0], Rho, M);
 U_C1 = normcdf(Z,0,1);
 
 % Generate samples from C2 (B,D) [Clayton Copula]
-U_C2_1 = U_C1(:,2); c2_alpha = 2; p = rand(M,1);
+U_C2_1 = U_C1(:,2); c2_alpha = 1; p = rand(M,1);
 U_C2_2 = U_C2_1.*(p.^(-c2_alpha./(1+c2_alpha)) - 1 + U_C2_1.^c2_alpha).^(-1./c2_alpha);
 U_C2 = [U_C2_1 U_C2_2];
 
@@ -130,14 +126,26 @@ X = [gaminv(U(:,1),2,1) ...
        unidinv(U(:,4),3) ...
        norminv(U(:,5),0,1)];
 
-numPts = 100;
 X_vec = [continueRv(X(:,4)) X(:,2)];
-F1 = ksdensity(X_vec(:,1),linspace(min(X_vec(:,1)),max(X_vec(:,1)), numPts) ,'support','positive','function','cdf');
-F2 = ksdensity(X_vec(:,2),linspace(min(X_vec(:,2)),max(X_vec(:,2)), numPts) ,'support','positive','function','cdf');
-FX_vec = [F1' F2'];
+
+numECDFPts = 100;
+domain1 = linspace(min(X_vec(:,1)),max(X_vec(:,1)), numECDFPts);
+F1 = ksdensity(X_vec(:,1),domain1 ,'function','cdf');
+rvEmpObj1 = rvEmpiricalInfo(domain1, [], F1);
+domain2 = linspace(min(X_vec(:,2)),max(X_vec(:,2)), numECDFPts);
+F2 = ksdensity(X_vec(:,2),domain2 ,'function','cdf');
+rvEmpObj2 = rvEmpiricalInfo(domain2, [], F2);
+
+U_in = zeros(size(X_vec));
+% create pseudo-observations
+for ii=1:M
+    U_in(ii,1) = rvEmpObj1.queryDistribution(X_vec(ii,1));
+    U_in(ii,2) = rvEmpObj2.queryDistribution(X_vec(ii,2));
+end
+
 
 c1_ref = empcopuladensity(U_C2, h, K, 'betak');
-c1_proper = empcopuladensity(FX_vec, h, K, 'betak');
+c1_proper = empcopuladensity(U_in, h, K, 'betak');
 
 u = linspace(0,1,K);
 [U1,U2] = ndgrid(u);
@@ -146,3 +154,91 @@ h1 = subplot(1,2,1); surf(U1,U2,c1_ref); title('Reference')
 h2 = subplot(1,2,2); surf(U1,U2,c1_proper); title('Estimated w/ KSDENSITY')
 hlink = linkprop([h1,h2],{'CameraPosition','CameraUpVector'});
 rotate3d on
+
+%% Test empcopuladensity heuristically w/ discrete marginals & Gaussian Copula
+clear;
+clc;
+
+M = 1000;
+D = 2;
+
+% Generate samples from C1 (A,B) [Gaussian Copula]
+Rho = [1 -0.8; -0.8 1];
+U = copularnd('Gaussian', Rho, M);
+
+X = [unidinv(U(:,1),3) ...
+     unidinv(U(:,2),4)];
+
+% transform the data by dithering according to Michel, Denuit, Neslehova
+X_xform = continueRv(X);
+
+% generate pseudoobservations from X_xform
+ecdfNumPts = 100;
+FX_in = zeros(ecdfNumPts, D);
+U_in = zeros(size(X_xform));
+for jj=1:D
+    domain = linspace(min(X_xform(:,jj)),max(X_xform(:,jj)),ecdfNumPts);
+    FX_in(:,jj) = ksdensity(X_xform(:,jj), domain, 'function','cdf')';
+    empInfoObj = rvEmpiricalInfo(domain, [], FX_in(:,jj));
+    for kk=1:M
+        U_in(kk,jj) = empInfoObj.queryDistribution(X_xform(kk,jj));
+    end
+end
+
+% estimate the copula density
+h = 0.05;
+K = 25;
+c = empcopuladensity(U_in, h, K, 'betak'); 
+
+u = linspace(0,1,K);
+[U1,U2] = ndgrid(u);
+c_expect = copulapdf('Gaussian', [U1(:) U2(:)],Rho);
+c_expect = reshape(c_expect,K,K);
+
+
+h1 = subplot(1,2,1); surf(U1,U2,c_expect); grid on; title('Reference'); xlabel('U_1'); ylabel('U_2');
+h2 = subplot(1,2,2); surf(U1,U2,c); grid on; title('Estimated'); xlabel('U_1'); ylabel('U_2');
+linkprop([h1,h2],{'CameraPosition','CameraUpVector'}); rotate3d on;
+
+%% Test empcopuladensity heuristically w/ discrete marginals & Gumbel Copula
+clear;
+clc;
+
+M = 1000;
+D = 2;
+
+alpha = 9.5; copType = 'Clayton';
+U = copularnd(copType, alpha, M);
+
+X = [unidinv(U(:,1),3) ...
+     unidinv(U(:,2),4)];
+
+% transform the data by dithering according to Michel, Denuit, Neslehova
+X_xform = continueRv(X);
+
+% generate pseudoobservations from X_xform
+ecdfNumPts = 100;
+FX_in = zeros(ecdfNumPts, D);
+U_in = zeros(size(X_xform));
+for jj=1:D
+    domain = linspace(min(X_xform(:,jj)),max(X_xform(:,jj)),ecdfNumPts);
+    FX_in(:,jj) = ksdensity(X_xform(:,jj), domain, 'function','cdf')';
+    empInfoObj = rvEmpiricalInfo(domain, [], FX_in(:,jj));
+    for kk=1:M
+        U_in(kk,jj) = empInfoObj.queryDistribution(X_xform(kk,jj));
+    end
+end
+
+% estimate the copula density
+h = 0.02;
+K = 50;
+c = empcopuladensity(U_in, h, K, 'betak');
+
+[U1,U2] = ndgrid(linspace(0,1,K));
+c_expect = copulapdf(copType, [U1(:) U2(:)],alpha);
+c_expect = reshape(c_expect,K,K);
+
+h1 = subplot(1,2,1); surf(U1,U2,c_expect); grid on; title('Reference'); xlabel('U_1'); ylabel('U_2');
+h2 = subplot(1,2,2); surf(U1,U2,c); grid on; title('Estimated'); xlabel('U_1'); ylabel('U_2');
+linkprop([h1,h2],{'CameraPosition','CameraUpVector'}); rotate3d on;
+            
