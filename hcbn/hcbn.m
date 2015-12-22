@@ -35,6 +35,8 @@ classdef hcbn < handle
                         % discrete random variables
         discNodeIdxs;   % the indices of of the nodes of the discrete
                         % random variables
+        
+        h;          % the beta-kernel density estimation weighting
                         
         dagLL_scalingFactor;    % a scaling factor for the log-likelihood
                                 % of the DAG with the training data.  This
@@ -42,6 +44,8 @@ classdef hcbn < handle
                                 % 1, and when we compare this against
                                 % "test" datasets, we will see how well the
                                 % model holds against the other datasets
+        
+                                
                                 
         DEBUG_MODE; % if turned on, will print out extra stuff to screen to
                     % monitor what is going on
@@ -79,13 +83,15 @@ classdef hcbn < handle
             
             obj.dag = zeros(obj.D,obj.D);
             
-            obj.K = 200;    % hard coded to 200, which seems to be a
+            obj.K = 25;     % hard coded to 25, which seems to be a
                             % reasonable tradeoff between accuracy and
                             % memory/computational requirements
             
             obj.X = X;
             obj.X_xform = X;
 
+            obj.h = 0.05;
+            
             obj.discreteNodes = discreteNodes;
             obj.discNodeIdxs = zeros(1,length(obj.discreteNodes));
             for ii=1:length(obj.discNodeIdxs)
@@ -200,7 +206,7 @@ classdef hcbn < handle
                 [parentIdxs, parentNames] = obj.getParents(nodeIdx);
                 
                 if(obj.DEBUG_MODE)
-                    fprintf('Estimating Copula for Node=%s <-- ', node);
+                    fprintf('Estimating Copula for Node=%s:%d <-- ', node, nodeIdx);
                     for jj=1:length(parentNames)
                         fprintf('%d:%s ', parentIdxs(jj), parentNames{jj});
                     end
@@ -212,13 +218,19 @@ classdef hcbn < handle
                     obj.copulaFamilies{nodeIdx} = [];
                 else
                     % grab the appropriate values 
+                    ecdfNumPts = 100;
                     X_in = zeros(size(obj.X_xform,1), 1+length(parentNames));
+                    FX_in = zeros(ecdfNumPts, 1+length(parentNames));
                     X_in(:,1) = obj.X_xform(:,nodeIdx);
-
-                    kk = 2;
-                    for jj=parentIdxs
-                        X_in(:,kk) = obj.X_xform(:,jj);
-                        kk = kk + 1;
+                    
+                    kk = 2:2+length(parentIdxs)-1;
+                    X_in(:,kk) = obj.X_xform(:,parentIdxs);
+                    
+                    % generate pseudo-observations
+                    for jj=1:size(X_in,2)
+                        FX_in(:,jj) = ksdensity(X_in(:,jj),...
+                            linspace(min(X_in(:,jj)),max(X_in(:,jj)),ecdfNumPts),...
+                            'function','cdf')';
                     end
                     
                     % check to see if any of the indices that we extracted
@@ -227,7 +239,9 @@ classdef hcbn < handle
                     % Gaussian copula)
                     allIdxs = [nodeIdx parentIdxs];
                     if(sum(ismember(allIdxs, obj.discNodeIdxs)))
-                        [ C, U, c ] = empcopula(X_in, obj.K);
+                        M = size(X_in,1);
+                        C = [];         % TODO: estimate this, but not necessary for hcbn
+                        c = empcopuladensity(FX_in, obj.h, obj.K, 'betak');
                         type = 'empirical';
                         Rho = [];
                         Rho_parents = [];
@@ -238,18 +252,18 @@ classdef hcbn < handle
                             % only one dimension, no concept of "joint"
                             % distribution)
                             C_parents = [];
-                            U_parents = [];
                             c_parents = [];
                         else
-                            X_in_parents = X_in(:,2:end);
-                            [ C_parents, U_parents, c_parents] = empcopula(X_in_parents, obj.K);
+                            FX_in_parents = FX_in(:,2:end);
+                            C_parents = []; % TODO: estimate this, but not necessary for hcbn
+                            c_parents = empcopuladensity(FX_in_parents, obj.h, obj.K, 'betak');
                         end
                     else
                         % all continuous marginals, lets fit to a copula
                         % model (for now, we only do Gaussian)
                         type = 'model';
-                        C = []; U = []; c = [];
-                        C_parents = []; c_parents = []; U_parents = [];
+                        C = []; c = [];
+                        C_parents = []; c_parents = [];
                         u = zeros(size(X_in));
                         M = size(X_in,1);
                         for m=1:M
@@ -268,7 +282,7 @@ classdef hcbn < handle
                         end
                     end
                     copFam = copulafamily(node, nodeIdx, parentNames, parentIdxs, type, ...
-                            C, U, c, Rho, C_parents, U_parents, c_parents, Rho_parents);
+                            C, c, Rho, C_parents, c_parents, Rho_parents);
                     obj.copulaFamilies{nodeIdx} = copFam;
                 end
             end
@@ -333,21 +347,23 @@ classdef hcbn < handle
             for m=1:M
                 % compute empirical distribution log likelihood (for just
                 % the child node)
-                ll_val = ll_val + log(obj.empInfo{allIdxs(1)}.queryDensity(X_in(m,1)));
+                ll_val = ll_val + log(obj.empInfo{nodeIdx}.queryDensity(X_in(m,1)));
                 
-                % generate u
+                % generate u, avoid values of u being 0 or 1
                 uIdx = 1;
                 for jj=allIdxs
-                    u(uIdx) = obj.empInfo{jj}.queryDistribution(X_in(m,uIdx));
+                    uu = obj.empInfo{jj}.queryDistribution(X_in(m,uIdx));
+                    if(abs(uu-1)<=.001)
+                        uu = 0.999;
+                    elseif(abs(uu-.001)<=0.001)
+                        uu = 0.001;
+                    end
+                    u(uIdx) = uu;
                     uIdx = uIdx + 1;
                 end
                 
                 % compute copula ratio value
-                Rc = obj.copulaRatioVal(nodeIdx, u, X_in(m,:));
-%                 % prevent low values from throwing off likelihood
-%                 if(Rc<1)
-%                     Rc = 1;
-%                 end
+                Rc = obj.copulaRatioVal(nodeIdx, u);
                 
                 %%%%%%%%%%%%%%%%%%%% DEBUGGING %%%%%%%%%%%%%%%%%%%%%%%
                 if(nargout>1)
@@ -359,7 +375,7 @@ classdef hcbn < handle
             end
         end
         
-        function [Rc_val] = copulaRatioVal(obj, nodeIdx, u, x)
+        function [Rc_val] = copulaRatioVal(obj, nodeIdx, u)
             %COPULARATIOVAL - calculates the copula ratio for a node at a
             %                 location in the unit hypercube
             % Inputs:
@@ -367,7 +383,6 @@ classdef hcbn < handle
             %            calculated.  This is the node index.
             %  u - a vector of a point in the unit-hypercube where
             %      the copula ratio will be calculated
-            %  x - the corresponding x from which u was calculated
             
             % find the associated copula family
             copFam = obj.copulaFamilies{nodeIdx};
@@ -380,16 +395,16 @@ classdef hcbn < handle
                 c_val_denominator = 1;
             elseif(strcmp(copFam.type, 'empirical'))
                 % get the copula density for this family
-                C = copFam.C; c = copFam.c{end};
-                C_parents = copFam.C_parents; c_parents = copFam.c_parents{end};
+                c = copFam.c;
+                c_parents = copFam.c_parents;
 
                 % query it for the specified point with empcopula_val
-                [~, c_val_numerator] = empcopula_val(C,c,u);
+                c_val_numerator = empcopula_val(c,u);
                 u_denom = u(2:end);
                 if(length(u_denom)==1)
                     c_val_denominator = 1;
                 else
-                    [~, c_val_denominator] = empcopula_val(C_parents,c_parents,u_denom);
+                    c_val_denominator = empcopula_val(c_parents,u_denom);
                 end
             else
                 % assume we fit the Gaussian model to the data

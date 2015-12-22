@@ -306,23 +306,23 @@ for K=[25]
             uu = [empInfoX1.queryDistribution(X(m,1)) empInfoX2.queryDistribution(X(m,2))];
             %%% NOTE: all den's will be the same b/c only 1 parent
             % actual copula ratio for c_emp_smooth
-            [~,Rc_c_emp_smooth_num] = empcopula_val([], c_emp_smooth, uu);
+            Rc_c_emp_smooth_num = empcopula_val(c_emp_smooth, uu);
             Rc_c_emp_smooth = Rc_c_emp_smooth_num/1;
 
             % actual copula ratio for c_dens_kde_p9
-            [~,Rc_c_dens_kde_p9_num] = empcopula_val([], c_dens_kde_p9, uu);
+            Rc_c_dens_kde_p9_num = empcopula_val(c_dens_kde_p9, uu);
             Rc_c_dens_kde_p9 = Rc_c_dens_kde_p9_num/1;
 
             % actual copula ratio for c_dens_kde_p14
-            [~,Rc_c_dens_kde_p14_num] = empcopula_val([], c_dens_kde_p14, uu);
+            Rc_c_dens_kde_p14_num = empcopula_val(c_dens_kde_p14, uu);
             Rc_c_dens_kde_p14 = Rc_c_dens_kde_p14_num/1;
             
             % actual copula ratio for c_dens_kde_p14_v2
-            [~,Rc_c_dens_kde_p14v2_num] = empcopula_val([], c_dens_kde_p14_v2, uu);
+            Rc_c_dens_kde_p14v2_num = empcopula_val(c_dens_kde_p14_v2, uu);
             Rc_c_dens_kde_p14v2 = Rc_c_dens_kde_p14v2_num/1;
 
             % actual copula ratio for c_dens_betak
-            [~,Rc_c_dens_betak_num] = empcopula_val([], c_dens_betak, uu);
+            Rc_c_dens_betak_num = empcopula_val(c_dens_betak, uu);
             Rc_c_dens_betak = Rc_c_dens_betak_num/1;
 
             Rc_vals(:,ii) = [Rc_expect Rc_c_emp_smooth Rc_c_dens_kde_p9 Rc_c_dens_kde_p14 Rc_c_dens_kde_p14v2 Rc_c_dens_betak]';
@@ -444,8 +444,8 @@ for K=[25]
             uu_den = [empInfoX2.queryDistribution(X(m,2)) empInfoX2.queryDistribution(X(m,3))];
             
             % actual copula ratio for c_dens_betak
-            [~,Rc_c_dens_betak_num] = empcopula_val([], c_dens_betak_num, uu_num);
-            [~,Rc_c_dens_betak_den] = empcopula_val([], c_dens_betak_den, uu_den);
+            Rc_c_dens_betak_num = empcopula_val(c_dens_betak_num, uu_num);
+            Rc_c_dens_betak_den = empcopula_val(c_dens_betak_den, uu_den);
             Rc_c_dens_betak = Rc_c_dens_betak_num/Rc_c_dens_betak_den;
 
             Rc_vals(:,ii) = [Rc_expect Rc_c_dens_betak]';

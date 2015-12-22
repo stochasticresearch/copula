@@ -16,8 +16,6 @@ function [ c ] = empcopuladensity( U, h, K, method )
 % Outputs
 %  c - the copula density
 
-% h = 1;      % TODO: adapt this based on D
-
 if(strcmpi(method, 'betak'))
     M = size(U,1);
     D = size(U,2);
