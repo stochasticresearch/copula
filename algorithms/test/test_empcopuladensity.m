@@ -241,4 +241,151 @@ c_expect = reshape(c_expect,K,K);
 h1 = subplot(1,2,1); surf(U1,U2,c_expect); grid on; title('Reference'); xlabel('U_1'); ylabel('U_2');
 h2 = subplot(1,2,2); surf(U1,U2,c); grid on; title('Estimated'); xlabel('U_1'); ylabel('U_2');
 linkprop([h1,h2],{'CameraPosition','CameraUpVector'}); rotate3d on;
-            
+
+%% Test empcopuladensity heuristically w/ discrete marginals & Gumbel Copula
+clear;
+clc;
+
+M = 1000;
+D = 2;
+
+Rho = [1 0.4; 0.4 1]; copType = 'Gaussian';
+U = copularnd(copType, Rho, M);
+
+X1 = unidinv(U(:,1),5);
+X2 = unidinv(U(:,2),5);
+X = [X1 X2];
+ 
+[nn, ctrs] = hist3(X);
+probMatrix = zeros(5,5);
+probMatrix(1,1) = nn(1,1)/M; probMatrix(1,2) = nn(1,3)/M; probMatrix(1,3) = nn(1,6)/M; probMatrix(1,4) = nn(1,8)/M; probMatrix(1,5) = nn(1,10)/M;
+probMatrix(2,1) = nn(3,1)/M; probMatrix(2,2) = nn(3,3)/M; probMatrix(2,3) = nn(3,6)/M; probMatrix(2,4) = nn(3,8)/M; probMatrix(2,5) = nn(3,10)/M;
+probMatrix(3,1) = nn(6,1)/M; probMatrix(3,2) = nn(6,3)/M; probMatrix(3,3) = nn(6,6)/M; probMatrix(3,4) = nn(6,8)/M; probMatrix(3,5) = nn(6,10)/M;
+probMatrix(4,1) = nn(8,1)/M; probMatrix(4,2) = nn(8,3)/M; probMatrix(4,3) = nn(8,6)/M; probMatrix(4,4) = nn(8,8)/M; probMatrix(4,5) = nn(8,10)/M;
+probMatrix(5,1) = nn(10,1)/M; probMatrix(5,2) = nn(10,3)/M; probMatrix(5,3) = nn(10,6)/M; probMatrix(5,4) = nn(10,8)/M; probMatrix(5,5) = nn(10,10)/M;
+
+X_xform = continueRv(X);
+
+ecdfNumPts = 100;
+FX_in = zeros(ecdfNumPts, D);
+U_in = zeros(size(X_xform));
+for jj=1:D
+    domain = linspace(min(X_xform(:,jj)),max(X_xform(:,jj)),ecdfNumPts);
+    FX_in(:,jj) = ksdensity(X_xform(:,jj), domain, 'function','cdf')';
+    empInfoObj = rvEmpiricalInfo(domain, [], FX_in(:,jj));
+    for kk=1:M
+        U_in(kk,jj) = empInfoObj.queryDistribution(X_xform(kk,jj));
+    end
+end
+
+% estimate the copula density
+h = 0.02;
+K = 25;
+c_est = empcopuladensity(U_in, h, K, 'betak');
+
+[U1,U2] = ndgrid(linspace(0,1,K));
+c_actual = copulapdf(copType, [U1(:) U2(:)], Rho);
+c_actual = reshape(c_actual,K,K);
+
+h1 = subplot(1,3,1); hist3(X);                   title('Joint Distribution')
+h2 = subplot(1,3,2); surf(U1,U2,c_est);          title('Estimated Copula')
+h3 = subplot(1,3,3); surf(U1,U2,c_actual);       title('Actual Copula')
+linkprop([h1,h2,h3],{'CameraPosition','CameraUpVector'}); rotate3d on;
+
+% now, since we have the full PDF, we can compare how accurate hte
+% estimated copula is to the true, with the definition: 
+% c(u1,u2) = f(x1,x2)/[ f(x1) * f(x2) ]
+
+[FX_in1, domain1] = ecdf(X1); FX_in1 = FX_in1(2:end); domain1 = domain1(2:end);
+empInfoObj1 = rvEmpiricalInfo(domain1, [], FX_in1);
+
+[FX_in2, domain2] = ecdf(X2); FX_in2 = FX_in2(2:end); domain2 = domain2(2:end);
+empInfoObj2 = rvEmpiricalInfo(domain2, [], FX_in2);
+
+for x1=1:5
+    for x2=1:5
+        f_val = probMatrix(x1,x2)/(0.33*0.33);  % f(x1,x2)/[f(x1)*f(x2)]
+        u1 = empInfoObj1.queryDistribution(x1);
+        u2 = empInfoObj2.queryDistribution(x2);
+        if(abs(u1-1)<=.01)
+            u1 = 0.99;
+        elseif(abs(u1-.01)<=0.01)
+            u1 = 0.01;
+        end
+        if(abs(u2-1)<=.01)
+            u2 = 0.99;
+        elseif(abs(u2-.01)<=0.01)
+            u2 = 0.01;
+        end
+        u = [u1 u2];
+        
+        c_est_val = empcopula_val(c_est, u); 
+        c_actual_val = copulapdf('Gaussian', u, Rho);
+        
+        f_val_mat(x1,x2) = f_val;
+        c_est_mat(x1,x2) = c_est_val;
+        c_actual_mat(x1,x2) = c_actual_val;
+    end
+end
+
+f_val_mat
+c_est_mat
+c_actual_mat
+
+est_err_mat = (f_val_mat-c_est_mat).^2
+actual_err_mat = (f_val_mat-c_actual_mat).^2
+
+%% Test empcopuladensity heuristically w/ discrete marginals & Gumbel Copula
+clear;
+clc;
+
+M = 1000;
+D = 2;
+
+Rho = [1 0.4; 0.4 1]; copType = 'Gaussian';
+U = copularnd(copType, Rho, M);
+
+% Create a multivariate gaussian :) easy for testing
+X = [norminv(U(:,1),0,1) ...
+     norminv(U(:,2),0,1)];
+
+ecdfNumPts = 100;
+FX_in = zeros(ecdfNumPts, D);
+U_in = zeros(size(X));
+for jj=1:D
+    domain = linspace(min(X(:,jj)),max(X(:,jj)),ecdfNumPts);
+    FX_in(:,jj) = ksdensity(X(:,jj), domain, 'function','cdf')';
+    empInfoObj = rvEmpiricalInfo(domain, [], FX_in(:,jj));
+    for kk=1:M
+        U_in(kk,jj) = empInfoObj.queryDistribution(X(kk,jj));
+    end
+end
+
+% estimate the copula density
+h = 0.01;
+K = 50;
+c_est = empcopuladensity(U_in, h, K, 'betak');
+
+ii = 1;
+for x1=-3:.1:3
+    jj = 1;
+    for x2=-3:.1:3
+        f_val = mvnpdf([x1,x2], [0 0], Rho)/(normpdf(x1)*normpdf(x2)); u=[normcdf(x1) normcdf(x2)];
+        c_est_val = empcopula_val(c_est, u); 
+        c_actual_val = copulapdf('Gaussian', u, Rho);
+        
+        f_val_mat(ii,jj) = f_val;
+        c_est_mat(ii,jj) = c_est_val;
+        c_actual_mat(ii,jj) = c_actual_val;
+        jj = jj + 1;
+    end
+    ii = ii + 1;
+end
+
+[U1,U2] = ndgrid(linspace(0,1,length(-3:.1:3)));
+
+h1 = subplot(2,2,1); surf(U1,U2,f_val_mat); title('f calc'); xlabel('U_1'); ylabel('U_2')
+h2 = subplot(2,2,2); surf(U1,U2,c_actual_mat); title('c actual'); xlabel('U_1'); ylabel('U_2')
+h3 = subplot(2,2,3); surf(U1,U2,c_est_mat); title('c est'); xlabel('U_1'); ylabel('U_2')
+h4 = subplot(2,2,4); surf(U1,U2,(c_est_mat-f_val_mat).^2); title('(c est - f calc)^2'); xlabel('U_1'); ylabel('U_2')
+linkprop([h1,h2,h3,h4],{'CameraPosition','CameraUpVector'}); rotate3d on;
