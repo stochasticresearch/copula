@@ -43,8 +43,8 @@ U_C3 = [U_C3_1 U_C3_2];
 
 U = [U_C1(:,2) U_C2 U_C3(:,2)];
 
-X_12 =   [a_dist.icdf(U(:,1)) ...
-           b_dist.icdf(U(:,2))];
+X12 =   [a_dist.icdf(U(:,1)) ...
+          b_dist.icdf(U(:,2))];
 % perform the inverse transform to generate the X data matrix
 if(strcmpi(continuousType,'Gaussian'))
     % assume 0 mean, pick random std deviations 0.1 and 3
@@ -56,7 +56,7 @@ if(strcmpi(continuousType,'Gaussian'))
             norminv(U(:,5),0,rhoE)];
 else
     % pick random one parameter distributions
-    distChoices = randsample(5,3,true);
+    distChoices = randsample(5,3,true)';
     % choice to rv type mapping:
     %  1 -> Gaussian
     %  2 -> Exponential
@@ -65,24 +65,30 @@ else
     %  5 -> Uniform
     
     % create X3, X4, X5
-    X345 = [];
+    X345 = zeros(M,3);
     idx = 3;
+    xIdx = 1;
     for ii=distChoices
         p1 = 0.1 + 3*rand(1);
-        p2 = 0.1 + 3*rand(1);
+        if(ii~=5)
+            p2 = 0.1 + 3*rand(1);
+        else
+            p2 = p1 + 3*rand(1);
+        end
         switch ii
             case 1
-                X345 = [X345 norminv(U(:,idx),0,p1)];
+                X345(:,xIdx) = norminv(U(:,idx),0,p1);
             case 2
-                X345 = [X345 expinv(U(:,idx),p1)];
+                X345(:,xIdx) = expinv(U(:,idx),p1);
             case 3
-                X345 = [X345 gammainv(U(:,idx),p1,p2)];
+                X345(:,xIdx) = gaminv(U(:,idx),p1,p2);
             case 4
-                X345 = [X345 betainv(U(:,idx),p1,p2)];
+                X345(:,xIdx) = betainv(U(:,idx),p1,p2);
             case 5
-                X345 = [X345 unifinv(U(:,idx),p1,p2)];
+                X345(:,xIdx) = unifinv(U(:,idx),p1,p2);
         end
         idx = idx + 1;
+        xIdx = xIdx + 1;
     end
 end
 
