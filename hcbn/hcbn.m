@@ -487,4 +487,3 @@ classdef hcbn < handle
         end
     end
 end
-
