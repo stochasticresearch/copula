@@ -5,8 +5,8 @@ clc;
 discreteType = {};
 nodeA = [0.4 0.3 0.2 0.1]; discreteType{1} = nodeA;
 nodeB = [0.6 0.1 0.05 0.25]; discreteType{2} = nodeB;
-% continuousType = 'Gaussian';
-continuousType = 'other';
+continuousType = 'Gaussian';
+% continuousType = 'other';
 M = 1000;
 X = genSynthData(discreteType, continuousType, M);
 
