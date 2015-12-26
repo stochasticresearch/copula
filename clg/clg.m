@@ -31,7 +31,7 @@ classdef clg < handle
             %  TODO
             %   [ ] - 
             %
-            obj.DEBUG_MODE = 1;
+            obj.DEBUG_MODE = 0;
             
             obj.N = size(X,1);
             obj.D = size(X,2);
@@ -148,22 +148,26 @@ classdef clg < handle
                                         X_subset = [X_subset; obj.X(ii,:)];
                                     end
                                 end
-                                
-                                % get all the continuous data associated with this combo
-                                continuousNodesIdxs = [node continuousParents];
-                                X_subset_continuous = zeros(length(X_subset),length(continuousNodesIdxs));
-                                idx = 1;
-                                for ii=continuousNodesIdxs
-                                    X_subset_continuous(:,idx) = X_subset(:,ii);
-                                    idx = idx + 1;
-                                end
+                                if(comboFound)
+                                    % get all the continuous data associated with this combo
+                                    continuousNodesIdxs = [node continuousParents];
+                                    X_subset_continuous = zeros(size(X_subset,1),length(continuousNodesIdxs));
+                                    idx = 1;
+                                    for ii=continuousNodesIdxs
+                                        X_subset_continuous(:,idx) = X_subset(:,ii);
+                                        idx = idx + 1;
+                                    end
 
-                                if(size(X_subset_continuous,2)==1)
-                                    % estimate univariate Gaussian parameters
-                                    [Mean,Covariance] = normfit(X_subset_continuous);
+                                    if(size(X_subset_continuous,2)==1)
+                                        % estimate univariate Gaussian parameters
+                                        [Mean,Covariance] = normfit(X_subset_continuous);
+                                    else
+                                        % estimate the Multivariate Gaussian parameters
+                                        [Mean, Covariance] = ecmnmle(X_subset_continuous);
+                                    end
                                 else
-                                    % estimate the Multivariate Gaussian parameters
-                                    [Mean, Covariance] = ecmnmle(X_subset_continuous);
+                                    Mean = 0;
+                                    Covariance = 1;
                                 end
                                 nodeBnParam = clgNodeBnParam(node, combo, Mean, Covariance);
                                 nodeBnParams{nodeBnParamsIdx} = nodeBnParam;
@@ -192,7 +196,7 @@ classdef clg < handle
             parentIdxs = find(obj.dag(:,nodeIdx))';
         end
 
-        function [llVal] = dataLogLikelihood(X)
+        function [llVal] = dataLogLikelihood(obj, X)
             %DATALOGLIKELIHOOD - calculates the log-likelihood of the given
             %dataset to the calculated model of the data
             % Inputs:
@@ -200,16 +204,17 @@ classdef clg < handle
             % Outputs:
             %  llVal - the log-likelihood value
             M = size(X,1);
-            totalProb = 1;
+            llVal = 0;
             for nn=1:M
+                nodeProb = 1;
                 for node=1:obj.D
                     nodeBnParam = obj.bnParams{node};
                     if(isa(nodeBnParam, 'rvEmpiricalInfo'))
                         % discrete root node
-                        totalProb = totalProb * nodeBnParam.queryDensity(X(nn,node));
-                    elseif(isempty(nodeBnParam.combo))
+                        nodeProb = nodeProb * nodeBnParam.queryDensity(X(nn,node));
+                    elseif(length(nodeBnParam)==1)
                         % continuous root node
-                        totalProb = totalProb * normpdf(X(nn,node), nodeBnParam.Mean, nodeBnParam.Covariance);
+                        nodeProb = nodeProb * normpdf(X(nn,node), nodeBnParam.Mean, nodeBnParam.Covariance);
                     else
                         % leaf node - first we find the parents of this
                         % leaf node, get the appropriate data
@@ -220,18 +225,17 @@ classdef clg < handle
                         % the probability for the datapoint
                         numCombos = length(obj.bnParams{node});
                         for combo=1:numCombos
-                            if(isequal(X_parent,obj.bnParams{node}.combo))
-                                Mean = obj.bnParams{node}.Mean;
-                                Covariance = obj.bnParams{node}.Covariance;
-                                totalProb = totalProb * mvnpdf(X(nn,node), Mean, Covariance);
+                            if(isequal(X_parent,obj.bnParams{node}{combo}.combo))
+                                Mean = obj.bnParams{node}{combo}.Mean;
+                                Covariance = obj.bnParams{node}{combo}.Covariance;
+                                nodeProb = nodeProb * mvnpdf(X(nn,node), Mean, Covariance);
                                 break;
                             end
                         end
                     end
                 end
+                llVal = llVal + log(nodeProb);
             end
-            llVal = log(totalProb);
-        end
-        
+        end        
     end
 end
