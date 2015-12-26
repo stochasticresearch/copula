@@ -13,6 +13,9 @@ dag = zeros(D,D);
 dag(aa,[cc dd]) = 1;
 dag(bb,[dd ee]) = 1;
 discreteNodes = [aa bb];
+nodeNames = {'A', 'B', 'C', 'D', 'E'};
+bntPath = '../../../bnt';
+discreteNodeNames = {'A','B'};
 
 %% Generate the synthetic data set
 
@@ -25,20 +28,27 @@ X = genSynthData(discreteType, continuousType, M);
 X_train_full = X(1:9000,:);
 X_test = X(9001:end,:);
 
-%% perform CLG modeling, parametric to train/test size
+%% perform CLG/HCBN/MTE modeling, parametric to train/test size
 
 % instantiate the CLG object
 trainVecSize = 100:500:9000;
-llValVec = zeros(1,length(trainVecSize));
+llValVec = zeros(3,length(trainVecSize));   % (1,:) -> CLG, (2,:) -> HCBN, (3,:) -> MTE
 idx = 1;
 for numTrain=trainVecSize
     fprintf('Processing training size=%d\n', numTrain);
     X_train = X_train_full(1:numTrain,:);
     
     clgObj = clg(X_train, discreteNodes, dag);
-    llVal = clgObj.dataLogLikelihood(X_test);
-    llValVec(idx) = llVal;
+    clgLLVal = clgObj.dataLogLikelihood(X_test);
+    
+    hcbnObj = hcbn(bntPath, X_train, nodeNames, discreteNodeNames, dag);
+    hcbnLLval = hcbnObj.hcbnLogLikelihood(X_test);
+    
+    llValVec(1, idx) = clgLLVal;
+    llValVec(2, idx) = hcbnLLVal;
     idx = idx + 1;
 end
 
-plot(trainVecSize, llValVec); grid on; xlabel('# Training Samples'); ylabel('Log-Likelihood')
+plot(trainVecSize, llValVec(1,:), trainVecSize, llValVec(2,:)); 
+grid on; xlabel('# Training Samples'); ylabel('Log-Likelihood')
+legend('CLG', 'HCBN')
