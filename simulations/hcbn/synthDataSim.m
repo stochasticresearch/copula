@@ -31,7 +31,7 @@ X_test = X(9001:end,:);
 %% perform CLG/HCBN/MTE modeling, parametric to train/test size
 
 % instantiate the CLG object
-trainVecSize = 250:250:5000;
+trainVecSize = 500:500:5000;
 llValVec = zeros(3,length(trainVecSize));   % (1,:) -> CLG, (2,:) -> HCBN, (3,:) -> MTE
 idx = 1;
 for numTrain=trainVecSize
