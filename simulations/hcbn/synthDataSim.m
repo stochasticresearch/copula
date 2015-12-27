@@ -14,7 +14,7 @@ dag(aa,[cc dd]) = 1;
 dag(bb,[dd ee]) = 1;
 discreteNodes = [aa bb];
 nodeNames = {'A', 'B', 'C', 'D', 'E'};
-bntPath = '../../../bnt';
+bntPath = '../bnt';
 discreteNodeNames = {'A','B'};
 
 %% Generate the synthetic data set
@@ -31,7 +31,7 @@ X_test = X(9001:end,:);
 %% perform CLG/HCBN/MTE modeling, parametric to train/test size
 
 % instantiate the CLG object
-trainVecSize = 100:500:9000;
+trainVecSize = 250:250:5000;
 llValVec = zeros(3,length(trainVecSize));   % (1,:) -> CLG, (2,:) -> HCBN, (3,:) -> MTE
 idx = 1;
 for numTrain=trainVecSize
@@ -45,7 +45,7 @@ for numTrain=trainVecSize
     hcbnLLval = hcbnObj.hcbnLogLikelihood(X_test);
     
     llValVec(1, idx) = clgLLVal;
-    llValVec(2, idx) = hcbnLLVal;
+    llValVec(2, idx) = hcbnLLval;
     idx = idx + 1;
 end
 
