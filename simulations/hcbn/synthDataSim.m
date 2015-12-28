@@ -22,8 +22,8 @@ discreteNodeNames = {'A','B'};
 discreteType = {};
 nodeA = [0.4 0.3 0.2 0.1]; discreteType{1} = nodeA;
 nodeB = [0.6 0.1 0.05 0.25]; discreteType{2} = nodeB;
-% continuousType = 'Gaussian';
-continuousType = 'other';
+continuousType = 'Gaussian';
+% continuousType = 'other';
 X = genSynthData(discreteType, continuousType, M);
 
 X_train_full = X(1:9000,:);
@@ -33,7 +33,7 @@ X_test = X(9001:end,:);
 
 % instantiate the CLG object
 trainVecSize = 500:500:5000;
-llValVec = zeros(3,length(trainVecSize));   % (1,:) -> CLG, (2,:) -> HCBN, (3,:) -> MTE
+llValVec = zeros(3,length(trainVecSize));   % (1,:) -> CLG, (2,:) -> MTE, (3,:) -> HCBN
 idx = 1;
 for numTrain=trainVecSize
     fprintf('Processing training size=%d\n', numTrain);
@@ -42,14 +42,18 @@ for numTrain=trainVecSize
     clgObj = clg(X_train, discreteNodes, dag);
     clgLLVal = clgObj.dataLogLikelihood(X_test);
     
+    mteObj = mte(X_train, discreteNodes, dag);
+    mteLLVal = mteObj.dataLogLikelihood(X_test);
+    
     hcbnObj = hcbn(bntPath, X_train, nodeNames, discreteNodeNames, dag);
-    hcbnLLval = hcbnObj.hcbnLogLikelihood(X_test);
+    hcbnLLVal = hcbnObj.hcbnLogLikelihood(X_test);
     
     llValVec(1, idx) = clgLLVal;
-    llValVec(2, idx) = hcbnLLval;
+    llValVec(2, idx) = mteLLVal;
+    llValVec(3, idx) = hcbnLLVal;
     idx = idx + 1;
 end
 
-plot(trainVecSize, llValVec(1,:), trainVecSize, llValVec(2,:)); 
+plot(trainVecSize, llValVec(1,:), trainVecSize, llValVec(2,:), trainVecSize, llValVec(3,:)); 
 grid on; xlabel('# Training Samples'); ylabel('Log-Likelihood')
-legend('CLG', 'HCBN')
+legend('CLG', 'MTE', 'HCBN')

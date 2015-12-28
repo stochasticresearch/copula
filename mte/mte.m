@@ -1,4 +1,4 @@
-classdef clg < handle
+classdef mte < handle
     properties
         dag;        % the Directed Acyclic Graph structure.  The format of
                     % the DAG is an adjancency matrix.  Element (i,j)
@@ -15,7 +15,7 @@ classdef clg < handle
     end
     
     methods
-        function obj = clg(X, discreteNodes, dag)
+        function obj = mte(X, discreteNodes, dag)
             % DAG - Constructs a HCBN object
             %  Inputs:
             %   X - a N x D matrix of the the observable data which the
@@ -45,10 +45,26 @@ classdef clg < handle
                 obj.uniqueVals(ii) = length(unique(X(:,ii)));
             end
             
-            obj.calcClgParams();
+            obj.calcMteParams();
         end
         
-        function [] = calcClgParams(obj)
+        function [parentIdxs] = getParents(obj, node)
+            %GETPARENTS - returns the indices and the names of a nodes
+            %                 parents
+            %
+            % Inputs:
+            %  node - the node index or name of the node for which the
+            %         parents are desired
+            %
+            % Outputs:
+            %  parentIdxs - a vector of the indices of all the parents of
+            %               this node
+            
+            nodeIdx = node;
+            parentIdxs = find(obj.dag(:,nodeIdx))';
+        end
+        
+        function [] = calcMteParams(obj)
             %CALCCLGPARAMS - computes the CLG parameters for the specified
             %DAG with the data the CLG object was initialized with
             
@@ -82,9 +98,8 @@ classdef clg < handle
                     else
                         % node is continuous, estimate as Gaussian and
                         % store paramters
-                        [Mean,Covariance] = normfit(X_univariate);
-                        clgNodeBnParamObj = clgNodeBnParam(node, [], Mean, Covariance);
-                        obj.bnParams{node} = clgNodeBnParamObj;
+                        mte_params = estMteDensity(X_univariate);
+                        obj.bnParams{node} = mte_params;
                     end
                 else
                     % if both the current node and its parents are discrete,
@@ -124,7 +139,7 @@ classdef clg < handle
                         end
                         combos = combos';
                         
-                        % for each combination, estimate the CLG parameter
+                        % for each combination, estimate the MTE parameter
                         numCombos = size(combos,1);
                         nodeBnParams = cell(1,numCombos);
                         nodeBnParamsIdx = 1;
@@ -159,19 +174,18 @@ classdef clg < handle
 
                                     if(size(X_subset_continuous,2)==1)
                                         % estimate univariate Gaussian parameters
-                                        [Mean,Covariance] = normfit(X_subset_continuous);
+                                        mte_info = estMteDensity(X_subset_continuous);
                                     else
                                         % estimate the Multivariate Gaussian parameters
-                                        [Mean, Covariance] = ecmnmle(X_subset_continuous);
+                                        error('Currently unsupported!');
                                     end
                                 else
-                                    fprintf('In HERE?? CLG\n');
+                                    fprintf('In HERE?? MTE\n');
                                     domain = 1:10;
                                     f = 0.00001*ones(1,10);
                                     mte_info = rvEmpiricalInfo(domain, f, []);
                                 end
-                                nodeBnParam = clgNodeBnParam(node, combo, Mean, Covariance);
-                                nodeBnParams{nodeBnParamsIdx} = nodeBnParam;
+                                nodeBnParams{nodeBnParamsIdx} = mteNodeBnParam(node, combo, mte_info);
                                 nodeBnParamsIdx = nodeBnParamsIdx + 1;
                             end
                         end
@@ -181,22 +195,6 @@ classdef clg < handle
             end
         end
         
-        function [parentIdxs] = getParents(obj, node)
-            %GETPARENTS - returns the indices and the names of a nodes
-            %                 parents
-            %
-            % Inputs:
-            %  node - the node index or name of the node for which the
-            %         parents are desired
-            %
-            % Outputs:
-            %  parentIdxs - a vector of the indices of all the parents of
-            %               this node
-            
-            nodeIdx = node;
-            parentIdxs = find(obj.dag(:,nodeIdx))';
-        end
-
         function [llVal] = dataLogLikelihood(obj, X)
             %DATALOGLIKELIHOOD - calculates the log-likelihood of the given
             %dataset to the calculated model of the data
@@ -209,27 +207,19 @@ classdef clg < handle
             for nn=1:M
                 nodeProb = 1;
                 for node=1:obj.D
-                    nodeBnParam = obj.bnParams{node};
-                    if(isa(nodeBnParam, 'rvEmpiricalInfo'))
-                        % discrete root node
+                    parentNodes = obj.getParents(node);
+                    if(isempty(parentNodes))
+                        nodeBnParam = obj.bnParams{node};
                         nodeProb = nodeProb * nodeBnParam.queryDensity(X(nn,node));
-                    elseif(length(nodeBnParam)==1)
-                        % continuous root node
-                        nodeProb = nodeProb * normpdf(X(nn,node), nodeBnParam.Mean, nodeBnParam.Covariance);
                     else
-                        % leaf node - first we find the parents of this
-                        % leaf node, get the appropriate data
                         parentNodes = obj.getParents(node);
                         X_parent = X(nn,parentNodes);
-                        
-                        % search for the correct combination & calculate
-                        % the probability for the datapoint
+                        % find the correct combo
                         numCombos = length(obj.bnParams{node});
                         for combo=1:numCombos
                             if(isequal(X_parent,obj.bnParams{node}{combo}.combo))
-                                Mean = obj.bnParams{node}{combo}.Mean;
-                                Covariance = obj.bnParams{node}{combo}.Covariance;
-                                nodeProb = nodeProb * mvnpdf(X(nn,node), Mean, Covariance);
+                                mte_info = obj.bnParams{node}{combo}.mte_info;
+                                nodeProb = nodeProb * mte_info.queryDensity(X(nn,node));
                                 break;
                             end
                         end
@@ -237,6 +227,7 @@ classdef clg < handle
                 end
                 llVal = llVal + log(nodeProb);
             end
-        end        
+        end
+        
     end
 end

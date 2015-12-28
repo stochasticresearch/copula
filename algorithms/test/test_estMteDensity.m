@@ -2,21 +2,19 @@ clear;
 clc;
 
 % Test script for estMteDensity
-x = normrnd(0,1,1,1000);
+x = normrnd(0,1,1000,1);
 [f,xi] = ksdensity(x);
-mte_params = estMteDensity(x);
+mte_estimate = estMteDensity(x);
 
-% reconstruct the pdf from the MTE
-mte_pdf_estimate = [];
-for ii=1:length(mte_params)
-    x = mte_params{ii}.xi_subset;
-    a = mte_params{ii}.a; b = mte_params{ii}.b;
-    c = mte_params{ii}.c; d = mte_params{ii}.d;
-    mte_subset_reconstruct = a*exp(b*x)+c*exp(d*x);
-    mte_pdf_estimate = [mte_pdf_estimate; mte_subset_reconstruct];
-end
-
-plot(xi,f,xi,mte_pdf_estimate);
+plot(xi,f,mte_estimate.domain,mte_estimate.density);
 grid on;
 xlabel('x')
 legend('KDE', 'MTE')
+
+refLikelihood = -1*normlike([0,1],x)
+
+mteLLVal = 0;
+for ii=1:1000
+    mteLLVal = mteLLVal + log(mte_estimate.queryDensity(x(ii)));
+end
+mteLLVal
