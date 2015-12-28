@@ -3,7 +3,7 @@ clear;
 clc;
 
 %% setup global parameters
-M = 10000; D = 5;
+D = 5;
 
 %       A   B      
 %      / \ / \
@@ -22,38 +22,66 @@ discreteNodeNames = {'A','B'};
 discreteType = {};
 nodeA = [0.4 0.3 0.2 0.1]; discreteType{1} = nodeA;
 nodeB = [0.6 0.1 0.05 0.25]; discreteType{2} = nodeB;
-continuousType = 'Gaussian';
-% continuousType = 'other';
-X = genSynthData(discreteType, continuousType, M);
-
-X_train_full = X(1:9000,:);
-X_test = X(9001:end,:);
 
 %% perform CLG/HCBN/MTE modeling, parametric to train/test size
 
 % instantiate the CLG object
-trainVecSize = 500:500:5000;
-llValVec = zeros(3,length(trainVecSize));   % (1,:) -> CLG, (2,:) -> MTE, (3,:) -> HCBN
-idx = 1;
-for numTrain=trainVecSize
-    fprintf('Processing training size=%d\n', numTrain);
-    X_train = X_train_full(1:numTrain,:);
-    
-    clgObj = clg(X_train, discreteNodes, dag);
-    clgLLVal = clgObj.dataLogLikelihood(X_test);
-    
-    mteObj = mte(X_train, discreteNodes, dag);
-    mteLLVal = mteObj.dataLogLikelihood(X_test);
-    
-    hcbnObj = hcbn(bntPath, X_train, nodeNames, discreteNodeNames, dag);
-    hcbnLLVal = hcbnObj.hcbnLogLikelihood(X_test);
-    
-    llValVec(1, idx) = clgLLVal;
-    llValVec(2, idx) = mteLLVal;
-    llValVec(3, idx) = hcbnLLVal;
-    idx = idx + 1;
+numMCSims = 10; numTest = 1000;
+trainVecSize = 500:250:2000;
+M = max(trainVecSize)+numTest; 
+% (1,:) -> CLG-Gaussian, (2,:) -> MTE-Gaussian, (3,:) -> HCBN-Gaussian
+% (4,:) -> CLG-Other     (5,:) -> MTE-Other     (6,:) -> HCBN-Other
+llValMat = zeros(6,length(trainVecSize),numMCSims);   
+for mcSimNumber=1:numMCSims
+    idx = 1;
+    for numTrain=trainVecSize
+
+        fprintf('Processing training size=%d -- MC Sim #=%d\n', numTrain, mcSimNumber);
+
+        continuousType = 'Gaussian';
+        X = genSynthData(discreteType, continuousType, M);
+        X_train_full = X(1:max(trainVecSize),:);
+        X_test = X(max(trainVecSize)+1:end,:);
+        X_train = X_train_full(1:numTrain,:);
+
+        clgObj = clg(X_train, discreteNodes, dag); clgLLVal_Gaussian = clgObj.dataLogLikelihood(X_test);
+        mteObj = mte(X_train, discreteNodes, dag); mteLLVal_Gaussian = mteObj.dataLogLikelihood(X_test);
+        hcbnObj = hcbn(bntPath, X_train, nodeNames, discreteNodeNames, dag); hcbnLLVal_Guassian = hcbnObj.hcbnLogLikelihood(X_test);
+
+        continuousType = 'other';
+        X = genSynthData(discreteType, continuousType, M);
+        X_train_full = X(1:max(trainVecSize),:);
+        X_test = X(max(trainVecSize)+1:end,:);
+        X_train = X_train_full(1:numTrain,:);
+
+        clgObj = clg(X_train, discreteNodes, dag); clgLLVal_Other = clgObj.dataLogLikelihood(X_test);
+        mteObj = mte(X_train, discreteNodes, dag); mteLLVal_Other = mteObj.dataLogLikelihood(X_test);
+        hcbnObj = hcbn(bntPath, X_train, nodeNames, discreteNodeNames, dag); hcbnLLVal_Other = hcbnObj.hcbnLogLikelihood(X_test);
+
+        llValMat(1, idx, mcSimNumber) = clgLLVal_Gaussian;
+        llValMat(2, idx, mcSimNumber) = mteLLVal_Gaussian;
+        llValMat(3, idx, mcSimNumber) = hcbnLLVal_Guassian;
+        llValMat(4, idx, mcSimNumber) = clgLLVal_Other;
+        llValMat(5, idx, mcSimNumber) = mteLLVal_Other;
+        llValMat(6, idx, mcSimNumber) = hcbnLLVal_Other;
+        idx = idx + 1;
+    end
 end
 
-plot(trainVecSize, llValVec(1,:), trainVecSize, llValVec(2,:), trainVecSize, llValVec(3,:)); 
-grid on; xlabel('# Training Samples'); ylabel('Log-Likelihood')
-legend('CLG', 'MTE', 'HCBN')
+% average the monte-carlo simulations
+llValsAvg = mean(llValMat,3);
+gaussRef = llValsAvg(1,:);
+otherRef = llValsAvg(4,:);
+plot(trainVecSize, gaussRef./llValsAvg(1,:), 'b*-.', ...
+     trainVecSize, gaussRef./llValsAvg(2,:), 'r*-.', ...
+     trainVecSize, gaussRef./llValsAvg(3,:), 'k*-.', ...
+     trainVecSize, otherRef./llValsAvg(4,:), 'b+-.', ...
+     trainVecSize, otherRef./llValsAvg(5,:), 'r+-.', ...
+     trainVecSize, otherRef./llValsAvg(6,:), 'k+-.'); 
+grid on; xlabel('# Training Samples'); title(sprintf('Relative Log-Likelihood with %d MC Simulations',numMCSims));
+legend('CLG (Gaussian)', ...
+       'MTE (Gaussian)', ...
+       'HCBN (Gaussian)', ...
+       'CLG (Other)', ...
+       'MTE (Other)', ...
+       'HCBN (Other)')

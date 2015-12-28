@@ -180,7 +180,7 @@ classdef mte < handle
                                         error('Currently unsupported!');
                                     end
                                 else
-                                    fprintf('In HERE?? MTE\n');
+                                    fprintf('MTE COMBO not found!!\n');
                                     domain = 1:10;
                                     f = 0.00001*ones(1,10);
                                     mte_info = rvEmpiricalInfo(domain, f, []);

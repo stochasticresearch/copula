@@ -158,17 +158,24 @@ classdef clg < handle
                                     end
 
                                     if(size(X_subset_continuous,2)==1)
-                                        % estimate univariate Gaussian parameters
-                                        [Mean,Covariance] = normfit(X_subset_continuous);
+                                        if(size(X_subset_continuous,1)==1)
+                                            % here, we only found one
+                                            % data-point in our dataset, so
+                                            % use default Gaussian
+                                            % parameters
+                                            Mean = 0; Covariance = 1;
+                                        else
+                                            % estimate univariate Gaussian parameters
+                                            [Mean,Covariance] = normfit(X_subset_continuous);
+                                        end
                                     else
                                         % estimate the Multivariate Gaussian parameters
                                         [Mean, Covariance] = ecmnmle(X_subset_continuous);
                                     end
                                 else
-                                    fprintf('In HERE?? CLG\n');
-                                    domain = 1:10;
-                                    f = 0.00001*ones(1,10);
-                                    mte_info = rvEmpiricalInfo(domain, f, []);
+                                    fprintf('CLG COMBO not found!\n');
+                                    % use default Gaussian Parameters
+                                    Mean = 0; Covariance = 1;
                                 end
                                 nodeBnParam = clgNodeBnParam(node, combo, Mean, Covariance);
                                 nodeBnParams{nodeBnParamsIdx} = nodeBnParam;
