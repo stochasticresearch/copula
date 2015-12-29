@@ -69,7 +69,7 @@ classdef hcbn < handle
             %   [ ] - 
             %
             
-            obj.DEBUG_MODE = 0;
+            obj.DEBUG_MODE = 1;
             
             % add BNT to the path
             addpath(genpath(bntPath));
@@ -315,7 +315,7 @@ classdef hcbn < handle
             
             % generate U from the copula that was "learned"
             copFam = obj.copulaFamilies{nodeIdx};
-            if(strcmpi(copFam, 'empirical'))
+            if(strcmpi(copFam.type, 'empirical'))
                 U = empcopularnd(copFam.c, M);
             else
                 U = copularnd('Gaussian', copFam.Rho, M);
@@ -326,9 +326,7 @@ classdef hcbn < handle
             allIdxs = [nodeIdx copFam.parentNodeIdxs];
             for ii=1:M
                 for dd=1:D_family
-                    X(ii,dd) = interp1(obj.empInfo{allIdxs(dd)}.distribution,...
-                                       obj.empInfo{allIdxs(dd)}.domain,...
-                                       U(ii,dd),'linear','extrap');
+                    X(ii,dd) = obj.empInfo{allIdxs(dd)}.invDistribution(U(ii,dd));
                 end
             end
         end

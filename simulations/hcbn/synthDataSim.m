@@ -26,7 +26,7 @@ nodeB = [0.6 0.1 0.05 0.25]; discreteType{2} = nodeB;
 %% perform CLG/HCBN/MTE modeling, parametric to train/test size
 
 % instantiate the CLG object
-numMCSims = 10; numTest = 1000;
+numMCSims = 3; numTest = 1000;
 trainVecSize = 500:250:2000;
 M = max(trainVecSize)+numTest; 
 % (1,:) -> CLG-Gaussian, (2,:) -> MTE-Gaussian, (3,:) -> HCBN-Gaussian

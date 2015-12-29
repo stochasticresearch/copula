@@ -1,9 +1,6 @@
 % The main script, which performs simulations for both the BN and HCBN
 % variants with the specified data
 
-% TODO: [ ] - Figure out why copula generation balks when training size >
-%             generation size?  Must be a bug in the regeneration part
-
 clear;
 clc;
 

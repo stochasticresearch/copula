@@ -57,6 +57,25 @@ classdef rvEmpiricalInfo
             val = rvEmpiricalInfo.adjustVal(obj.distribution(idx));
         end
         
+        function [idx, distributionVal] = findClosestDistributionVal(obj, q)
+            if(q > obj.distribution(end))
+                distributionVal = obj.distribution(end);
+                idx = length(obj.distribution);
+            elseif(q < obj.distribution(1))
+                distributionVal = obj.distribution(1);
+                idx = 1;
+            else
+                tmp = abs(obj.distribution-q);
+                [~, idx] = min(tmp); %index of closest value
+                distributionVal = obj.distribution(idx); %closest value
+            end
+        end
+        
+        function [val] = invDistribution(obj, u)
+            idx = obj.findClosestDistributionVal(u);
+            val = obj.domain(idx);
+        end
+        
     end
     
 end
