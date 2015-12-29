@@ -290,6 +290,49 @@ classdef hcbn < handle
             end
         end
         
+        function [X] = genFamilySamples(obj, node, M)
+            %GENFAMILYSAMPLES - generates samples from a specified family
+            % Inputs:
+            %  node - the child node, whose family is sampled
+            %  M - the number of samples to generate
+            % Outputs:
+            %  X - the samples from the family associated with the input
+            %      node.  The columns of X are [node, parent1, parent2 ...]
+            
+            if(ischar(node))
+                % node name was provided
+                nodeName = node;
+                for ii=1:obj.D
+                    if(isequal(nodeName, obj.nodeNames{ii}))
+                        nodeIdx = ii;
+                        break;
+                    end
+                end
+            else
+                % assume node index was provided
+                nodeIdx = node;
+            end
+            
+            % generate U from the copula that was "learned"
+            copFam = obj.copulaFamilies{nodeIdx};
+            if(strcmpi(copFam, 'empirical'))
+                U = empcopularnd(copFam.c, M);
+            else
+                U = copularnd('Gaussian', copFam.Rho, M);
+            end
+            D_family = size(U,2);
+            X = zeros(size(U));
+            % invert each U appropriately to generate X
+            allIdxs = [nodeIdx copFam.parentNodeIdxs];
+            for ii=1:M
+                for dd=1:D_family
+                    X(ii,dd) = interp1(obj.empInfo{allIdxs(dd)}.distribution,...
+                                       obj.empInfo{allIdxs(dd)}.domain,...
+                                       U(ii,dd),'linear','extrap');
+                end
+            end
+        end
+        
         function [ ll_val ] = hcbnLogLikelihood(obj, X)
             %HCBNLOGLIKELIHOOD - calculates the log-likelihood of the HCBN
             %                    model to the provided data
