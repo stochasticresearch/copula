@@ -83,7 +83,7 @@ classdef hcbn < handle
             
             obj.dag = zeros(obj.D,obj.D);
             
-            obj.K = 25;     % hard coded to 25, which seems to be a
+            obj.K = 100;    % hard coded, this value seems to be a
                             % reasonable tradeoff between accuracy and
                             % memory/computational requirements
             
@@ -126,16 +126,14 @@ classdef hcbn < handle
             %              and the empirical density function via kernel
             %              based methods
             for ii=1:obj.D
-                % estimate the ECDF
-                M = size(obj.X,1);
-                [F,x] = ecdf(obj.X(:,ii));
-                F = F(2:end);
-                x = x(2:end);
-                
                 % check if this is a discrete or continuous node for
-                % density estimation
+                % density estimation, we handle these separately
                 if(any(obj.discNodeIdxs==ii))
-                    % means this is a discrete node, we handle separately
+                    M = size(obj.X,1);
+                    [F,x] = ecdf(obj.X(:,ii));
+                    F = F(2:end);
+                    x = x(2:end);
+                
                     f = zeros(1,length(x));
                     idx = 1;
                     for jj=1:length(x)
@@ -143,7 +141,8 @@ classdef hcbn < handle
                         idx = idx + 1;
                     end
                 else
-                    f = ksdensity(obj.X(:,ii),x);
+                    [f,x] = ksdensity(obj.X(:,ii));
+                    F = ksdensity(obj.X(:,ii),'function','cdf');
                 end
                 empInfoObj = rvEmpiricalInfo(x, f, F);
                 obj.empInfo{ii} = empInfoObj;

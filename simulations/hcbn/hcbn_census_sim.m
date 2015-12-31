@@ -48,8 +48,8 @@ for ii=1:numDataPts
     end
 end
 
-X_train = X(1:2000,:);
-X_test = X(1:1000,:);
+X_train = X(1:3000,:);
+X_test = X(10000:11000,:);
 fprintf('Generating HCBN model\n');
 % setup HCBN object
 nodeNames = {'age', 'workclass', 'fnlwgt', 'education', 'education-num', ...
@@ -62,27 +62,30 @@ discreteNodeNames = {nodeNames{2}, nodeNames{4}, nodeNames{6}, nodeNames{7}, ...
 D = length(nodeNames);
 
 dag = zeros(D,D);
+continuousIdx = 1;
+idx1 = 3;
+idx2 = 6;
 % construct the DAG so we can show interesting graphs, we'd like to show
 % the probabilistic modeling of age & occupation, and age & marital-status
 % versus the collected data (this is a continuous parent w/ discrete
 % children scenario)
-dag(3,6) = 1; dag(3,8) = 1;
+dag(continuousIdx,idx1) = 1; dag(continuousIdx,idx2) = 1;
 
 % instantiate hcbn object
 hcbnObj = hcbn(bntPath, X_train, nodeNames, discreteNodeNames, dag);
 
 fprintf('Generating samples from model\n');
-tvec1 = hcbnObj.genFamilySamples('martial-status', 1000);
-tvec2 = hcbnObj.genFamilySamples('relationship', 1000);
+tvec1 = hcbnObj.genFamilySamples('fnlwgt', 1000);
+tvec2 = hcbnObj.genFamilySamples('martial-status', 1000);
 
 h1 = subplot(2,2,1); 
-scatter(X_test(:,3),X_test(:,6)); grid on; xlabel('FNLWGT'); ylabel('Martial Status'); title('True Data')
+scatter(X_test(:,continuousIdx),X_test(:,idx1)); grid on; xlabel('Age'); ylabel('FNLWGT'); title('True Data')
 h2 = subplot(2,2,2); 
-scatter(tvec1(:,2),tvec1(:,1)); grid on; xlabel('FNLWGT'); ylabel('Martial Status'); title('HCBN Generative Model')
+scatter(tvec1(:,2),tvec1(:,1)); grid on; xlabel('Age'); ylabel('FNLWGT'); title('HCBN Generative Model')
 h3 = subplot(2,2,3); 
-scatter(X_test(:,3),X_test(:,8)); grid on; xlabel('FNLWGT'); ylabel('Relationship'); title('True Data')
+scatter(X_test(:,continuousIdx),X_test(:,idx2)); grid on; xlabel('Age'); ylabel('Martial-Status'); title('True Data')
 h4 = subplot(2,2,4); 
-scatter(tvec2(:,2),tvec2(:,1)); grid on; xlabel('FNLWGT'); ylabel('Relationship'); title('HCBN Generative Model')
+scatter(tvec2(:,2),tvec2(:,1)); grid on; xlabel('Age'); ylabel('Martial-Status'); title('HCBN Generative Model')
 
 linkaxes([h1,h2],'xy')
 linkaxes([h3,h4],'xy')
