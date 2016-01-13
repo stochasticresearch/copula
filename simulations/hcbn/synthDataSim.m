@@ -2,7 +2,9 @@
 clear;
 clc;
 
-%% setup global parameters
+tic
+
+% setup global parameters
 D = 5;
 
 %       A   B      
@@ -17,16 +19,16 @@ nodeNames = {'A', 'B', 'C', 'D', 'E'};
 bntPath = '../bnt';
 discreteNodeNames = {'A','B'};
 
-%% Generate the synthetic data set
+% Generate the synthetic data set
 
 discreteType = {};
 nodeA = [0.4 0.3 0.2 0.1]; discreteType{1} = nodeA;
 nodeB = [0.6 0.1 0.05 0.25]; discreteType{2} = nodeB;
 
-%% perform CLG/HCBN/MTE modeling, parametric to train/test size
+% perform CLG/HCBN/MTE modeling, parametric to train/test size
 
 % instantiate the CLG object
-numMCSims = 3; numTest = 1000;
+numMCSims = 100; numTest = 1000;
 trainVecSize = 500:250:2000;
 M = max(trainVecSize)+numTest; 
 % (1,:) -> CLG-Gaussian, (2,:) -> MTE-Gaussian, (3,:) -> HCBN-Gaussian
@@ -64,24 +66,36 @@ for mcSimNumber=1:numMCSims
         llValMat(4, idx, mcSimNumber) = clgLLVal_Other;
         llValMat(5, idx, mcSimNumber) = mteLLVal_Other;
         llValMat(6, idx, mcSimNumber) = hcbnLLVal_Other;
+                
         idx = idx + 1;
     end
+    
+    % save off results after every MC sim
+    fnameToSave = sprintf('/home/kiran/ownCloud/PhD/sim_results/llValMat_%d.mat', mcSimNumber);
+    save(fnameToSave, 'llValMat');
+
 end
 
 % average the monte-carlo simulations
 llValsAvg = mean(llValMat,3);
 gaussRef = llValsAvg(1,:);
 otherRef = llValsAvg(4,:);
-plot(trainVecSize, gaussRef./llValsAvg(1,:), 'b*-.', ...
-     trainVecSize, gaussRef./llValsAvg(2,:), 'r*-.', ...
-     trainVecSize, gaussRef./llValsAvg(3,:), 'k*-.', ...
-     trainVecSize, otherRef./llValsAvg(4,:), 'b+-.', ...
-     trainVecSize, otherRef./llValsAvg(5,:), 'r+-.', ...
-     trainVecSize, otherRef./llValsAvg(6,:), 'k+-.'); 
-grid on; xlabel('# Training Samples'); title(sprintf('Relative Log-Likelihood with %d MC Simulations',numMCSims));
+set(gca,'fontsize',18)
+hold on;
+plot(trainVecSize, gaussRef./llValsAvg(1,:), 'b*-.', 'LineWidth',2);
+plot(trainVecSize, gaussRef./llValsAvg(2,:), 'r*-.', 'LineWidth',2);
+plot(trainVecSize, gaussRef./llValsAvg(3,:), 'k*-.', 'LineWidth',2);
+plot(trainVecSize, otherRef./llValsAvg(4,:), 'b+-.', 'LineWidth',2);
+plot(trainVecSize, otherRef./llValsAvg(5,:), 'r+-.', 'LineWidth',2);
+plot(trainVecSize, otherRef./llValsAvg(6,:), 'k+-.', 'LineWidth',2);
+grid on; xlabel('# Training Samples'); 
 legend('CLG (Gaussian)', ...
        'MTE (Gaussian)', ...
        'HCBN (Gaussian)', ...
        'CLG (Other)', ...
        'MTE (Other)', ...
        'HCBN (Other)')
+hold off;
+save('/home/kiran/ownCloud/PhD/synthDataSim.mat')
+
+toc

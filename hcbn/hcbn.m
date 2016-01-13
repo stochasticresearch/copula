@@ -69,7 +69,7 @@ classdef hcbn < handle
             %   [ ] - 
             %
             
-            obj.DEBUG_MODE = 1;
+            obj.DEBUG_MODE = 0;
             
             % add BNT to the path
             addpath(genpath(bntPath));
