@@ -76,11 +76,30 @@ for mcSimNumber=1:numMCSims
 
 end
 
+%% 
+clear;
+clc;
+
+load('/home/kiran/ownCloud/PhD/sim_results/llValMat_100.mat');
+numMCSims = 100;
+trainVecSize = 500:250:2000;
+
 % average the monte-carlo simulations
-llValsAvg = mean(llValMat,3);
+llValMatIdxs = isfinite(llValMat);
+llValMatFiniteIdxs = [];
+% find MC sim number which doesn't have any NaN's or +/- INFs
+for mcSimNumber=1:numMCSims
+    if(sum(any(llValMatIdxs(:,:,mcSimNumber)==0))==0)
+        llValMatFiniteIdxs = [llValMatFiniteIdxs mcSimNumber];
+    else
+        fprintf('Found bad at %d\n', mcSimNumber);
+    end
+end
+
+llValsAvg = mean(llValMat(:,:,llValMatFiniteIdxs),3);
 gaussRef = llValsAvg(1,:);
 otherRef = llValsAvg(4,:);
-set(gca,'fontsize',18)
+set(gca,'fontsize',30)
 hold on;
 plot(trainVecSize, gaussRef./llValsAvg(1,:), 'b*-.', 'LineWidth',2);
 plot(trainVecSize, gaussRef./llValsAvg(2,:), 'r*-.', 'LineWidth',2);
