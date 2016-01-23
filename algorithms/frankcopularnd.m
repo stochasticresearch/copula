@@ -21,15 +21,15 @@ else
     U = zeros(M,N);
     for ii=1:M
         p = -1.0*expm1(-1*alpha);
-        if(p==1)
+        if (abs(1 - p) <= eps(p))
             % boundary protection
             p = 1 - eps;
         end
-        v = logserrnd(p, 1);
+        vv = logserrnd(p, 1);
         
         % sample N independent uniform random variables
         x_i = rand(1,N);
-        t = -1*log(x_i)./v;
+        t = -1*log(x_i)./vv;
         U(ii,:) = -1.0*log1p( exp(-t)*expm1(-1.0*alpha))/alpha;
     end
     
