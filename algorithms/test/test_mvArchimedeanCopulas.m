@@ -18,6 +18,6 @@ figure;
 plotmatrix(U_frank);
 title('Multivariate Frank Copula')
 
-% figure;
-% plotmatrix(U_gumbel);
-% title('Multivariate Gumbel Copula')
+figure;
+plotmatrix(U_gumbel);
+title('Multivariate Gumbel Copula')

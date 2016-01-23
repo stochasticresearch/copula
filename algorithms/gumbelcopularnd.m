@@ -22,13 +22,13 @@ else
         g  = cos(pi/(2.0*alpha)).^alpha;
         d  = 0;
         pm = 1;
-        v = rstable1(1,a,b,g,d,pm);
+        vv = rstable1(1,a,b,g,d,pm);
         
         % sample N independent uniform random variables
         x_i = rand(1,N);
-        t = -1*log(x_i)./v;
+        t = -1*log(x_i)./vv;
         
-        U(ii,:) = exp(-1*(t.^1.0/alpha));
+        U(ii,:) = exp(-1*(t.^(1.0/alpha)));
     end
     
 end % if
