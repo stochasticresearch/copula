@@ -4,7 +4,7 @@ function [ y ] = rstable1(n, alpha, beta, gamma, delta, pm)
 %    - rstable1.R
 %    - retstable.c
 
-y = rstable_c(n, alpha) * gamma + delta;
+    y = rstable_c(n, alpha) * gamma + delta;
 
 end
 
@@ -24,6 +24,7 @@ function [ y ] = rstable0(alpha)
             if(W~=0)
                 break;
             end
+        end
         y = (A(pi*U,alpha)/(W.^(1.0-alpha)) ).^(1.0/alpha);
     end
 end
