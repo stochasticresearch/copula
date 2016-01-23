@@ -8,8 +8,19 @@ function [ y ] = logserrnd( p, n )
 %  y - the random variates
 
 % We approximate the log-series distribution by converting it to a multinomial
-% distribution with K = 20
+% distribution with K = 20 (default)
 K = 20;
+
+nVarargs = length(varargin);
+if(nVarargs==1)
+    K = varargin{1};
+    % validate it is an integer below 50
+    if(~isnumeric(K) || K>20)
+        warning('Invalid varargin{1}, defaulting to K=20');
+        K = 20;
+    end
+end
+
 probvec = zeros(1,K);
 for kk=1:K
     probvec(kk) = - p^kk ./ (kk*log(1-p));

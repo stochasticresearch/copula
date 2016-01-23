@@ -22,7 +22,7 @@ else
     for ii=1:M
         p = -1.0*expm1(-1*alpha);
         if(p==1)
-            % boundary case protection
+            % boundary protection
             p = 1 - eps;
         end
         v = logserrnd(p, 1);
