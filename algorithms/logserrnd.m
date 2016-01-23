@@ -29,13 +29,8 @@ for kk=1:K
     probvec(kk) = - p^kk ./ (kk*log(1-p));
 end
 
-probvec
-
 % normalize probvec to sum to 1
 probvec = probvec/sum(probvec);
-
-probvec
-sum(probvec)
 
 pd = makedist('Multinomial','Probabilities',probvec);
 
