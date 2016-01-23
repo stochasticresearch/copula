@@ -14,7 +14,7 @@ if(N==2)
 else
     % Algorithm 1 described in both the SAS Copula Procedure, as well as the
     % paper: "High Dimensional Archimedean Copula Generation Algorithm"
-    U = zeros(M,N)
+    U = zeros(M,N);
     for ii=1:M
         shape = 1.0/alpha;
         scale = 1;
