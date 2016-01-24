@@ -17,7 +17,7 @@ frank.cop <- frankCopula(alpha, dim=3)
 gumbel.cop <- gumbelCopula(alpha, dim=3)
 
 ## generate input to unit hypercube
-uu <- seq(0,1,0.1)
+uu <- seq(0.1,0.99,0.1)
 u <- expand.grid(uu,uu,uu)
 
 sz <- nrow(u)
