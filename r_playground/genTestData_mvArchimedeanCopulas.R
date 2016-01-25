@@ -7,10 +7,15 @@ cat("\014")
 ## hardcoded, but for now not sure how to handle this in R :/
 setwd("/home/kiran/phd_code/copula/r_playground/")
 
-## Generate Clayton Copula data
-library(copula)
+## unload any existing loaded copula packages
+#detach("package:copula", unload=TRUE)
+library(copula, lib.loc="/home/kiran/R_sources/install")  ## load our personal copula library, where we
+                                                          ## made small print-outs to understand better what was
+                                                          ## going on with some of the code :)
 library(utils)
 
+
+## Generate data
 alpha <- 4;
 clayton.cop <- claytonCopula(alpha, dim=3)
 frank.cop <- frankCopula(alpha, dim=3)
@@ -32,6 +37,8 @@ for(ii in 1:sz)
   frankpdf[ii] <- dCopula(unlist(u[ii,]),frank.cop)
   gumbelpdf[ii] <- dCopula(unlist(u[ii,]),gumbel.cop)
 }
+
+##dCopula(c(0.1,0.1,0.1),gumbel.cop)
 
 write.table(u, file = "testfiles/mvArchimedeanCopula_input.csv", sep = ",",
             row.names = FALSE, col.names = FALSE)
