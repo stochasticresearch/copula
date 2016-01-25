@@ -1,10 +1,10 @@
-function [ y ] = claytoncopulapdf( u, alpha, varargin )
-%GUMBELCOPULAPDF Computes the PDF of the Clayton Copula for N>=2
+function [ y ] = frankcopulapdf( u, alpha, varargin )
+%GUMBELCOPULAPDF Computes the PDF of the Frank Copula for N>=2
 % Inputs:
-%  u - an M x N matrix of all the points over which to compute the Clayton
+%  u - an M x N matrix of all the points over which to compute the Frank
 %      copula PDF, M is the number of points in a unit-hypercube of
 %      dimension N
-%  alpha - the dependency parameter of the Clayton copula.  
+%  alpha - the dependency parameter of the Frank copula.  
 %      Please NOTE!! There is a difference in terminology between Mathworks
 %      and R, in R (and seemingly in academic literature), theta is used as
 %      the dependency parameter, and alpha = 1/theta.  Mathworks seems to
@@ -15,6 +15,7 @@ function [ y ] = claytoncopulapdf( u, alpha, varargin )
 % Optional Inputs:
 %  varargin{1} - if 0, then compute pdf directly, 
 %                else, compute log of pdf at specified value
+%
 % Outputs:
 %  y - the value of the Clayton copula density at the specified value in
 %      the unit hypercube
@@ -33,45 +34,24 @@ else
     if(isnumeric(varargin{1}))
         wantLog = varargin{1};
     else
-        warning('Invalid varargin{1} for claytoncopulapdf, defaulting to LOG=FALSE');
+        warning('Invalid varargin{1} for frankcopulapdf, defaulting to LOG=FALSE');
         wantLog = 0;
     end
 end
 
-
 [~,N] = size(u);
-if(N==2)
-    y = copulapdf('Clayton', u, alpha);
-else
-    % compute log of the pdf
-    lu = sum(log(u),2);
-    t = sum(iPsi_clayton(u, alpha), 2);
-    y = sum(log1p(alpha*(0:N-1))) - (1+alpha)*lu - (N + 1.0/alpha)*log1p(t);
-    % exponentiate the result if the desired value is not the log version
-    if(~wantLog)
-        y = exp(y);
-    end
-end
 
-end
+u_sum = sum(u,2);
+lp  = log1mexp(alpha);    % log(1 - exp(-alpha))
+lpu = log1mexp(alpha*u); % log(1 - exp(-alpha * u))
+lu  = sum(lpu,2);
 
-function [ y ] = iPsi_clayton( u, alpha, varargin )
+Li_arg = lp + sum(lpu-lp,2);
+Li = log(polylog(-(N-1), exp(Li_arg)));
+y = (N-1)*log(alpha) + Li - alpha*u_sum - lu;
 
-nVarargs = length(varargin);
-if(nVarargs==0)
-    useLog = 0;
-else
-    if(isnumeric(varargin{1}))
-        useLog = varargin{1};
-    else
-        warning('Invalid varargin{1} for iPsi_clayton, defaulting to LOG=FALSE');
-        useLog = 0;
-    end
-end
-
-y = u.^(-alpha) - 1;
-if(useLog)
-    y = log(y);
+if(~wantLog)
+    y = exp(y);
 end
 
 end
