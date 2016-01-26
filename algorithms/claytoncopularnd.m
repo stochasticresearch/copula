@@ -10,7 +10,7 @@ function [ U ] = claytoncopularnd( M, N, alpha )
 %  U - an M x N matrix of generated samples
 
 if(N==2)
-    U = copularnd('Clayton', alpha, N);
+    U = copularnd('Clayton', alpha, M);
 else
     % Algorithm 1 described in both the SAS Copula Procedure, as well as the
     % paper: "High Dimensional Archimedean Copula Generation Algorithm"

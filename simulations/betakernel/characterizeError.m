@@ -21,107 +21,154 @@ Rho_3D = [1 0.3 0.6; 0.3 1 0.7; 0.6 0.7 1];
 Rho_4D = [1 0.3 0.6 0.4; 0.3 1 0.7 0.1; 0.6 0.7 1 0.2; 0.4 0.1 0.2 1];
 nu = 1;
 alpha = 6;
+numECDFPts = 100;
 
 % define the marginal distributions to be multinomial distributions, you
 % should also parametrize this with different probabilities and for
 % different number of discrete outcomes
-F_X1 = makedist('Multinomial','Probabilities',[0.2 0.2 0.2 0.2 0.2]);
-F_X2 = makedist('Multinomial','Probabilities',[0.5 0.1 0.1 0.1 0.2]);
-F_X3 = makedist('Multinomial','Probabilities',[0.9 0.01 0.01 0.04 0.4]);
-F_X4 = makedist('Multinomial','Probabilities',[0.2 0.3 0.4 0.05 0.05]);
-F_X = {F_X1, F_X2, F_X3, F_X4};
+discreteMarginalDist_1 = makedist('Multinomial','Probabilities',[0.2 0.2 0.2 0.2 0.2]);
+discreteMarginalDist_2 = makedist('Multinomial','Probabilities',[0.5 0.1 0.1 0.1 0.2]);
+discreteMarginalDist_3 = makedist('Multinomial','Probabilities',[0.9 0.01 0.01 0.04 0.04]);
+discreteMarginalDist_4 = makedist('Multinomial','Probabilities',[0.2 0.3 0.4 0.05 0.05]);
+discreteMarginalDistributions = {discreteMarginalDist_1, ...
+    discreteMarginalDist_2, ...
+    discreteMarginalDist_3, ...
+    discreteMarginalDist_4};
 
+e_dens_dobsMat = zeros(length(copulaTypes), ...
+                 length(K_vec),...
+                 length(M_vec), ...
+                 length(N_vec),...
+                 length(h_vec));
+e_dens_bestcaseMat = zeros(size(e_dens_dobsMat));
+e_dens_trueMat = zeros(size(e_dens_dobsMat));
+
+e_probMat = zeros(size(e_dens_dobsMat));    % contains the error between 
+                                            % c(F(x1) ... F(xn)) and
+                                            % f(x1 ... xn) / [f(x1) * ... * f(xn) ]
+
+cTypeIdx = 1; 
 for copulaType=copulaTypes
+    KvecIdx = 1;
     for K=K_vec
+        MvecIdx = 1;
         for M=M_vec
+            NvecIdx = 1;
             for N=N_vec
+                hvecIdx = 1;
                 for h=h_vec
+                    u = linspace(0,1,K);
                     if(N==2)
                         Rho = Rho_2D;
                         [U1,U2] = ndgrid(u);
+                        copPdf_U = [U1(:) U2(:)];
+                        reshapeVec = [K,K];
                     elseif(N==3)
                         Rho = Rho_3D;
                         [U1,U2,U3] = ndgrid(u);
+                        copPdf_U = [U1(:) U2(:) U3(:)];
+                        reshapeVec = [K,K,K];
                     elseif(N==4)
                         Rho = Rho_4D;
                         [U1,U2,U3,U4] = ndgrid(u);
+                        copPdf_U = [U1(:) U2(:) U3(:) U4(:)];
+                        reshapeVec = [K,K,K,K];
                     end
                     % generate the copula random variates to set the
-                    % dependency
+                    % dependency, and the actual copula densities
                     if(strcmp(copulaType, 'Gaussian'))
                         U = copularnd(copulaType, Rho, M);
+                        c = copulapdf(copulaType, copPdf_U, Rho);
                     elseif(strcmp(copulaType, 'T'))
                         U = copularnd(copulaType, Rho, nu, M);
+                        c = copulapdf(copulaType, copPdf_U, Rho, nu);
                     elseif(strcmp(copulaType, 'Frank'))
                         U = frankcopularnd(M, N, alpha);
+                        c = frankcopulapdf(copPdf_U, alpha);
                     elseif(strcmp(copulaType, 'Gumbel'))
                         U = gumbelcopularnd(M, N, alpha);
+                        c = gumbelcopulapdf(copPdf_U, alpha);
                     elseif(strcmp(copulaType, 'Clayton'))
                         U = claytoncopularnd(M, N, alpha);
+                        c = claytoncopulapdf(copPdf_U, alpha);
                     else
                         error('Unknown copula type!');
                     end
+                    c = reshape(c, reshapeVec);
                     
                     % apply icdf function to generate discrete random
                     % variates w/ the defined dependency structure
                     X = zeros(M,N);
                     for nn=1:N
-                        X(:,nn) = icdf(F_X{nn}, U(:,nn));
+                        X(:,nn) = icdf(discreteMarginalDistributions{nn}, U(:,nn));
                     end
                     
                     % continue the discrete observations
                     X_continued = continueRv( X );
                     
-                    % generate the actual copula density c
-                    
-                    
+                    % generate pseudo-observations from the empirical
+                    % marginal distribution functions for the continued
+                    % random variables, and estimate the empirical copula
+                    % density from those
+                    U_pseudoObs = zeros(size(X_continued));
+                    for nn=1:N
+                        domain = linspace(min(X_continued(:,nn)),max(X_continued(:,nn)), numECDFPts);
+                        F_hat = ksdensity(X_continued(:,nn),domain ,'function','cdf');
+                        rvEmpObj = rvEmpiricalInfo(domain, [], F_hat);
+                        for mm=1:M
+                            U_pseudoObs(mm,nn) = rvEmpObj.queryDistribution(X_continued(mm,nn));
+                        end
+                    end
+
                     % estimate the copula density from the continued 
                     % observations - call this c_hat_dobs
-                    c_hat_dobs = empcopuladensity(X_continued, h, K, 'betak');
+                    c_hat_dobs = empcopuladensity(U_pseudoObs, h, K, 'betak');
                     
                     % compute error between estimated copula (c_hat_dobs)
                     % density and actual copula density c, call this e_dobs
+                    e_dobs = hyperFunctionError(c,c_hat_dobs);
                     
                     % estimate the copula density w/ the copula random 
                     % variates directly - call this c_hat
+                    c_hat = empcopuladensity(U, h, K, 'betak');
                     
                     % compute error between c_hat and c, call this
                     % e_bestcase
+                    e_bestcase = hyperFunctionError(c,c_hat);
                     
                     % compute error between c_hat and c_hat_dobs, call this
                     % e_true
+                    e_true = hyperFunctionError(c_hat,c_hat_dobs);
+                    
+                    e_dens_dobsMat(cTypeIdx,KvecIdx,MvecIdx,NvecIdx,hvecIdx) = e_dobs;
+                    e_dens_bestcaseMat(cTypeIdx,KvecIdx,MvecIdx,NvecIdx,hvecIdx) = e_bestcase;
+                    e_dens_trueMat(cTypeIdx,KvecIdx,MvecIdx,NvecIdx,hvecIdx) = e_true;
+                    
+                    % compute the error between  c(F(x1) ... F(xn)) and
+                    % f(x1 ... xn) / [f(x1) * ... * f(xn) ], we use
+                    % c_hat_dobs for the copula calculation
+                    [prob_using_density, combos] = computeEmpiricalDiscretProb( X );
+                    prob_using_c_hat_obs = zeros(size(prob_using_density));
+                    U_psuedoObs = zeros(1,length(combo));
+                    for comboIdx=1:size(combos,1)
+                        combo = combos(comboIdx,:);
+                        
+                        % change the combo to pseudo-observations
+                        for jj=1:length(combo)
+                            U_pseudoObs(jj) = cdf(discreteMarginalDistributions{jj},combo(jj));
+                        end
+                        
+                        % query the copula value
+                        prob_using_c_hat_obs(comboIdx) = empcopula_val(c_hat_dobs, U_pseudoObs);
+                    end
+                    
+                    hvecIdx = hvecIdx + 1;
                 end
+                NvecIdx = NvecIdx + 1;
             end
+            MvecIdx = MvecIdx + 1;
         end
+        KvecIdx = KvecIdx + 1;
     end
+    cTypeIdx = cTypeIdx + 1;
 end
-
-K = 25;
-u = linspace(0,1,K);
-[U1,U2] = ndgrid(u);
-c2 = copulapdf(copulaType, [U1(:) U2(:)],5);
-c2 = reshape(c2, K,K);
-h1 = subplot(1,2,1);
-surf(U1,U2,c2);
-xlabel('u1')
-ylabel('u2')
-title('Actual Copula')
-
-alpha = 5;
-M = 1000;
-
-X = copularnd(copulaType,alpha,M);
-
-h = .05;
-c1 = empcopuladensity(X, h, K, 'betak');
-h2 = subplot(1,2,2);
-surf(U1,U2,c1);
-xlabel('u1')
-ylabel('u2')
-title('Empirical Copula')
-
-mse = mean((c1(:)-c2(:)).^2);
-fprintf('MSE = %f\n', mse);
-
-hlink = linkprop([h1,h2],{'CameraPosition','CameraUpVector'});
-rotate3d on
