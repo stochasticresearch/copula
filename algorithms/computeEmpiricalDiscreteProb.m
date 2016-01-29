@@ -21,7 +21,13 @@ function [ prob, combos ] = computeEmpiricalDiscreteProb( X )
 %probability distribution
 % Inputs:
 %  X - input M x N matrix, with N being the dimensionality of the discrete
-%      distribution, and M being the number of samples
+%      distribution, and M being the number of samples.  It is assumed that
+%      the data in each colum (i.e. each dimension) is a subset of the
+%      natural numbers (i.e. 1, 2, ...) starting with 1, and ending with
+%      some value.  The maximum value of each column will be used to
+%      determine the the domain of the random variable .  The domain for
+%      each marginal distribution will be 1:max(X(:,i)) for the ith
+%      marginal distribution, represented by the i^th column of data in X
 % Outputs
 %  prob - a vector containing the probabilities for each of the
 %         combinations, referenced in the combo vector
@@ -37,7 +43,7 @@ else
     % distribution
     uniqueVals = zeros(1,N);
     for nn=1:N
-        uniqueVals(nn) = length(unique(X(:,nn)));
+        uniqueVals(nn) = max(X(:,nn));
     end
 
     combos = combvec(1:uniqueVals(1),1:uniqueVals(2));
