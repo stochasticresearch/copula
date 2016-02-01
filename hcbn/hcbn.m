@@ -1,4 +1,4 @@
-%******************************************************************************
+%**************************************************************************
 %* 
 %* Copyright (C) 2016  Kiran Karra <kiran.karra@gmail.com>
 %*
@@ -244,18 +244,7 @@ classdef hcbn < handle
                     % Gaussian copula)
                     allIdxs = [nodeIdx parentIdxs];
                     if(sum(ismember(allIdxs, obj.discNodeIdxs)))
-                        ecdfNumPts = 100;
-                        FX = zeros(ecdfNumPts, 1+length(parentNames));
-                        U_in = zeros(size(X_in));
-                        % generate pseudo-observations
-                        for jj=1:size(X_in,2)
-                            domain = linspace(min(X_in(:,jj)),max(X_in(:,jj)),ecdfNumPts);
-                            FX(:,jj) = ksdensity(X_in(:,jj), domain, 'function', 'cdf')';
-                            empInfoObj = rvEmpiricalInfo(domain, [], FX(:,jj));
-                            for kk=1:size(X_in,1)
-                                U_in(kk,jj) = empInfoObj.queryDistribution(X_in(kk,jj));
-                            end
-                        end
+                        U_in = pseudoobs(X_in);     % WARNING: before, it used to be pseudoobs(X_in, 'ecdf', 100);
                         
                         M = size(X_in,1);
                         C = [];         % TODO: estimate this, but not necessary for hcbn

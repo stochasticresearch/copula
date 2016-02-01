@@ -1,4 +1,4 @@
-%******************************************************************************
+%**************************************************************************
 %* 
 %* Copyright (C) 2016  Kiran Karra <kiran.karra@gmail.com>
 %*
@@ -145,21 +145,8 @@ X = [gaminv(U(:,1),2,1) ...
 
 X_vec = [continueRv(X(:,4)) X(:,2)];
 
-numECDFPts = 100;
-domain1 = linspace(min(X_vec(:,1)),max(X_vec(:,1)), numECDFPts);
-F1 = ksdensity(X_vec(:,1),domain1 ,'function','cdf');
-rvEmpObj1 = rvEmpiricalInfo(domain1, [], F1);
-domain2 = linspace(min(X_vec(:,2)),max(X_vec(:,2)), numECDFPts);
-F2 = ksdensity(X_vec(:,2),domain2 ,'function','cdf');
-rvEmpObj2 = rvEmpiricalInfo(domain2, [], F2);
-
-U_in = zeros(size(X_vec));
 % create pseudo-observations
-for ii=1:M
-    U_in(ii,1) = rvEmpObj1.queryDistribution(X_vec(ii,1));
-    U_in(ii,2) = rvEmpObj2.queryDistribution(X_vec(ii,2));
-end
-
+U_in = pseudoobs(X_vec);
 
 c1_ref = empcopuladensity(U_C2, h, K, 'betak');
 c1_proper = empcopuladensity(U_in, h, K, 'betak');
@@ -190,17 +177,7 @@ X = [unidinv(U(:,1),3) ...
 X_xform = continueRv(X);
 
 % generate pseudoobservations from X_xform
-ecdfNumPts = 100;
-FX_in = zeros(ecdfNumPts, D);
-U_in = zeros(size(X_xform));
-for jj=1:D
-    domain = linspace(min(X_xform(:,jj)),max(X_xform(:,jj)),ecdfNumPts);
-    FX_in(:,jj) = ksdensity(X_xform(:,jj), domain, 'function','cdf')';
-    empInfoObj = rvEmpiricalInfo(domain, [], FX_in(:,jj));
-    for kk=1:M
-        U_in(kk,jj) = empInfoObj.queryDistribution(X_xform(kk,jj));
-    end
-end
+U_in = pseudoobs(X_xform);
 
 % estimate the copula density
 h = 0.05;
@@ -234,17 +211,7 @@ X = [unidinv(U(:,1),3) ...
 X_xform = continueRv(X);
 
 % generate pseudoobservations from X_xform
-ecdfNumPts = 100;
-FX_in = zeros(ecdfNumPts, D);
-U_in = zeros(size(X_xform));
-for jj=1:D
-    domain = linspace(min(X_xform(:,jj)),max(X_xform(:,jj)),ecdfNumPts);
-    FX_in(:,jj) = ksdensity(X_xform(:,jj), domain, 'function','cdf')';
-    empInfoObj = rvEmpiricalInfo(domain, [], FX_in(:,jj));
-    for kk=1:M
-        U_in(kk,jj) = empInfoObj.queryDistribution(X_xform(kk,jj));
-    end
-end
+U_in = pseudoobs(X_xform);
 
 % estimate the copula density
 h = 0.02;
@@ -282,18 +249,7 @@ probMatrix(4,1) = nn(8,1)/M; probMatrix(4,2) = nn(8,3)/M; probMatrix(4,3) = nn(8
 probMatrix(5,1) = nn(10,1)/M; probMatrix(5,2) = nn(10,3)/M; probMatrix(5,3) = nn(10,6)/M; probMatrix(5,4) = nn(10,8)/M; probMatrix(5,5) = nn(10,10)/M;
 
 X_xform = continueRv(X);
-
-ecdfNumPts = 100;
-FX_in = zeros(ecdfNumPts, D);
-U_in = zeros(size(X_xform));
-for jj=1:D
-    domain = linspace(min(X_xform(:,jj)),max(X_xform(:,jj)),ecdfNumPts);
-    FX_in(:,jj) = ksdensity(X_xform(:,jj), domain, 'function','cdf')';
-    empInfoObj = rvEmpiricalInfo(domain, [], FX_in(:,jj));
-    for kk=1:M
-        U_in(kk,jj) = empInfoObj.queryDistribution(X_xform(kk,jj));
-    end
-end
+U_in = pseudoobs(X_xform);
 
 % estimate the copula density
 h = 0.02;
@@ -365,18 +321,7 @@ U = copularnd(copType, Rho, M);
 % Create a multivariate gaussian :) easy for testing
 X = [norminv(U(:,1),0,1) ...
      norminv(U(:,2),0,1)];
-
-ecdfNumPts = 100;
-FX_in = zeros(ecdfNumPts, D);
-U_in = zeros(size(X));
-for jj=1:D
-    domain = linspace(min(X(:,jj)),max(X(:,jj)),ecdfNumPts);
-    FX_in(:,jj) = ksdensity(X(:,jj), domain, 'function','cdf')';
-    empInfoObj = rvEmpiricalInfo(domain, [], FX_in(:,jj));
-    for kk=1:M
-        U_in(kk,jj) = empInfoObj.queryDistribution(X(kk,jj));
-    end
-end
+U_in = pseudoobs(X);
 
 % estimate the copula density
 h = 0.01;

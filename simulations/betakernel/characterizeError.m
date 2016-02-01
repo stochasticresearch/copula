@@ -1,4 +1,4 @@
-%******************************************************************************
+%**************************************************************************
 %* 
 %* Copyright (C) 2016  Kiran Karra <kiran.karra@gmail.com>
 %*
@@ -127,16 +127,8 @@ for copulaType=copulaTypes
                     % marginal distribution functions for the continued
                     % random variables, and estimate the empirical copula
                     % density from those
-                    U_pseudoObs = zeros(size(X_continued));
-                    for nn=1:N
-                        domain = linspace(min(X_continued(:,nn)),max(X_continued(:,nn)), numECDFPts);
-                        F_hat = ksdensity(X_continued(:,nn),domain ,'function','cdf');
-                        rvEmpObj = rvEmpiricalInfo(domain, [], F_hat);
-                        for mm=1:M
-                            U_pseudoObs(mm,nn) = rvEmpObj.queryDistribution(X_continued(mm,nn));
-                        end
-                    end
-
+                    U_pseudoObs = pseudoobs(X_continued);
+                    
                     % estimate the copula density from the continued 
                     % observations - call this c_hat_dobs
                     c_hat_dobs = empcopuladensity(U_pseudoObs, h, K, 'betak');
