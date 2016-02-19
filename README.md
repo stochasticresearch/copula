@@ -1,7 +1,7 @@
-Contains many tools useful for copula modeling in Matlab that do not exist directly in the Statistics and Machine Learning toolbox.  The directory structure is as follows:
+Contains many tools useful for copula modeling in Matlab that do not exist directly in the Statistics and Machine Learning toolbox.  The (relevant) directory structure is as follows:
   - algorithms/ - contains the core copula algorithms.  Brief descriptions of the files are:
     
-  | Command | Description |
+  | File | Description |
   | --- | --- |
   | claytoncopulapdf.m | Computes the Clayton Copula's PDF for D>=2 |
   | claytoncopularnd.m | Samples from a D>=2 Clayton Copula |
@@ -20,3 +20,17 @@ Contains many tools useful for copula modeling in Matlab that do not exist direc
   | logserrnd.m | Samples from the Log-Series distribution |
   | pseudoobs.m | Computes pseudo-observations for a given (multivariate) random vector |
   | rstable1.m | Samples from the Stable Distribution |
+
+  - clg/ - contains code for building Conditional Linear Gaussian Bayesian Networks
+    
+  | File | Description |
+  | --- | --- |
+  | clg.m | Main class definition of CLG Model |
+
+  - hcbn/ - contains code for building Hybrid Copula Bayesian Networks (HCBN)
+    
+  | File | Description |
+  | --- | --- |
+  | hcbn.m | Main class definition of HCBN Model |
+
+- simulations/ - contains simulation code which uses the algorithms developed
