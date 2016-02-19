@@ -1,4 +1,10 @@
-Contains many tools useful for copula modeling in Matlab that do not exist directly in the Statistics and Machine Learning toolbox.  The (relevant) directory structure is as follows:
+Contains many tools useful for copula modeling in Matlab that do not exist directly in the Statistics and Machine Learning toolbox.  Highlights are:
+  1) Smooth empirical copula density estimation via Beta-Kernels.
+  2) Sampling from calculated empirical copula
+  3) Clayton/Frank/Gumbel copula PDF and sampling for D>=2
+  4) Hybrid Copula Bayesian Network construction
+
+The (relevant) directory structure is as follows:
   - algorithms/ - contains the core copula algorithms.  Brief descriptions of the files are:
     
   | File | Description |
