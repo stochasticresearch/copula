@@ -41,7 +41,7 @@ surf(U1,U2,c1);
 xlabel('u1')
 ylabel('u2')
 
-c1 = empcopuladensity(X, h, K, 'betak');
+c1 = empcopulapdf(X, h, K, 'betak');
 h2 = subplot(1,3,2);
 surf(U1,U2,c1);
 xlabel('u1')
@@ -65,7 +65,7 @@ Rho = [1 .4 .2; .4 1 -.8; .2 -.8 1];
 Z = mvnrnd([0 0 0], Rho, M);
 U = normcdf(Z,0,1);
 
-c1 = empcopuladensity(U, h, K, 'betak');
+c1 = empcopulapdf(U, h, K, 'betak');
 
 u = linspace(0,1,K);
 [U1,U2,U3] = ndgrid(u);
@@ -83,7 +83,7 @@ h1 = subplot(3,3,1);
 surf(UU1,UU2,squeeze(sum(c1,3))); xlabel('u_1'); ylabel('u_2')
 h2 = subplot(3,3,2);
 surf(UU1,UU2,squeeze(sum(c1,2))); xlabel('u_1'); ylabel('u_3')
-title('EMPCOPULADENSITY')
+title('empcopulapdf')
 h3 = subplot(3,3,3);
 surf(UU1,UU2,squeeze(sum(c1,1))); xlabel('u_2'); ylabel('u_3')
 
@@ -148,8 +148,8 @@ X_vec = [continueRv(X(:,4)) X(:,2)];
 % create pseudo-observations
 U_in = pseudoobs(X_vec);
 
-c1_ref = empcopuladensity(U_C2, h, K, 'betak');
-c1_proper = empcopuladensity(U_in, h, K, 'betak');
+c1_ref = empcopulapdf(U_C2, h, K, 'betak');
+c1_proper = empcopulapdf(U_in, h, K, 'betak');
 
 u = linspace(0,1,K);
 [U1,U2] = ndgrid(u);
@@ -159,7 +159,7 @@ h2 = subplot(1,2,2); surf(U1,U2,c1_proper); title('Estimated w/ KSDENSITY')
 hlink = linkprop([h1,h2],{'CameraPosition','CameraUpVector'});
 rotate3d on
 
-%% Test empcopuladensity heuristically w/ discrete marginals & Gaussian Copula
+%% Test empcopulapdf heuristically w/ discrete marginals & Gaussian Copula
 clear;
 clc;
 
@@ -182,7 +182,7 @@ U_in = pseudoobs(X_xform);
 % estimate the copula density
 h = 0.05;
 K = 25;
-c = empcopuladensity(U_in, h, K, 'betak'); 
+c = empcopulapdf(U_in, h, K, 'betak'); 
 
 u = linspace(0,1,K);
 [U1,U2] = ndgrid(u);
@@ -194,7 +194,7 @@ h1 = subplot(1,2,1); surf(U1,U2,c_expect); grid on; title('Reference'); xlabel('
 h2 = subplot(1,2,2); surf(U1,U2,c); grid on; title('Estimated'); xlabel('U_1'); ylabel('U_2');
 linkprop([h1,h2],{'CameraPosition','CameraUpVector'}); rotate3d on;
 
-%% Test empcopuladensity heuristically w/ discrete marginals & Gumbel Copula
+%% Test empcopulapdf heuristically w/ discrete marginals & Gumbel Copula
 clear;
 clc;
 
@@ -216,7 +216,7 @@ U_in = pseudoobs(X_xform);
 % estimate the copula density
 h = 0.02;
 K = 50;
-c = empcopuladensity(U_in, h, K, 'betak');
+c = empcopulapdf(U_in, h, K, 'betak');
 
 [U1,U2] = ndgrid(linspace(0,1,K));
 c_expect = copulapdf(copType, [U1(:) U2(:)],alpha);
@@ -226,7 +226,7 @@ h1 = subplot(1,2,1); surf(U1,U2,c_expect); grid on; title('Reference'); xlabel('
 h2 = subplot(1,2,2); surf(U1,U2,c); grid on; title('Estimated'); xlabel('U_1'); ylabel('U_2');
 linkprop([h1,h2],{'CameraPosition','CameraUpVector'}); rotate3d on;
 
-%% Test empcopuladensity heuristically w/ discrete marginals & Gumbel Copula
+%% Test empcopulapdf heuristically w/ discrete marginals & Gumbel Copula
 clear;
 clc;
 
@@ -254,7 +254,7 @@ U_in = pseudoobs(X_xform);
 % estimate the copula density
 h = 0.02;
 K = 25;
-c_est = empcopuladensity(U_in, h, K, 'betak');
+c_est = empcopulapdf(U_in, h, K, 'betak');
 
 [U1,U2] = ndgrid(linspace(0,1,K));
 c_actual = copulapdf(copType, [U1(:) U2(:)], Rho);
@@ -308,7 +308,7 @@ c_actual_mat
 est_err_mat = (f_val_mat-c_est_mat).^2
 actual_err_mat = (f_val_mat-c_actual_mat).^2
 
-%% Test empcopuladensity heuristically w/ discrete marginals & Gumbel Copula
+%% Test empcopulapdf heuristically w/ discrete marginals & Gumbel Copula
 clear;
 clc;
 
@@ -326,7 +326,7 @@ U_in = pseudoobs(X);
 % estimate the copula density
 h = 0.01;
 K = 50;
-c_est = empcopuladensity(U_in, h, K, 'betak');
+c_est = empcopulapdf(U_in, h, K, 'betak');
 
 ii = 1;
 for x1=-3:.1:3

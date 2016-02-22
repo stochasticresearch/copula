@@ -131,7 +131,7 @@ for copulaType=copulaTypes
                     
                     % estimate the copula density from the continued 
                     % observations - call this c_hat_dobs
-                    c_hat_dobs = empcopuladensity(U_pseudoObs, h, K, 'betak');
+                    c_hat_dobs = empcopulapdf(U_pseudoObs, h, K, 'betak');
                     
                     % compute error between estimated copula (c_hat_dobs)
                     % density and actual copula density c, call this e_dobs
@@ -139,7 +139,7 @@ for copulaType=copulaTypes
                     
                     % estimate the copula density w/ the copula random 
                     % variates directly - call this c_hat
-                    c_hat = empcopuladensity(U, h, K, 'betak');
+                    c_hat = empcopulapdf(U, h, K, 'betak');
                     
                     % compute error between c_hat and c, call this
                     % e_bestcase

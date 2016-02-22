@@ -15,8 +15,8 @@
 %* You should have received a copy of the GNU General Public License
 %* along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [ c ] = empcopuladensity( U, h, K, method )
-%EMPCOPULADENSITY Calculates the empirical copula density over the grid
+function [ c ] = empcopulapdf( U, h, K, method )
+%EMPCOPULAPDF Calculates the empirical copula density over the grid
 %points with K points in each dimension, using the specified method
 % 
 % Inputs

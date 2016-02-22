@@ -248,7 +248,7 @@ classdef hcbn < handle
                         
                         M = size(X_in,1);
                         C = [];         % TODO: estimate this, but not necessary for hcbn
-                        c = empcopuladensity(U_in, obj.h, obj.K, 'betak');
+                        c = empcopulapdf(U_in, obj.h, obj.K, 'betak');
                         type = 'empirical';
                         Rho = [];
                         Rho_parents = [];
@@ -263,7 +263,7 @@ classdef hcbn < handle
                         else
                             U_in_parents = U_in(:,2:end);
                             C_parents = []; % TODO: estimate this, but not necessary for hcbn
-                            c_parents = empcopuladensity(U_in_parents, obj.h, obj.K, 'betak');
+                            c_parents = empcopulapdf(U_in_parents, obj.h, obj.K, 'betak');
                         end
                     else
                         % all continuous marginals, lets fit to a copula
