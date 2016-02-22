@@ -16,6 +16,7 @@ Contains many tools useful for copula modeling in Matlab that do not exist direc
   | *continueRv.m* | Continues realizations of a discrete RV (see http://dx.doi.org/10.1016/j.jmva.2004.01.004) |
   | *empcopula_val.m* | Computes value of an empirical copula at a specified point in unit hypercube |
   | *empcopulapdf.m* | Computes empirical copula density given pseudo-observations |
+  | *empcopulacdf.m* | Computes empirical copula function given pseudo-observations |
   | *empcopularnd.m* | Generates samples from an empirical copula |
   | *estMteDensity.m* | KDE with trucanted exponential distribution |
   | *frankcopulapdf.m* | Computes the Frank Copula's PDF for D>=2 |
