@@ -24,10 +24,10 @@ clc;
 alpha = 4;
 
 % read input test file
-u = csvread('../r_playground/testfiles/mvArchimedeanCopula_input.csv');
-y_claytonR = csvread('../r_playground/testfiles/claytonPdf3D_output.csv');
-y_frankR = csvread('../r_playground/testfiles/frankPdf3D_output.csv');
-y_gumbelR = csvread('../r_playground/testfiles/gumbelPdf3D_output.csv');
+u = csvread('../../testfiles/mvArchimedeanCopula_input.csv');
+y_claytonR = csvread('../../testfiles/claytonPdf3D_output.csv');
+y_frankR = csvread('../../testfiles/frankPdf3D_output.csv');
+y_gumbelR = csvread('../../testfiles/gumbelPdf3D_output.csv');
 
 y_claytonMlab = claytoncopulapdf(u, alpha);
 y_frankMlab = frankcopulapdf(u, alpha);
