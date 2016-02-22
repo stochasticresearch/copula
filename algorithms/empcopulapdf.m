@@ -23,6 +23,7 @@ function [ c ] = empcopulapdf( U, h, K, method )
 %  U - the pseudosamples of the copula (i.e.) F(X) = [F(X_1) ... F(X_D)],
 %      should be a M x D input, where M is the number of samples and D is
 %      the dimensionality
+%  h - the kernel bandwidth
 %  K - the spacing of the gridpoints over which to calculate the empirical
 %      copula density
 %  method - options are:
