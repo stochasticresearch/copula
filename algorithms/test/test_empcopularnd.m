@@ -109,7 +109,7 @@ rotate3d on
 %% 
 % Test full integration as follows:
 %  1.) Generate samples from a copula using copularnd
-%  2.) Compute the empirical copula density using empcopuladensity
+%  2.) Compute the empirical copula density using empcopulapdf
 %  3.) Generate samples from the empirical copula density
 %  4.) Compare the outputs of Steps #1 and #3
 
@@ -126,7 +126,7 @@ K = 25;
 uu = copularnd(copType,alpha,M);
 
 % generate samples by first computing empirical density
-c_density_hat = empcopuladensity(uu, h, K, 'betak');
+c_density_hat = empcopulapdf(uu, h, K, 'betak');
 uu_gen = empcopularnd(c_density_hat, M);
 
 subplot(1,2,1); scatter(uu(:,1),uu(:,2)); grid on; title(sprintf('Built-in %s Samples', copType))
@@ -138,7 +138,7 @@ copType = 'Gumbel';
 uu = copularnd(copType,alpha,M);
 
 % generate samples by first computing empirical density
-c_density_hat = empcopuladensity(uu, h, K, 'betak');
+c_density_hat = empcopulapdf(uu, h, K, 'betak');
 uu_gen = empcopularnd(c_density_hat, M);
 
 subplot(1,2,1); scatter(uu(:,1),uu(:,2)); grid on; title(sprintf('Built-in %s Samples', copType))
@@ -150,7 +150,7 @@ copType = 'Clayton';
 uu = copularnd(copType,alpha,M);
 
 % generate samples by first computing empirical density
-c_density_hat = empcopuladensity(uu, h, K, 'betak');
+c_density_hat = empcopulapdf(uu, h, K, 'betak');
 uu_gen = empcopularnd(c_density_hat, M);
 
 subplot(1,2,1); scatter(uu(:,1),uu(:,2)); grid on; title(sprintf('Built-in %s Samples', copType))
@@ -162,7 +162,7 @@ Rho = [1 0.8; 0.8 1];
 uu = copularnd(copType,Rho,M);
 
 % generate samples by first computing empirical density
-c_density_hat = empcopuladensity(uu, h, K, 'betak');
+c_density_hat = empcopulapdf(uu, h, K, 'betak');
 uu_gen = empcopularnd(c_density_hat, M);
 
 subplot(1,2,1); scatter(uu(:,1),uu(:,2)); grid on; title(sprintf('Built-in %s Samples', copType))
@@ -175,7 +175,7 @@ copType = 'Gaussian';
 Rho = [1 .4 .2; .4 1 -.8; .2 -.8 1];
 uu = copularnd(copType,Rho,M);
 h = .01; K = 50;
-c_density_hat = empcopuladensity(uu, h, K, 'betak');
+c_density_hat = empcopulapdf(uu, h, K, 'betak');
 uu_gen = empcopularnd(c_density_hat, M);
 
 h1 = subplot(1,2,1);
