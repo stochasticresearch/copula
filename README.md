@@ -2,7 +2,7 @@
 Contains many tools useful for copula modeling in Matlab that do not exist directly in the Statistics and Machine Learning toolbox.  Highlights are:
   - Smooth empirical copula density estimation via Beta-Kernels for any D>=2.
   - Empirical copula function estimation for any D>=2
-  - Sampling from calculated empirical copula
+  - Sampling from calculated empirical copula for D>=2
   - Clayton/Frank/Gumbel copula PDF and sampling for D>=2
   - Hybrid Copula Bayesian Network construction
 
