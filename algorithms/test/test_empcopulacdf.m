@@ -98,3 +98,40 @@ h9 = subplot(3,3,9);
 surf(UU1,UU2,C3_u1u3); xlabel('u_2'); ylabel('u_3')
 
 rotate3d on
+
+%% Generate Density from 2-D Frank Copula by first taking CDF and differentiating,
+% and using empcopulapdf, to see hte difference
+
+clear;
+clc;
+
+K = 25;
+copulaType = 'Frank';
+alpha = 5;
+Rho = [1 -0.3; -0.3, 1];
+
+u = linspace(0.01,0.99,K);
+[U1,U2] = ndgrid(u);
+c = copulapdf(copulaType, [U1(:) U2(:)],alpha);
+c = reshape(c, K,K);
+
+U = copularnd(copulaType,alpha,1000);
+C_est = empcopulacdf(U, K, 'deheuvels');
+[cc] = gradient(C_est);
+[~,c_est_grad] = gradient(cc);
+
+% estimate w/ empcopulapdf
+h = 0.05;
+K = 25;
+c_direct = empcopulapdf(U, h, K, 'betak');
+
+% normalize all of the c's for plotting effect
+c = c./max(c(:));
+c_est_grad = c_est_grad./max(c_est_grad(:));
+c_direct = c_direct./max(c_direct(:));
+
+h1 = subplot(1,3,1); surf(U1,U2,c); xlabel('u'); ylabel('v'); title('c_{actual}'); grid on;
+h2 = subplot(1,3,2); surf(U1,U2,c_est_grad); xlabel('u'); ylabel('v'); 
+title('$$ \hat{c}(\mathbf{u}) = \frac{\partial \hat{C}(\mathbf{u})}{d \mathbf{u}}$$','interpreter','latex'); grid on;
+h3 = subplot(1,3,3); surf(U1,U2,c_direct); xlabel('u'); ylabel('v'); 
+title('$$ \hat{c}_\beta(\mathbf{u}) $$','interpreter','latex'); grid on;
