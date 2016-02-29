@@ -37,9 +37,9 @@ U_ecdf = pseudoobs(x, 'ecdf', numECDFPts);
 U_rank = pseudoobs(x);
 
 figure;
-subplot(3,3,1); scatter(x(:,1),x(:,2)); grid on; xlabel('X'); ylabel('Y');
-subplot(3,3,2); scatter(U_ecdf(:,1),U_ecdf(:,2)); grid on; xlabel('U_{pseudo}'); ylabel('V_{pseudo}');
-subplot(3,3,3); scatter(U_rank(:,1),U_rank(:,2)); grid on; xlabel('U_{rank}'); ylabel('V_{rank}');
+subplot(3,3,1); scatter(x(:,1),x(:,2)); grid on; xlabel('X'); ylabel('Y'); title('Original Samples')
+subplot(3,3,2); scatter(U_ecdf(:,1),U_ecdf(:,2)); grid on; xlabel('U_{pseudo}'); ylabel('V_{pseudo}'); title('ECDF Copula Sample Extraction')
+subplot(3,3,3); scatter(U_rank(:,1),U_rank(:,2)); grid on; xlabel('U_{rank}'); ylabel('V_{rank}'); title('Rank Copula Sample Extraction')
 
 nHistBins = 25;
 subplot(3,3,4); histogram(x(:,1),nHistBins); grid on; title('f_X(x)')
