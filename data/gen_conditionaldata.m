@@ -16,7 +16,7 @@
 %* along with this program.  If not, see <http://www.gnu.org/licenses/>.
 %**************************************************************************
 
-function [ X, Y, Z_internal_X ] = gen_conditionaldata( num_samps, model, n, ...
+function [ Xt, Yt, Z, X, Y ] = gen_conditionaldata( num_samps, model, n, ...
                                         distX, distY, distZ, ...
                                         fpre_XY, fcmb_XY, fpost_XY, ...
                                         fpre_Z, fcmb_Z, fpost_Z )
@@ -83,10 +83,10 @@ function [ X, Y, Z_internal_X ] = gen_conditionaldata( num_samps, model, n, ...
 %  fcmb_XY - a cell array of dimension [1 x 2] with function handles.
 %            fcmb_XY{1} = f(fpre_XY{1},Z_cmb); 
 %            fcmb_XY{2} = f(fpre_XY{2},Z_cmb);
-%  fpost_XY - a cell array of dimension [1 x 2] with function handles
-%            fpost_XY{1} = f(fcmb_XY{1})
-%            fpost_XY{2} = f(fcmb_XY{2})
-%  fpre_Z - a cell array of dimension [n x 1] where the i1^th element is a
+%  fpost_XY - a cell array of dimension [n x 2] with function handles
+%            fpost_XY{1,1} = f(fcmb_XY{1})
+%            fpost_XY{1,2} = f(fcmb_XY{2})
+%  fpre_Z - a cell array of dimension [n x 2] where the i1^th element is a
 %           function handle which defines the transform that will happen to
 %           Z_i as applied to X, and the i2^th element is applied to Y.
 %  fcmb_Z - a cell array of dimension [1 x 2] which contains the
@@ -101,11 +101,15 @@ function [ X, Y, Z_internal_X ] = gen_conditionaldata( num_samps, model, n, ...
 %            combined Z. As before:
 %            fpost_Z{1} applies to X
 %            fpost_Z{2} applies to Y
-%            
+% Outputs:
+%  Xt - The transformed X samples
+%  Yt - The transformed Y samples
+%  Z  - The Z samples
+%  X  - The original X samples
+%  Y  - The original Y samples
 %
-% TODO: describe how the function handles can be used to create nice unique
-% and flexible distributional data that is CI or nCI.  Explain m and n from
-% diagrams w/ the weights for fcmb_Z
+% See test/test_gen_conditionaldata.m for examples on how to use this
+% function properly and effectively.
 
 % generate Z_1 .. Z_n
 Z_internal_X = zeros(num_samps, n);
@@ -139,22 +143,22 @@ X = random(distX, num_samps, 1);
 Y = random(distY, num_samps, 1);
 
 % apply the pre operators
-X = fpre_XY{1}(X);
-Y = fpre_XY{2}(Y);
+Xt = fpre_XY{1}(X);
+Yt = fpre_XY{2}(Y);
 
 % apply the combine operator to X and Y
-X_cmb = fcmb_XY{1}([X Z_post_X]);
-Y_cmb = fcmb_XY{2}([Y Z_post_Y]);
+X_cmb = fcmb_XY{1}([Xt Z_post_X]);
+Y_cmb = fcmb_XY{2}([Yt Z_post_Y]);
 
 % apply post operators to X and Y
-X = fpost_XY{1}(X_cmb);
-Y = fpost_XY{2}(Y_cmb);
+Xt = fpost_XY{1}(X_cmb);
+Yt = fpost_XY{2}(Y_cmb);
 
 % induce dependency between X and Y if desired
 % TODO: the type of dependency should be configurable
 if(strcmpi(model, 'nCI'))
     ff = normrnd(0,1,num_samps,1) * 0.5;
-    X = X + ff; Y = X + ff;
+    Xt = Xt + ff; Yt = Xt + ff;
 end
 
 end
