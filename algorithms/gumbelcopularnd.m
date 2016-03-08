@@ -14,8 +14,9 @@
 %*
 %* You should have received a copy of the GNU General Public License
 %* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+%**************************************************************************
 
-function [ U ] = gumbelcopularnd( M, N, alpha )
+function [ U, X_i ] = gumbelcopularnd( M, N, alpha, varargin )
 %GUMBELCOPULARND Generates M samples from a Gumbel copula of dimensionality
 %N, with parameter alpha
 % Inputs:
@@ -25,29 +26,33 @@ function [ U ] = gumbelcopularnd( M, N, alpha )
 %
 % Outputs:
 %  U - an M x N matrix of generated samples
+%  X_i - an M x N matrix of intermediary random variables generated in the
+%        creation of U
 
-if(N==2)
-    U = copularnd('Gumbel', alpha, M);
-else
-    % Algorithm 1 described in both the SAS Copula Procedure, as well as the
-    % paper: "High Dimensional Archimedean Copula Generation Algorithm"
-    U = zeros(M,N);
-    
-    for ii=1:M
-        a  = 1.0/alpha;
-        b  = 1;
-        g  = cos(pi/(2.0*alpha)).^alpha;
-        d  = 0;
-        pm = 1;
-        vv = rstable1(1,a,b,g,d,pm);
-        
-        % sample N independent uniform random variables
-        x_i = rand(1,N);
-        t = -1*log(x_i)./vv;
-        
-        U(ii,:) = exp(-1*(t.^(1.0/alpha)));
-    end
-    
-end % if
+if(N<2)
+    error('N must be atleast 2');
+end
+if alpha < 1
+    error('Gumbel copula parameter must be between [1, inf)');
+end
+
+% Algorithm 1 described in both the SAS Copula Procedure, as well as the
+% paper: "High Dimensional Archimedean Copula Generation Algorithm"
+U = zeros(M,N);
+X_i = rand(M,N);
+for ii=1:M
+    a  = 1.0/alpha;
+    b  = 1;
+    g  = cos(pi/(2.0*alpha)).^alpha;
+    d  = 0;
+    pm = 1;
+    vv = rstable1(1,a,b,g,d,pm);
+
+    % sample N independent uniform random variables
+    x_i = X_i(ii,:);
+    t = -1*log(x_i)./vv;
+
+    U(ii,:) = exp(-1*(t.^(1.0/alpha)));
+end
 
 end % function

@@ -14,8 +14,9 @@
 %*
 %* You should have received a copy of the GNU General Public License
 %* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+%**************************************************************************
 
-function [ U ] = claytoncopularnd( M, N, alpha )
+function [ U, X_i ] = claytoncopularnd( M, N, alpha, varargin )
 %CLAYTONCOPULARND Generates M samples from a Clayton copula of dimensionality
 %N, with parameter alpha
 % Inputs:
@@ -25,29 +26,42 @@ function [ U ] = claytoncopularnd( M, N, alpha )
 %
 % Outputs:
 %  U - an M x N matrix of generated samples
+%  X_i - an M x N matrix of intermediary random variables generated in the
+%        creation of U
 
-if(N==2)
-    U = copularnd('Clayton', alpha, M);
-else
-    % Algorithm 1 described in both the SAS Copula Procedure, as well as the
-    % paper: "High Dimensional Archimedean Copula Generation Algorithm"
-    U = zeros(M,N);
-    for ii=1:M
-        shape = 1.0/alpha;
-        scale = 1;
-        v = gamrnd(shape, scale);
-        
-        % sample N independent uniform random variables
-        x_i = rand(1,N);
-        t = -1*log(x_i)./v;
-        if(alpha<0)
-            error('Clayton copula parameter must be between [0, inf)')
-        end
-        
-        tmp = 1.0 + t;
-        U(ii,:) = tmp.^(-1.0/alpha);
+if(N<2)
+    error('N must be atleast 2');
+end
+if(alpha<0)
+    error('Clayton copula parameter must be between [0, inf)')
+end
+
+Z_in = [];
+if(~isempty(varargin))
+    Z_in = varargin{1};
+    if(~(size(Z_in,1)==M && size(Z_in,2)==1))
+        error('U must be a vector of length [M x 1]');
     end
-    
-end % if
+end
+
+% Algorithm 1 described in both the SAS Copula Procedure, as well as the
+% paper: "High Dimensional Archimedean Copula Generation Algorithm"
+U = zeros(M,N);
+X_i = rand(M,N);
+if(~isempty(Z_in))
+    X_i(:,1) = Z_in;
+end
+for ii=1:M
+    shape = 1.0/alpha;
+    scale = 1;
+    v = gamrnd(shape, scale);
+
+    % sample N independent uniform random variables
+    x_i = X_i(ii,:);
+    t = -1*log(x_i)./v;
+
+    tmp = 1.0 + t;
+    U(ii,:) = tmp.^(-1.0/alpha);
+end
 
 end % function
