@@ -16,9 +16,9 @@
 %* along with this program.  If not, see <http://www.gnu.org/licenses/>.
 %**************************************************************************
 
-function [ U, X_i ] = frankcopularnd( M, N, alpha, varargin )
+function [ U ] = frankcopularnd( M, D, alpha )
 %FRANKCOPULARND Generates M samples from a Frank copula of dimensionality
-%N, with parameter alpha
+%D, with parameter alpha
 % Inputs:
 %  M - the number of samples to generate
 %  N - the dimensionality of the data
@@ -29,18 +29,17 @@ function [ U, X_i ] = frankcopularnd( M, N, alpha, varargin )
 %  X_i - an M x N matrix of intermediary random variables generated in the
 %        creation of U
 
-if(N<2)
+if(D<2)
     error('N must be atleast 2');
 end
 
-% Algorithm 1 described in both the SAS Copula Procedure, as well as the
-% paper: "High Dimensional Archimedean Copula Generation Algorithm"
 if(alpha<=0)
     error('For N>=3, alpha > 0 for the Frank Copula')
 end
 
-U = zeros(M,N);
-X_i = rand(M,N);
+% Algorithm 1 described in both the SAS Copula Procedure, as well as the
+% paper: "High Dimensional Archimedean Copula Generation Algorithm"
+U = zeros(M,D);
 for ii=1:M
     p = -1.0*expm1(-1*alpha);
     if (abs(1 - p) <= eps(p))
@@ -50,7 +49,7 @@ for ii=1:M
     vv = logserrnd(p, 1);
 
     % sample N independent uniform random variables
-    x_i = X_i(ii,:);
+    x_i = rand(1,D);
     t = -1*log(x_i)./vv;
     U(ii,:) = -1.0*log1p( exp(-t)*expm1(-1.0*alpha))/alpha;
 end

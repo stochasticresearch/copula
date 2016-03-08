@@ -14,6 +14,7 @@
 %*
 %* You should have received a copy of the GNU General Public License
 %* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+%**************************************************************************
 
 function [ X ] = genSynthData( discreteType, continuousType, M )
 %GENSYNTHDATA Generates synthetic data for testing HCBN, MTE, and CLG from
