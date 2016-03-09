@@ -74,6 +74,11 @@ if(~wantLog)
     y = exp(y);
 end
 
+% respect the grounded property of the copula manually, in case the user
+% requested boundary copula pdf values
+idxs = ~all(u,2);
+y(idxs) = 0;
+
 end
 
 function [ y ] = iPsi_gumbel( u, alpha, varargin )

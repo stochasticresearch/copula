@@ -1,19 +1,21 @@
 %**************************************************************************
-%* 
-%* Copyright (C) 2016  Kiran Karra <kiran.karra@gmail.com>
-%*
-%* This program is free software: you can redistribute it and/or modify
-%* it under the terms of the GNU General Public License as published by
-%* the Free Software Foundation, either version 3 of the License, or
-%* (at your option) any later version.
-%*
-%* This program is distributed in the hope that it will be useful,
-%* but WITHOUT ANY WARRANTY; without even the implied warranty of
-%* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-%* GNU General Public License for more details.
-%*
-%* You should have received a copy of the GNU General Public License
-%* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+%*                                                                        *
+%* Copyright (C) 2016  Kiran Karra <kiran.karra@gmail.com>                *
+%*                                                                        *
+%* This program is free software: you can redistribute it and/or modify   *
+%* it under the terms of the GNU General Public License as published by   *
+%* the Free Software Foundation, either version 3 of the License, or      *
+%* (at your option) any later version.                                    *
+%*                                                                        *
+%* This program is distributed in the hope that it will be useful,        *
+%* but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+%* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+%* GNU General Public License for more details.                           *
+%*                                                                        *
+%* You should have received a copy of the GNU General Public License      *
+%* along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+%*                                                                        *
+%**************************************************************************
 
 function [ y ] = claytoncopulapdf( u, alpha, varargin )
 %GUMBELCOPULAPDF Computes the PDF of the Clayton Copula for N>=2
@@ -57,18 +59,20 @@ end
 
 
 [~,N] = size(u);
-if(N==2)
-    y = copulapdf('Clayton', u, alpha);
-else
-    % compute log of the pdf
-    lu = sum(log(u),2);
-    t = sum(iPsi_clayton(u, alpha), 2);
-    y = sum(log1p(alpha*(0:N-1))) - (1+alpha)*lu - (N + 1.0/alpha)*log1p(t);
-    % exponentiate the result if the desired value is not the log version
-    if(~wantLog)
-        y = exp(y);
-    end
+
+% compute log of the pdf
+lu = sum(log(u),2);
+t = sum(iPsi_clayton(u, alpha), 2);
+y = sum(log1p(alpha*(0:N-1))) - (1+alpha)*lu - (N + 1.0/alpha)*log1p(t);
+% exponentiate the result if the desired value is not the log version
+if(~wantLog)
+    y = exp(y);
 end
+
+% respect the grounded property of the copula manually, in case the user
+% requested boundary copula pdf values
+idxs = ~all(u,2);
+y(idxs) = 0;
 
 end
 

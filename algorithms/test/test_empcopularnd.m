@@ -1,19 +1,21 @@
 %**************************************************************************
-%* 
-%* Copyright (C) 2016  Kiran Karra <kiran.karra@gmail.com>
-%*
-%* This program is free software: you can redistribute it and/or modify
-%* it under the terms of the GNU General Public License as published by
-%* the Free Software Foundation, either version 3 of the License, or
-%* (at your option) any later version.
-%*
-%* This program is distributed in the hope that it will be useful,
-%* but WITHOUT ANY WARRANTY; without even the implied warranty of
-%* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-%* GNU General Public License for more details.
-%*
-%* You should have received a copy of the GNU General Public License
-%* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+%*                                                                        *
+%* Copyright (C) 2016  Kiran Karra <kiran.karra@gmail.com>                *
+%*                                                                        *
+%* This program is free software: you can redistribute it and/or modify   *
+%* it under the terms of the GNU General Public License as published by   *
+%* the Free Software Foundation, either version 3 of the License, or      *
+%* (at your option) any later version.                                    *
+%*                                                                        *
+%* This program is distributed in the hope that it will be useful,        *
+%* but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+%* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+%* GNU General Public License for more details.                           *
+%*                                                                        *
+%* You should have received a copy of the GNU General Public License      *
+%* along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+%*                                                                        *
+%**************************************************************************
 
 % Test empcopularnd against matlab generation
 clear;
@@ -112,6 +114,8 @@ rotate3d on
 %  2.) Compute the empirical copula density using empcopulapdf
 %  3.) Generate samples from the empirical copula density
 %  4.) Compare the outputs of Steps #1 and #3
+clear;
+clc;
 
 % random sample generation parameters
 M = 1000;
@@ -119,8 +123,8 @@ alpha = 10;
 copType = 'Frank';
 
 % copula density estimation parameters
-h = 0.1; 
-K = 25;
+h = 0.05; 
+K = 250;
 
 % generate "true" random samples
 uu = copularnd(copType,alpha,M);
@@ -130,7 +134,7 @@ c_density_hat = empcopulapdf(uu, h, K, 'betak');
 uu_gen = empcopularnd(c_density_hat, M);
 
 subplot(1,2,1); scatter(uu(:,1),uu(:,2)); grid on; title(sprintf('Built-in %s Samples', copType))
-subplot(1,2,2); scatter(uu(:,1),uu(:,2)); grid on; title(sprintf('Generated %s Samples', copType))
+subplot(1,2,2); scatter(uu_gen(:,1),uu_gen(:,2)); grid on; title(sprintf('Generated %s Samples', copType))
 pause;
 
 % generate "true" random samples
@@ -142,7 +146,7 @@ c_density_hat = empcopulapdf(uu, h, K, 'betak');
 uu_gen = empcopularnd(c_density_hat, M);
 
 subplot(1,2,1); scatter(uu(:,1),uu(:,2)); grid on; title(sprintf('Built-in %s Samples', copType))
-subplot(1,2,2); scatter(uu(:,1),uu(:,2)); grid on; title(sprintf('Generated %s Samples', copType))
+subplot(1,2,2); scatter(uu_gen(:,1),uu_gen(:,2)); grid on; title(sprintf('Generated %s Samples', copType))
 pause;
 
 % generate "true" random samples
@@ -154,7 +158,7 @@ c_density_hat = empcopulapdf(uu, h, K, 'betak');
 uu_gen = empcopularnd(c_density_hat, M);
 
 subplot(1,2,1); scatter(uu(:,1),uu(:,2)); grid on; title(sprintf('Built-in %s Samples', copType))
-subplot(1,2,2); scatter(uu(:,1),uu(:,2)); grid on; title(sprintf('Generated %s Samples', copType))
+subplot(1,2,2); scatter(uu_gen(:,1),uu_gen(:,2)); grid on; title(sprintf('Generated %s Samples', copType))
 pause;
 
 copType = 'Gaussian';
@@ -166,7 +170,7 @@ c_density_hat = empcopulapdf(uu, h, K, 'betak');
 uu_gen = empcopularnd(c_density_hat, M);
 
 subplot(1,2,1); scatter(uu(:,1),uu(:,2)); grid on; title(sprintf('Built-in %s Samples', copType))
-subplot(1,2,2); scatter(uu(:,1),uu(:,2)); grid on; title(sprintf('Generated %s Samples', copType))
+subplot(1,2,2); scatter(uu_gen(:,1),uu_gen(:,2)); grid on; title(sprintf('Generated %s Samples', copType))
 pause;
 
 %% 
