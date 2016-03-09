@@ -17,11 +17,11 @@
 %*                                                                        *
 %**************************************************************************
 
-function [ U ] = depcopularnd2( c, U_parents )
-%DEPCOPULARND2 Aids in the generation of generating random numbers from
+function [ U ] = depcopularnd( c, U_parents )
+%DEPCOPULARND Aids in the generation of generating random numbers from
 %graphical models with common parents.
 
 M = size(U_parents,1);
-U = empcopularnd2(c, M, U_parents);
+U = empcopularnd(c, M, U_parents);
 
 end

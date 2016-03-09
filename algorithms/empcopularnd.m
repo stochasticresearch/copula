@@ -18,7 +18,7 @@
 %**************************************************************************
 
 function [ U ] = empcopularnd( c, M, varargin )
-%EMPCOPULARND2 Sample from any given copula density.
+%EMPCOPULARND Sample from any given copula density.
 %
 % Inputs:
 %  c - The copula density, provided as a [K x K x ... x K] matrix, where
