@@ -23,7 +23,6 @@
 clear;
 clc;
 
-rng(12345);
 Rho1 = [1 0.5; 0.5 1];
 Rho2 = [1 -0.3; -0.3 1];
 M = 1000;
@@ -51,7 +50,6 @@ fprintf('rho(X,Z2) = %f\n', corr(X,Z2));
 fprintf('rho(Y,Z2) = %f\n', corr(Y,Z2));
 
 fprintf('\nrho(Z1,Z2)=%f\n', corr(Z1,Z2));
-
 
 %% Test Clayton Copula w/ depcopularnd
 clear;
@@ -151,6 +149,83 @@ fprintf('rho_s(X,Y|Z2)=%f\n', partialcorr(X, Y, Z2, 'Type', 'Spearman'));
 fprintf('rho_s(X,Z2)=%f\n', corr(X, Z2, 'Type', 'Spearman'));
 fprintf('rho_s(X,Z2)=%f\n', corr(Y, Z2, 'Type', 'Spearman'));
 fprintf('**************************************************************\n');
+
+%% Test 3-D Gaussian depcopularnd for the following model
+%    Z1      Z2
+%     |\    /| 
+%     | \  / | 
+%     |  \/  |
+%     |  /\  |
+%     | /  \ |
+% X<---      --->Y
+%  Arrows point FROM Z1 --> X, Y, and FROM Z2 --> X, Y
+
+clear;
+clc;
+
+% define correlations
+rho_Z1_Z2 = 0.4;
+rho_Z1_X  = 0.2;
+rho_Z1_Y  = 0.2;
+rho_Z2_X  = -0.8;
+rho_Z2_Y  = -0.6;
+
+Rho1 = [1 rho_Z1_Z2 rho_Z1_X ; rho_Z1_Z2 1 rho_Z2_X; rho_Z1_X rho_Z2_X 1];
+Rho2 = [1 rho_Z1_Z2 rho_Z1_Y ; rho_Z1_Z2 1 rho_Z2_Y; rho_Z1_Y rho_Z2_Y 1];
+
+M = 100;
+
+numMCsims = 100;
+rho_Z1_Z2_hat_vec = zeros(1,numMCsims);
+rho_X_Z1_hat_vec = zeros(1,numMCsims);
+rho_Y_Z1_hat_vec = zeros(1,numMCsims);
+rho_X_Z2_hat_vec = zeros(1,numMCsims);
+rho_Y_Z2_hat_vec = zeros(1,numMCsims);
+rho_X_Y_hat_vec = zeros(1,numMCsims);
+rho_X_Y_given_Z1Z2_hat_vec = zeros(1,numMCsims);
+rho_X_Y_given_Z1_hat_vec = zeros(1,numMCsims);
+rho_X_Y_given_Z2_hat_vec = zeros(1,numMCsims);
+
+for simnum=1:numMCsims
+    
+    fprintf('simnum=%d\n', simnum);
+    
+    U_init = copularnd('Gaussian', Rho1, M);        % generates [Z1 Z2 X]
+    % generate the PDF
+    K = 100;
+    uu = linspace(0,1,K);
+    [U1,U2,U3] = ndgrid(uu);
+    c = copulapdf('Gaussian', [U1(:) U2(:) U3(:)], Rho2);
+    c = reshape(c,K,K,K);
+
+    Z1Z2_1 = U_init(:,1:2); X = U_init(:,3);
+    U_dep = depcopularnd(c, Z1Z2_1);
+    Z1Z2_2 = U_dep(:,1:2); Y = U_dep(:,3);
+    
+    % compute and store statistics
+    rho_Z1_Z2_hat = corr(Z1Z2_1(:,1),Z1Z2_1(:,2));          rho_Z1_Z2_hat_vec(simnum) = rho_Z1_Z2_hat;
+    rho_X_Z1_hat = corr(X,Z1Z2_1(:,1));                     rho_X_Z1_hat_vec(simnum) = rho_X_Z1_hat;
+    rho_Y_Z1_hat = corr(Y,Z1Z2_1(:,1));                     rho_Y_Z1_hat_vec(simnum) = rho_Y_Z1_hat;
+    rho_X_Z2_hat = corr(X,Z1Z2_1(:,2));                     rho_X_Z2_hat_vec(simnum) = rho_X_Z2_hat;
+    rho_Y_Z2_hat = corr(Y,Z1Z2_1(:,2));                     rho_Y_Z2_hat_vec(simnum) = rho_Y_Z2_hat;
+    rho_X_Y_hat  = corr(X,Y);                               rho_X_Y_hat_vec(simnum)  = rho_X_Y_hat;
+    rho_X_Y_given_Z1Z2_hat = partialcorr(X,Y,Z1Z2_1);       rho_X_Y_given_Z1Z2_hat_vec(simnum) = rho_X_Y_given_Z1Z2_hat;
+    rho_X_Y_given_Z1_hat   = partialcorr(X,Y,Z1Z2_1(:,1));  rho_X_Y_given_Z1_hat_vec(simnum) = rho_X_Y_given_Z1_hat;
+    rho_X_Y_given_Z2_hat   = partialcorr(X,Y,Z1Z2_1(:,2));  rho_X_Y_given_Z2_hat_vec(simnum) = rho_X_Y_given_Z2_hat;
+
+end
+
+fprintf('rho(Z1,Z2)=%f \t\t\t||\t\t ==> 0.4\n', mean(rho_Z1_Z2_hat) );
+fprintf('rho(X,Z1) = %f \t\t||\t\t ==> 0.2\n', mean(rho_X_Z1_hat) );
+fprintf('rho(Y,Z1) = %f \t\t||\t\t ==> 0.2\n', mean(rho_Y_Z1_hat) );
+fprintf('rho(X,Z2) = %f \t\t||\t\t ==> -0.8\n', mean(rho_X_Z2_hat) );
+fprintf('rho(Y,Z2) = %f \t\t||\t\t ==> -0.6\n', mean(rho_Y_Z2_hat) );
+fprintf('rho(X,Y) = %f\n', mean(rho_X_Y_hat) );
+fprintf('rho(X,Y|Z1,Z2) = %f \t\t||\t\t ==> 0\n', mean(rho_X_Y_given_Z1Z2_hat_vec) );
+fprintf('rho(X,Y|Z1) = %f\n', mean(rho_X_Y_given_Z1_hat_vec) );
+fprintf('rho(X,Y|Z2) = %f\n', mean(rho_X_Y_given_Z2_hat_vec) );
+
+
 
 %%
 %% Tests w/ depcopularnd_old
