@@ -27,7 +27,6 @@ Rho1 = [1 0.5; 0.5 1];
 Rho2 = [1 -0.3; -0.3 1];
 M = 1000;
 
-U_init = copularnd('Gaussian', Rho1, M);        % generates [Z X]
 % generate the PDF
 K = 100;
 uu = linspace(0,1,K);
@@ -35,21 +34,49 @@ uu = linspace(0,1,K);
 c = copulapdf('Gaussian', [U1(:) U2(:)], Rho2);
 c = reshape(c,K,K);
 
-Z1 = U_init(:,1); X = U_init(:,2);
-U_dep = depcopularnd(c, Z1);
-Z2 = U_dep(:,1); Y = U_dep(:,2);
+numMCsims = 100;
+rho_XY_Z_hat_vec  = zeros(1,numMCsims);
+rho_X_Y_hat_vec   = zeros(1,numMCsims);
+rho_X_Z_hat_vec   = zeros(1,numMCsims);
+rho_Y_Z_hat_vec   = zeros(1,numMCsims);
+rho_Z1_Z2_hat_vec = zeros(1,numMCsims);
 
+lastMsgLen = 0;
+for simnum=1:numMCsims
+    fprintf(repmat('\b',1,lastMsgLen));
+    msg = sprintf('Percentage Complete=%0.2f\n', simnum/numMCsims*100);
+    lastMsgLen = length(msg);
+    fprintf(msg);
+    
+    
+    U_init = copularnd('Gaussian', Rho1, M);        % generates [Z X]
+    Z1 = U_init(:,1); X = U_init(:,2);
+    U_dep = depcopularnd(c, Z1);
+    Z2 = U_dep(:,1); Y = U_dep(:,2);
+    
+    rho_XY_Z_hat = partialcorr(X,Y,Z1); 
+    rho_XY_Z_hat_vec(simnum) = rho_XY_Z_hat;
+    
+    rho_X_Y_hat  = corr(X,Y);           
+    rho_X_Y_hat_vec(simnum) = rho_X_Y_hat;
+    
+    rho_X_Z_hat  = corr(X,Z1);          
+    rho_X_Z_hat_vec(simnum) = rho_X_Z_hat;
+    
+    rho_Y_Z_hat  = corr(Y,Z1);          
+    rho_Y_Z_hat_vec(simnum) = rho_Y_Z_hat;
+    
+    rho_Z1_Z2_hat = corr(Z1,Z2);        
+    rho_Z1_Z2_hat_vec(simnum) = rho_Z1_Z2_hat;
+end
+
+fprintf(repmat('\b',1,lastMsgLen));
 fprintf('********** Gaussian RV Testing - X indep Y | Z **********\n');
-fprintf('rho(X,Y|Z1) = %f\n', partialcorr(X,Y,Z1));
-fprintf('rho(X,Y) = %f\n', corr(X,Y));
-fprintf('rho(X,Z1) = %f\n', corr(X,Z1));
-fprintf('rho(Y,Z1) = %f\n', corr(Y,Z1));
-
-fprintf('rho(X,Y|Z2) = %f\n', partialcorr(X,Y,Z2));
-fprintf('rho(X,Z2) = %f\n', corr(X,Z2));
-fprintf('rho(Y,Z2) = %f\n', corr(Y,Z2));
-
-fprintf('\nrho(Z1,Z2)=%f\n', corr(Z1,Z2));
+fprintf('rho(X,Y|Z) = %f\n', mean(rho_XY_Z_hat_vec) );
+fprintf('rho(X,Y) = %f\n', mean(rho_X_Y_hat_vec) );
+fprintf('rho(X,Z) = %f || \t\t ==> %f\n', mean(rho_X_Z_hat_vec), 0.5 );
+fprintf('rho(Y,Z) = %f || \t ==> %f\n', mean(rho_Y_Z_hat_vec), -0.3 );
+fprintf('rho(Z1,Z2)=%f\n', mean(rho_Z1_Z2_hat_vec) );
 
 %% Test Clayton Copula w/ depcopularnd
 clear;
@@ -58,7 +85,6 @@ clc;
 alpha = 5;
 M = 1000;
 N = 2;
-[U_init] = claytoncopularnd(M, N, alpha);
 
 % generate the PDF
 K = 100;
@@ -67,22 +93,48 @@ uu = linspace(0,1,K);
 c = claytoncopulapdf([U1(:) U2(:)], alpha);
 c = reshape(c,K,K);
 
-Z1 = U_init(:,1); X = U_init(:,2);
-U_dep = depcopularnd(c, Z1);
-Z2 = U_dep(:,1); Y = U_dep(:,2);
+numMCsims = 100;
+srho_XY_Z_hat_vec  = zeros(1,numMCsims);
+srho_X_Y_hat_vec   = zeros(1,numMCsims);
+srho_X_Z_hat_vec   = zeros(1,numMCsims);
+srho_Y_Z_hat_vec   = zeros(1,numMCsims);
+srho_Z1_Z2_hat_vec = zeros(1,numMCsims);
 
-fprintf('********** Clayton Dependency Testing - X indep Y | Z ******\n');
-fprintf('rho_s(Z1,Z2)=%f\n', corr(Z1,Z2,'type','Spearman'));
+lastMsgLen = 0;
+for simnum=1:numMCsims
+    fprintf(repmat('\b',1,lastMsgLen));
+    msg = sprintf('Percentage Complete=%0.2f\n', simnum/numMCsims*100);
+    lastMsgLen = length(msg);
+    fprintf(msg);
+    
+    [U_init] = claytoncopularnd(M, N, alpha);
+    Z1 = U_init(:,1); X = U_init(:,2);
+    U_dep = depcopularnd(c, Z1);
+    Z2 = U_dep(:,1); Y = U_dep(:,2);    
+    
+    srho_XY_Z_hat = partialcorr(X,Y,Z1,'type','Spearman'); 
+    srho_XY_Z_hat_vec(simnum) = srho_XY_Z_hat;
+    
+    srho_X_Y_hat  = corr(X,Y,'type','Spearman');           
+    srho_X_Y_hat_vec(simnum) = srho_X_Y_hat;
+    
+    srho_X_Z_hat  = corr(X,Z1,'type','Spearman');          
+    srho_X_Z_hat_vec(simnum) = srho_X_Z_hat;
+    
+    srho_Y_Z_hat  = corr(Y,Z1,'type','Spearman');          
+    srho_Y_Z_hat_vec(simnum) = srho_Y_Z_hat;
+    
+    srho_Z1_Z2_hat = corr(Z1,Z2,'type','Spearman');        
+    srho_Z1_Z2_hat_vec(simnum) = srho_Z1_Z2_hat;
+end
 
-fprintf('rho_s(X,Y|Z1)=%f\n', partialcorr(X, Y, Z1, 'Type', 'Spearman'));
-fprintf('rho_s(X,Y)=%f\n', corr(X, Y, 'Type', 'Spearman'));
-fprintf('rho_s(X,Z1)=%f\n', corr(X, Z1, 'Type', 'Spearman'));
-fprintf('rho_s(Y,Z1)=%f\n', corr(Y, Z1, 'Type', 'Spearman'));
-
-fprintf('rho_s(X,Y|Z2)=%f\n', partialcorr(X, Y, Z2, 'Type', 'Spearman'));
-fprintf('rho_s(X,Z2)=%f\n', corr(X, Z2, 'Type', 'Spearman'));
-fprintf('rho_s(X,Z2)=%f\n', corr(Y, Z2, 'Type', 'Spearman'));
-fprintf('**************************************************************\n');
+fprintf(repmat('\b',1,lastMsgLen));
+fprintf('********** Clayton Dependency Testing - X indep Y | Z **********\n');
+fprintf('rho_s(X,Y|Z) = %f\n', mean(srho_XY_Z_hat_vec) );
+fprintf('rho_s(X,Y) = %f\n', mean(srho_X_Y_hat_vec) );
+fprintf('rho_s(X,Z) = %f || \t\t ==> %f\n', mean(srho_X_Z_hat_vec), copulastat('Clayton', alpha, 'type', 'Spearman') );
+fprintf('rho_s(Y,Z) = %f || \t\t ==> %f\n', mean(srho_Y_Z_hat_vec), copulastat('Clayton', alpha, 'type', 'Spearman') );
+fprintf('rho_s(Z1,Z2)=%f\n', mean(srho_Z1_Z2_hat_vec) );
 
 %% Test Frank Copula w/ depcopularnd
 clear;
@@ -91,7 +143,6 @@ clc;
 alpha = 5;
 M = 1000;
 N = 2;
-[U_init] = frankcopularnd(M, N, alpha);
 
 % generate the PDF
 K = 100;
@@ -100,22 +151,48 @@ uu = linspace(0,1,K);
 c = frankcopulapdf([U1(:) U2(:)], alpha);
 c = reshape(c,K,K);
 
-Z1 = U_init(:,1); X = U_init(:,2);
-U_dep = depcopularnd(c, Z1);
-Z2 = U_dep(:,1); Y = U_dep(:,2);
+numMCsims = 100;
+srho_XY_Z_hat_vec  = zeros(1,numMCsims);
+srho_X_Y_hat_vec   = zeros(1,numMCsims);
+srho_X_Z_hat_vec   = zeros(1,numMCsims);
+srho_Y_Z_hat_vec   = zeros(1,numMCsims);
+srho_Z1_Z2_hat_vec = zeros(1,numMCsims);
 
-fprintf('********** FRANK Dependency Testing - X indep Y | Z ******\n');
-fprintf('rho_s(Z1,Z2)=%f\n', corr(Z1,Z2,'type','Spearman'));
+lastMsgLen = 0;
+for simnum=1:numMCsims
+    fprintf(repmat('\b',1,lastMsgLen));
+    msg = sprintf('Percentage Complete=%0.02f\n', simnum/numMCsims*100);
+    lastMsgLen = length(msg);
+    fprintf(msg);
+    
+    [U_init] = frankcopularnd(M, N, alpha);
+    Z1 = U_init(:,1); X = U_init(:,2);
+    U_dep = depcopularnd(c, Z1);
+    Z2 = U_dep(:,1); Y = U_dep(:,2);
 
-fprintf('rho_s(X,Y|Z1)=%f\n', partialcorr(X, Y, Z1, 'Type', 'Spearman'));
-fprintf('rho_s(X,Y)=%f\n', corr(X, Y, 'Type', 'Spearman'));
-fprintf('rho_s(X,Z1)=%f\n', corr(X, Z1, 'Type', 'Spearman'));
-fprintf('rho_s(Y,Z1)=%f\n', corr(Y, Z1, 'Type', 'Spearman'));
+    srho_XY_Z_hat = partialcorr(X,Y,Z1,'type','Spearman'); 
+    srho_XY_Z_hat_vec(simnum) = srho_XY_Z_hat;
+    
+    srho_X_Y_hat  = corr(X,Y,'type','Spearman');           
+    srho_X_Y_hat_vec(simnum) = srho_X_Y_hat;
+    
+    srho_X_Z_hat  = corr(X,Z1,'type','Spearman');          
+    srho_X_Z_hat_vec(simnum) = srho_X_Z_hat;
+    
+    srho_Y_Z_hat  = corr(Y,Z1,'type','Spearman');          
+    srho_Y_Z_hat_vec(simnum) = srho_Y_Z_hat;
+    
+    srho_Z1_Z2_hat = corr(Z1,Z2,'type','Spearman');        
+    srho_Z1_Z2_hat_vec(simnum) = srho_Z1_Z2_hat;
+end
 
-fprintf('rho_s(X,Y|Z2)=%f\n', partialcorr(X, Y, Z2, 'Type', 'Spearman'));
-fprintf('rho_s(X,Z2)=%f\n', corr(X, Z2, 'Type', 'Spearman'));
-fprintf('rho_s(X,Z2)=%f\n', corr(Y, Z2, 'Type', 'Spearman'));
-fprintf('**************************************************************\n');
+fprintf(repmat('\b',1,lastMsgLen));
+fprintf('********** Frank Dependency Testing - X indep Y | Z **********\n');
+fprintf('rho_s(X,Y|Z) = %f\n', mean(srho_XY_Z_hat_vec) );
+fprintf('rho_s(X,Y) = %f\n', mean(srho_X_Y_hat_vec) );
+fprintf('rho_s(X,Z) = %f || \t\t ==> %f\n', mean(srho_X_Z_hat_vec), copulastat('Frank', alpha, 'type', 'Spearman') );
+fprintf('rho_s(Y,Z) = %f || \t\t ==> %f\n', mean(srho_Y_Z_hat_vec), copulastat('Frank', alpha, 'type', 'Spearman') );
+fprintf('rho_s(Z1,Z2)=%f\n', mean(srho_Z1_Z2_hat_vec) );
 
 %% Test Gumbel Copula w/ depcopularnd
 clear;
@@ -124,7 +201,6 @@ clc;
 alpha = 2;
 M = 1000;
 N = 2;
-[U_init] = gumbelcopularnd(M, N, alpha);
 
 % generate the PDF
 K = 100;
@@ -133,22 +209,48 @@ uu = linspace(0,1,K);
 c = gumbelcopulapdf([U1(:) U2(:)], alpha);
 c = reshape(c,K,K);
 
-Z1 = U_init(:,1); X = U_init(:,2);
-U_dep = depcopularnd(c, Z1);
-Z2 = U_dep(:,1); Y = U_dep(:,2);
+numMCsims = 100;
+srho_XY_Z_hat_vec  = zeros(1,numMCsims);
+srho_X_Y_hat_vec   = zeros(1,numMCsims);
+srho_X_Z_hat_vec   = zeros(1,numMCsims);
+srho_Y_Z_hat_vec   = zeros(1,numMCsims);
+srho_Z1_Z2_hat_vec = zeros(1,numMCsims);
 
-fprintf('********** GUMBEL Dependency Testing - X indep Y | Z ******\n');
-fprintf('rho_s(Z1,Z2)=%f\n', corr(Z1,Z2,'type','Spearman'));
+lastMsgLen = 0;
+for simnum=1:numMCsims
+    fprintf(repmat('\b',1,lastMsgLen));
+    msg = sprintf('Percentage Complete=%0.02f\n', simnum/numMCsims*100);
+    lastMsgLen = length(msg);
+    fprintf(msg);
+    
+    [U_init] = gumbelcopularnd(M, N, alpha);
+    Z1 = U_init(:,1); X = U_init(:,2);
+    U_dep = depcopularnd(c, Z1);
+    Z2 = U_dep(:,1); Y = U_dep(:,2);
+    
+    srho_XY_Z_hat = partialcorr(X,Y,Z1,'type','Spearman'); 
+    srho_XY_Z_hat_vec(simnum) = srho_XY_Z_hat;
+    
+    srho_X_Y_hat  = corr(X,Y,'type','Spearman');           
+    srho_X_Y_hat_vec(simnum) = srho_X_Y_hat;
+    
+    srho_X_Z_hat  = corr(X,Z1,'type','Spearman');          
+    srho_X_Z_hat_vec(simnum) = srho_X_Z_hat;
+    
+    srho_Y_Z_hat  = corr(Y,Z1,'type','Spearman');          
+    srho_Y_Z_hat_vec(simnum) = srho_Y_Z_hat;
+    
+    srho_Z1_Z2_hat = corr(Z1,Z2,'type','Spearman');        
+    srho_Z1_Z2_hat_vec(simnum) = srho_Z1_Z2_hat;
+end
 
-fprintf('rho_s(X,Y|Z1)=%f\n', partialcorr(X, Y, Z1, 'Type', 'Spearman'));
-fprintf('rho_s(X,Y)=%f\n', corr(X, Y, 'Type', 'Spearman'));
-fprintf('rho_s(X,Z1)=%f\n', corr(X, Z1, 'Type', 'Spearman'));
-fprintf('rho_s(Y,Z1)=%f\n', corr(Y, Z1, 'Type', 'Spearman'));
-
-fprintf('rho_s(X,Y|Z2)=%f\n', partialcorr(X, Y, Z2, 'Type', 'Spearman'));
-fprintf('rho_s(X,Z2)=%f\n', corr(X, Z2, 'Type', 'Spearman'));
-fprintf('rho_s(X,Z2)=%f\n', corr(Y, Z2, 'Type', 'Spearman'));
-fprintf('**************************************************************\n');
+fprintf(repmat('\b',1,lastMsgLen));
+fprintf('********** Gumbel Dependency Testing - X indep Y | Z **********\n');
+fprintf('rho_s(X,Y|Z) = %f\n', mean(srho_XY_Z_hat_vec) );
+fprintf('rho_s(X,Y) = %f\n', mean(srho_X_Y_hat_vec) );
+fprintf('rho_s(X,Z) = %f || \t\t ==> %f\n', mean(srho_X_Z_hat_vec), copulastat('Gumbel', alpha, 'type', 'Spearman') );
+fprintf('rho_s(Y,Z) = %f || \t\t ==> %f\n', mean(srho_Y_Z_hat_vec), copulastat('Gumbel', alpha, 'type', 'Spearman') );
+fprintf('rho_s(Z1,Z2)=%f\n', mean(srho_Z1_Z2_hat_vec) );
 
 %% Test 3-D Gaussian depcopularnd for the following model
 %    Z1      Z2
@@ -173,7 +275,7 @@ rho_Z2_Y  = -0.6;
 Rho1 = [1 rho_Z1_Z2 rho_Z1_X ; rho_Z1_Z2 1 rho_Z2_X; rho_Z1_X rho_Z2_X 1];
 Rho2 = [1 rho_Z1_Z2 rho_Z1_Y ; rho_Z1_Z2 1 rho_Z2_Y; rho_Z1_Y rho_Z2_Y 1];
 
-M = 100;
+M = 1000;
 
 numMCsims = 100;
 rho_Z1_Z2_hat_vec = zeros(1,numMCsims);
@@ -186,18 +288,22 @@ rho_X_Y_given_Z1Z2_hat_vec = zeros(1,numMCsims);
 rho_X_Y_given_Z1_hat_vec = zeros(1,numMCsims);
 rho_X_Y_given_Z2_hat_vec = zeros(1,numMCsims);
 
+% generate the PDF
+K = 100;
+uu = linspace(0,1,K);
+[U1,U2,U3] = ndgrid(uu);
+c = copulapdf('Gaussian', [U1(:) U2(:) U3(:)], Rho2);
+c = reshape(c,K,K,K);
+
+lastMsgLen = 0;
 for simnum=1:numMCsims
-    
-    fprintf('simnum=%d\n', simnum);
+    fprintf(repmat('\b',1,lastMsgLen));
+    msg = sprintf('Percentage Complete=%0.02f\n', simnum/numMCsims*100);
+    lastMsgLen = length(msg);
+    fprintf(msg);
     
     U_init = copularnd('Gaussian', Rho1, M);        % generates [Z1 Z2 X]
-    % generate the PDF
-    K = 100;
-    uu = linspace(0,1,K);
-    [U1,U2,U3] = ndgrid(uu);
-    c = copulapdf('Gaussian', [U1(:) U2(:) U3(:)], Rho2);
-    c = reshape(c,K,K,K);
-
+    
     Z1Z2_1 = U_init(:,1:2); X = U_init(:,3);
     U_dep = depcopularnd(c, Z1Z2_1);
     Z1Z2_2 = U_dep(:,1:2); Y = U_dep(:,3);
@@ -215,6 +321,8 @@ for simnum=1:numMCsims
 
 end
 
+fprintf(repmat('\b',1,lastMsgLen));
+fprintf('********** Gaussian D=3 Dependency Testing - X indep Y | {Z1,Z2} **********\n');
 fprintf('rho(Z1,Z2)=%f \t\t\t||\t\t ==> 0.4\n', mean(rho_Z1_Z2_hat) );
 fprintf('rho(X,Z1) = %f \t\t||\t\t ==> 0.2\n', mean(rho_X_Z1_hat) );
 fprintf('rho(Y,Z1) = %f \t\t||\t\t ==> 0.2\n', mean(rho_Y_Z1_hat) );
@@ -225,7 +333,269 @@ fprintf('rho(X,Y|Z1,Z2) = %f \t\t||\t\t ==> 0\n', mean(rho_X_Y_given_Z1Z2_hat_ve
 fprintf('rho(X,Y|Z1) = %f\n', mean(rho_X_Y_given_Z1_hat_vec) );
 fprintf('rho(X,Y|Z2) = %f\n', mean(rho_X_Y_given_Z2_hat_vec) );
 
+%% Test the 3-D Clayton by modeling data w/ the affine transform and compare
+%    Z1      Z2
+%     |\    /| 
+%     | \  / | 
+%     |  \/  |
+%     |  /\  |
+%     | /  \ |
+% X<---      --->Y
+%  Arrows point FROM Z1 --> X, Y, and FROM Z2 --> X, Y
 
+clear;
+clc;
+
+alpha = 5;  % remember, we can only have one alpha w/out nested archimedean copulas :(
+M = 1000;
+N = 3;
+
+% generate the PDF
+K = 100;
+uu = linspace(0,1,K);
+[U1,U2,U3] = ndgrid(uu);
+c = claytoncopulapdf([U1(:) U2(:) U3(:)], alpha);
+c = reshape(c,K,K,K);
+
+numMCsims = 100;
+srho_Z1_Z2_hat_vec = zeros(1,numMCsims);
+srho_X_Z1_hat_vec = zeros(1,numMCsims);
+srho_Y_Z1_hat_vec = zeros(1,numMCsims);
+srho_X_Z2_hat_vec = zeros(1,numMCsims);
+srho_Y_Z2_hat_vec = zeros(1,numMCsims);
+srho_X_Y_hat_vec = zeros(1,numMCsims);
+srho_X_Y_given_Z1Z2_hat_vec = zeros(1,numMCsims);
+srho_X_Y_given_Z1_hat_vec = zeros(1,numMCsims);
+srho_X_Y_given_Z2_hat_vec = zeros(1,numMCsims);
+
+lastMsgLen = 0;
+for simnum=1:numMCsims
+    fprintf(repmat('\b',1,lastMsgLen));
+    msg = sprintf('Percentage Complete=%0.2f\n', simnum/numMCsims*100);
+    lastMsgLen = length(msg);
+    fprintf(msg);
+    
+    [U_init] = claytoncopularnd(M, N, alpha);
+    Z1Z2_1 = U_init(:,1:2); X = U_init(:,3);
+    U_dep = depcopularnd(c, Z1Z2_1);
+    Z1Z2_2 = U_dep(:,1:2); Y = U_dep(:,3);
+    
+    % compute and store statistics
+    srho_Z1_Z2_hat = corr(Z1Z2_1(:,1),Z1Z2_1(:,2),'type','Spearman');          
+    srho_Z1_Z2_hat_vec(simnum) = srho_Z1_Z2_hat;
+    
+    srho_X_Z1_hat = corr(X,Z1Z2_1(:,1),'type','Spearman');                     
+    srho_X_Z1_hat_vec(simnum) = srho_X_Z1_hat;
+    
+    srho_Y_Z1_hat = corr(Y,Z1Z2_1(:,1),'type','Spearman');                     
+    srho_Y_Z1_hat_vec(simnum) = srho_Y_Z1_hat;
+    
+    srho_X_Z2_hat = corr(X,Z1Z2_1(:,2),'type','Spearman');                     
+    srho_X_Z2_hat_vec(simnum) = srho_X_Z2_hat;
+    
+    srho_Y_Z2_hat = corr(Y,Z1Z2_1(:,2),'type','Spearman');                     
+    srho_Y_Z2_hat_vec(simnum) = srho_Y_Z2_hat;
+    
+    srho_X_Y_hat  = corr(X,Y,'type','Spearman');                               
+    srho_X_Y_hat_vec(simnum)  = srho_X_Y_hat;
+    
+    srho_X_Y_given_Z1Z2_hat = partialcorr(X,Y,Z1Z2_1,'type','Spearman');       
+    srho_X_Y_given_Z1Z2_hat_vec(simnum) = srho_X_Y_given_Z1Z2_hat;
+    
+    srho_X_Y_given_Z1_hat   = partialcorr(X,Y,Z1Z2_1(:,1),'type','Spearman');  
+    srho_X_Y_given_Z1_hat_vec(simnum) = srho_X_Y_given_Z1_hat;
+    
+    srho_X_Y_given_Z2_hat   = partialcorr(X,Y,Z1Z2_1(:,2),'type','Spearman');  
+    srho_X_Y_given_Z2_hat_vec(simnum) = srho_X_Y_given_Z2_hat;
+end
+
+fprintf(repmat('\b',1,lastMsgLen));
+fprintf('********** Clayton D=3 Dependency Testing - X indep Y | {Z1,Z2} **********\n');
+fprintf('rho(Z1,Z2)=%f \t\t||\t\t ==> %f\n', mean(srho_Z1_Z2_hat), copulastat('Clayton',alpha,'type','Spearman'));
+fprintf('rho(X,Z1) = %f \t\t||\t\t ==> %f\n', mean(srho_X_Z1_hat), copulastat('Clayton',alpha,'type','Spearman'));
+fprintf('rho(Y,Z1) = %f \t\t||\t\t ==> %f\n', mean(srho_Y_Z1_hat), copulastat('Clayton',alpha,'type','Spearman'));
+fprintf('rho(X,Z2) = %f \t\t||\t\t ==> %f\n', mean(srho_X_Z2_hat), copulastat('Clayton',alpha,'type','Spearman'));
+fprintf('rho(Y,Z2) = %f \t\t||\t\t ==> %f\n', mean(srho_Y_Z2_hat), copulastat('Clayton',alpha,'type','Spearman'));
+fprintf('rho(X,Y) = %f \t\t||\t\t ==> %f\n', mean(srho_X_Y_hat), copulastat('Clayton',alpha,'type','Spearman'));
+fprintf('rho(X,Y|Z1,Z2) = %f \t\t||\t\t ==> 0\n', mean(srho_X_Y_given_Z1Z2_hat_vec) );
+fprintf('rho(X,Y|Z1) = %f\n', mean(srho_X_Y_given_Z1_hat_vec) );
+fprintf('rho(X,Y|Z2) = %f\n', mean(srho_X_Y_given_Z2_hat_vec) );
+
+%% Test the 3-D Frank by modeling data w/ the affine transform and compare
+%    Z1      Z2
+%     |\    /| 
+%     | \  / | 
+%     |  \/  |
+%     |  /\  |
+%     | /  \ |
+% X<---      --->Y
+%  Arrows point FROM Z1 --> X, Y, and FROM Z2 --> X, Y
+
+clear;
+clc;
+
+alpha = 5;  % remember, we can only have one alpha w/out nested archimedean copulas :(
+M = 1000;
+N = 3;
+
+% generate the PDF
+K = 100;
+uu = linspace(0,1,K);
+[U1,U2,U3] = ndgrid(uu);
+c = frankcopulapdf([U1(:) U2(:) U3(:)], alpha);
+c = reshape(c,K,K,K);
+
+numMCsims = 100;
+srho_Z1_Z2_hat_vec = zeros(1,numMCsims);
+srho_X_Z1_hat_vec = zeros(1,numMCsims);
+srho_Y_Z1_hat_vec = zeros(1,numMCsims);
+srho_X_Z2_hat_vec = zeros(1,numMCsims);
+srho_Y_Z2_hat_vec = zeros(1,numMCsims);
+srho_X_Y_hat_vec = zeros(1,numMCsims);
+srho_X_Y_given_Z1Z2_hat_vec = zeros(1,numMCsims);
+srho_X_Y_given_Z1_hat_vec = zeros(1,numMCsims);
+srho_X_Y_given_Z2_hat_vec = zeros(1,numMCsims);
+
+lastMsgLen = 0;
+for simnum=1:numMCsims
+    fprintf(repmat('\b',1,lastMsgLen));
+    msg = sprintf('Percentage Complete=%0.2f\n', simnum/numMCsims*100);
+    lastMsgLen = length(msg);
+    fprintf(msg);
+    
+    [U_init] = frankcopularnd(M, N, alpha);
+    Z1Z2_1 = U_init(:,1:2); X = U_init(:,3);
+    U_dep = depcopularnd(c, Z1Z2_1);
+    Z1Z2_2 = U_dep(:,1:2); Y = U_dep(:,3);
+    
+    % compute and store statistics
+    srho_Z1_Z2_hat = corr(Z1Z2_1(:,1),Z1Z2_1(:,2),'type','Spearman');          
+    srho_Z1_Z2_hat_vec(simnum) = srho_Z1_Z2_hat;
+    
+    srho_X_Z1_hat = corr(X,Z1Z2_1(:,1),'type','Spearman');                     
+    srho_X_Z1_hat_vec(simnum) = srho_X_Z1_hat;
+    
+    srho_Y_Z1_hat = corr(Y,Z1Z2_1(:,1),'type','Spearman');                     
+    srho_Y_Z1_hat_vec(simnum) = srho_Y_Z1_hat;
+    
+    srho_X_Z2_hat = corr(X,Z1Z2_1(:,2),'type','Spearman');                     
+    srho_X_Z2_hat_vec(simnum) = srho_X_Z2_hat;
+    
+    srho_Y_Z2_hat = corr(Y,Z1Z2_1(:,2),'type','Spearman');                     
+    srho_Y_Z2_hat_vec(simnum) = srho_Y_Z2_hat;
+    
+    srho_X_Y_hat  = corr(X,Y,'type','Spearman');                               
+    srho_X_Y_hat_vec(simnum)  = srho_X_Y_hat;
+    
+    srho_X_Y_given_Z1Z2_hat = partialcorr(X,Y,Z1Z2_1,'type','Spearman');       
+    srho_X_Y_given_Z1Z2_hat_vec(simnum) = srho_X_Y_given_Z1Z2_hat;
+    
+    srho_X_Y_given_Z1_hat   = partialcorr(X,Y,Z1Z2_1(:,1),'type','Spearman');  
+    srho_X_Y_given_Z1_hat_vec(simnum) = srho_X_Y_given_Z1_hat;
+    
+    srho_X_Y_given_Z2_hat   = partialcorr(X,Y,Z1Z2_1(:,2),'type','Spearman');  
+    srho_X_Y_given_Z2_hat_vec(simnum) = srho_X_Y_given_Z2_hat;
+end
+
+fprintf(repmat('\b',1,lastMsgLen));
+fprintf('********** Frank D=3 Dependency Testing - X indep Y | {Z1,Z2} **********\n');
+fprintf('rho(Z1,Z2)=%f \t\t||\t\t ==> %f\n', mean(srho_Z1_Z2_hat), copulastat('Frank',alpha,'type','Spearman'));
+fprintf('rho(X,Z1) = %f \t\t||\t\t ==> %f\n', mean(srho_X_Z1_hat), copulastat('Frank',alpha,'type','Spearman'));
+fprintf('rho(Y,Z1) = %f \t\t||\t\t ==> %f\n', mean(srho_Y_Z1_hat), copulastat('Frank',alpha,'type','Spearman'));
+fprintf('rho(X,Z2) = %f \t\t||\t\t ==> %f\n', mean(srho_X_Z2_hat), copulastat('Frank',alpha,'type','Spearman'));
+fprintf('rho(Y,Z2) = %f \t\t||\t\t ==> %f\n', mean(srho_Y_Z2_hat), copulastat('Frank',alpha,'type','Spearman'));
+fprintf('rho(X,Y) = %f \t\t||\t\t ==> %f\n', mean(srho_X_Y_hat), copulastat('Frank',alpha,'type','Spearman'));
+fprintf('rho(X,Y|Z1,Z2) = %f \t\t||\t\t ==> 0\n', mean(srho_X_Y_given_Z1Z2_hat_vec) );
+fprintf('rho(X,Y|Z1) = %f\n', mean(srho_X_Y_given_Z1_hat_vec) );
+fprintf('rho(X,Y|Z2) = %f\n', mean(srho_X_Y_given_Z2_hat_vec) );
+
+%% Test the 3-D Gumbel by modeling data w/ the affine transform and compare
+%    Z1      Z2
+%     |\    /| 
+%     | \  / | 
+%     |  \/  |
+%     |  /\  |
+%     | /  \ |
+% X<---      --->Y
+%  Arrows point FROM Z1 --> X, Y, and FROM Z2 --> X, Y
+
+clear;
+clc;
+
+alpha = 2;  % remember, we can only have one alpha w/out nested archimedean copulas :(
+M = 1000;
+N = 3;
+
+% generate the PDF
+K = 100;
+uu = linspace(0,1,K);
+[U1,U2,U3] = ndgrid(uu);
+c = gumbelcopulapdf([U1(:) U2(:) U3(:)], alpha);
+c = reshape(c,K,K,K);
+
+numMCsims = 100;
+srho_Z1_Z2_hat_vec = zeros(1,numMCsims);
+srho_X_Z1_hat_vec = zeros(1,numMCsims);
+srho_Y_Z1_hat_vec = zeros(1,numMCsims);
+srho_X_Z2_hat_vec = zeros(1,numMCsims);
+srho_Y_Z2_hat_vec = zeros(1,numMCsims);
+srho_X_Y_hat_vec = zeros(1,numMCsims);
+srho_X_Y_given_Z1Z2_hat_vec = zeros(1,numMCsims);
+srho_X_Y_given_Z1_hat_vec = zeros(1,numMCsims);
+srho_X_Y_given_Z2_hat_vec = zeros(1,numMCsims);
+
+lastMsgLen = 0;
+for simnum=1:numMCsims
+    fprintf(repmat('\b',1,lastMsgLen));
+    msg = sprintf('Percentage Complete=%0.2f\n', simnum/numMCsims*100);
+    lastMsgLen = length(msg);
+    fprintf(msg);
+    
+    [U_init] = gumbelcopularnd(M, N, alpha);
+    Z1Z2_1 = U_init(:,1:2); X = U_init(:,3);
+    U_dep = depcopularnd(c, Z1Z2_1);
+    Z1Z2_2 = U_dep(:,1:2); Y = U_dep(:,3);
+    
+    % compute and store statistics
+    srho_Z1_Z2_hat = corr(Z1Z2_1(:,1),Z1Z2_1(:,2),'type','Spearman');          
+    srho_Z1_Z2_hat_vec(simnum) = srho_Z1_Z2_hat;
+    
+    srho_X_Z1_hat = corr(X,Z1Z2_1(:,1),'type','Spearman');                     
+    srho_X_Z1_hat_vec(simnum) = srho_X_Z1_hat;
+    
+    srho_Y_Z1_hat = corr(Y,Z1Z2_1(:,1),'type','Spearman');                     
+    srho_Y_Z1_hat_vec(simnum) = srho_Y_Z1_hat;
+    
+    srho_X_Z2_hat = corr(X,Z1Z2_1(:,2),'type','Spearman');                     
+    srho_X_Z2_hat_vec(simnum) = srho_X_Z2_hat;
+    
+    srho_Y_Z2_hat = corr(Y,Z1Z2_1(:,2),'type','Spearman');                     
+    srho_Y_Z2_hat_vec(simnum) = srho_Y_Z2_hat;
+    
+    srho_X_Y_hat  = corr(X,Y,'type','Spearman');                               
+    srho_X_Y_hat_vec(simnum)  = srho_X_Y_hat;
+    
+    srho_X_Y_given_Z1Z2_hat = partialcorr(X,Y,Z1Z2_1,'type','Spearman');       
+    srho_X_Y_given_Z1Z2_hat_vec(simnum) = srho_X_Y_given_Z1Z2_hat;
+    
+    srho_X_Y_given_Z1_hat   = partialcorr(X,Y,Z1Z2_1(:,1),'type','Spearman');  
+    srho_X_Y_given_Z1_hat_vec(simnum) = srho_X_Y_given_Z1_hat;
+    
+    srho_X_Y_given_Z2_hat   = partialcorr(X,Y,Z1Z2_1(:,2),'type','Spearman');  
+    srho_X_Y_given_Z2_hat_vec(simnum) = srho_X_Y_given_Z2_hat;
+end
+
+fprintf(repmat('\b',1,lastMsgLen));
+fprintf('********** Gumbel D=3 Dependency Testing - X indep Y | {Z1,Z2} **********\n');
+fprintf('rho(Z1,Z2)=%f \t\t||\t\t ==> %f\n', mean(srho_Z1_Z2_hat), copulastat('Gumbel',alpha,'type','Spearman'));
+fprintf('rho(X,Z1) = %f \t\t||\t\t ==> %f\n', mean(srho_X_Z1_hat), copulastat('Gumbel',alpha,'type','Spearman'));
+fprintf('rho(Y,Z1) = %f \t\t||\t\t ==> %f\n', mean(srho_Y_Z1_hat), copulastat('Gumbel',alpha,'type','Spearman'));
+fprintf('rho(X,Z2) = %f \t\t||\t\t ==> %f\n', mean(srho_X_Z2_hat), copulastat('Gumbel',alpha,'type','Spearman'));
+fprintf('rho(Y,Z2) = %f \t\t||\t\t ==> %f\n', mean(srho_Y_Z2_hat), copulastat('Gumbel',alpha,'type','Spearman'));
+fprintf('rho(X,Y) = %f \t\t||\t\t ==> %f\n', mean(srho_X_Y_hat), copulastat('Gumbel',alpha,'type','Spearman'));
+fprintf('rho(X,Y|Z1,Z2) = %f \t\t||\t\t ==> 0\n', mean(srho_X_Y_given_Z1Z2_hat_vec) );
+fprintf('rho(X,Y|Z1) = %f\n', mean(srho_X_Y_given_Z1_hat_vec) );
+fprintf('rho(X,Y|Z2) = %f\n', mean(srho_X_Y_given_Z2_hat_vec) );
 
 %%
 %% Tests w/ depcopularnd_old

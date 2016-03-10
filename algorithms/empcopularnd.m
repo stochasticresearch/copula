@@ -77,6 +77,7 @@ for ii=1:M
         idxVec(jj) = findClosest(uu,u_j);
     end
 end
+
 end
 
 function [colLinearIdx] = getLinearIdx(arrIdx,K)
