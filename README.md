@@ -28,7 +28,7 @@ Contains many tools useful for copula modeling in Matlab that do not exist direc
   | *log1mexp.m* | Convenience function for log(1-exp(a)) |
   | *logserrnd.m* | Samples from the Log-Series distribution |
   | *pseudoobs.m* | Computes pseudo-observations for a given (multivariate) random vector |
-  | *rstable1.m* | Samples from the Stable Distribution |
+  | *stable1rnd.m* | Samples from the Stable Distribution |
 
   - **clg/** - contains code for building Conditional Linear Gaussian Bayesian Networks
     

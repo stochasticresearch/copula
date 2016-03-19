@@ -17,42 +17,28 @@
 %*                                                                        *
 %**************************************************************************
 
-function [ U ] = gumbelcopularnd( M, D, alpha )
-%GUMBELCOPULARND Generates M samples from a Gumbel copula of dimensionality
-%D, with parameter alpha
-% Inputs:
-%  M - the number of samples to generate
-%  N - the dimensionality of the data
-%  alpha - the dependency parameter of the Gumbel copula
-%
-% Outputs:
-%  U - an M x N matrix of generated samples
-%  X_i - an M x N matrix of intermediary random variables generated in the
-%        creation of U
-
-if(D<2)
-    error('N must be atleast 2');
-end
-if alpha < 1
-    error('Gumbel copula parameter must be between [1, inf)');
+function [ y ] = stable0rnd(alpha)
+    if(alpha == 1) 
+        y = 1.0;
+    else
+        U = rand();
+        while 1
+            % generate non-zero exponential random variable
+            W = exprnd(1);
+            if(W~=0)
+                break;
+            end
+        end
+        y = (A(pi*U,alpha)/(W.^(1.0-alpha)) ).^(1.0/alpha);
+    end
 end
 
-% Algorithm 1 described in both the SAS Copula Procedure, as well as the
-% paper: "High Dimensional Archimedean Copula Generation Algorithm"
-U = zeros(M,D);
-for ii=1:M
-    a  = 1.0/alpha;
-    b  = 1;
-    g  = cos(pi/(2.0*alpha)).^alpha;
-    d  = 0;
-    pm = 1;
-    vv = stable1rnd(1,a,b,g,d,pm);
-
-    % sample N independent uniform random variables
-    x_i = rand(1,D);
-    t = -1*log(x_i)./vv;
-
-    U(ii,:) = exp(-1*(t.^(1.0/alpha)));
+function [ y ] = A(x, alpha)
+    Ialpha = 1.0-alpha;
+    y = A_3(x, alpha, Ialpha);
 end
 
-end % function
+function [ y ] = A_3(x, alpha, Ialpha)
+    y = ( (Ialpha* sinc(Ialpha*x/pi)).^Ialpha ) * ...
+        ( ( (alpha * sinc(alpha *x/pi)).^alpha ) ./ sinc(x./pi) );
+end

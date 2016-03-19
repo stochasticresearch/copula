@@ -17,42 +17,49 @@
 %*                                                                        *
 %**************************************************************************
 
-function [ U ] = gumbelcopularnd( M, D, alpha )
-%GUMBELCOPULARND Generates M samples from a Gumbel copula of dimensionality
-%D, with parameter alpha
-% Inputs:
-%  M - the number of samples to generate
-%  N - the dimensionality of the data
-%  alpha - the dependency parameter of the Gumbel copula
+function [ St ] = etstablernd( V0, h, alpha )
+%RETSTABLE Samples from the exponentially tilted stable distribution
+% Sample St ~ \tilde{S}(alpha, 1, (cos(alpha*pi/2)*V_0)^{1/alpha},
+%			 V_0*I_{alpha = 1}, h*I_{alpha != 1}; 1)
+% with Laplace-Stieltjes transform exp(-V_0((h+t)^alpha-h^alpha)),
+% see Nolan's book for the parametrization, via the "fast rejection algorithm",
+% see Hofert (2012).
 %
+% Inputs:
+%  V0 - vector of random variates V0
+%  h - parameter in [0,infinity)
+%  alpha - parameter in (0,1]
 % Outputs:
-%  U - an M x N matrix of generated samples
-%  X_i - an M x N matrix of intermediary random variables generated in the
-%        creation of U
+%  St - vector of random variates
+%
+% Acknowledgements - R implementation of retstable by:
+%   Marius Hofert, Martin Maechler
 
-if(D<2)
-    error('N must be atleast 2');
+V0 = V0(:);
+n = length(V0);
+
+% alpha == 1 => St corresponds to a point mass at V0 with Laplace-Stieltjes
+% transform exp(-V0*t)
+if(alpha == 1.)
+    St = V0;
+else
+    St = zeros(length(V0),1);
+    for ii=1:n
+        m = max(1, round( V0(ii)*h.^alpha ) );
+        c = (V0(ii)/m).^(1/alpha);
+        
+        St(ii) = 0;     % will be result after summation
+        for kk=1:m
+            condition = 1;
+            while condition
+                St_k = c*stable0rnd(alpha);
+                U = rand();
+                condition = (U > exp( -h*St_k));
+            end
+            St(ii) = St(ii) + St_k;
+        end
+        
+    end
 end
-if alpha < 1
-    error('Gumbel copula parameter must be between [1, inf)');
+
 end
-
-% Algorithm 1 described in both the SAS Copula Procedure, as well as the
-% paper: "High Dimensional Archimedean Copula Generation Algorithm"
-U = zeros(M,D);
-for ii=1:M
-    a  = 1.0/alpha;
-    b  = 1;
-    g  = cos(pi/(2.0*alpha)).^alpha;
-    d  = 0;
-    pm = 1;
-    vv = stable1rnd(1,a,b,g,d,pm);
-
-    % sample N independent uniform random variables
-    x_i = rand(1,D);
-    t = -1*log(x_i)./vv;
-
-    U(ii,:) = exp(-1*(t.^(1.0/alpha)));
-end
-
-end % function

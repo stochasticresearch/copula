@@ -17,42 +17,56 @@
 %*                                                                        *
 %**************************************************************************
 
-function [ U ] = gumbelcopularnd( M, D, alpha )
-%GUMBELCOPULARND Generates M samples from a Gumbel copula of dimensionality
-%D, with parameter alpha
+function [ y ] = logrnd( n, p )
+%RLOG Sample a Log(p) distribution with the algorithm "LK" of Kemp (1981).
+%Generating random variates from a Log(p) distribution with PMF
+%          p_k = p^k/(-log(1-p)k), k in IN,
+
 % Inputs:
-%  M - the number of samples to generate
-%  N - the dimensionality of the data
-%  alpha - the dependency parameter of the Gumbel copula
+%  n - the # of variables to generate
+%  p - value between (0,1)
 %
 % Outputs:
-%  U - an M x N matrix of generated samples
-%  X_i - an M x N matrix of intermediary random variables generated in the
-%        creation of U
+%  y - random variate from this distribution
+%
+% Acknowledgements - R implementation of rLog by:
+%   Marius Hofert, Martin Maechler
 
-if(D<2)
-    error('N must be atleast 2');
-end
-if alpha < 1
-    error('Gumbel copula parameter must be between [1, inf)');
-end
-
-% Algorithm 1 described in both the SAS Copula Procedure, as well as the
-% paper: "High Dimensional Archimedean Copula Generation Algorithm"
-U = zeros(M,D);
-for ii=1:M
-    a  = 1.0/alpha;
-    b  = 1;
-    g  = cos(pi/(2.0*alpha)).^alpha;
-    d  = 0;
-    pm = 1;
-    vv = stable1rnd(1,a,b,g,d,pm);
-
-    % sample N independent uniform random variables
-    x_i = rand(1,D);
-    t = -1*log(x_i)./vv;
-
-    U(ii,:) = exp(-1*(t.^(1.0/alpha)));
+if(p <= 0. ||  p > 1.)
+	error('rLog(): p must be inside (0,1)');
+else
+    y = zeros(n,1);
+    for ii=1:n
+        y(ii) = logrnd_single(p);
+    end
 end
 
-end % function
+end
+
+function [ y ] = logrnd_single( p )
+
+Ip = 1-p;
+U = rand();
+if(U>p)
+    y = 1;
+else
+    if(p<0.5)
+        Q = - expm1(log1p(-p) * rand()); % = 1-(1-p)^unif
+        logQ = log(Q);
+    else
+        iQ = Ip.^rand(); % = (1-p)^unif
+        Q = 1 - iQ;
+        logQ = log1p(-iQ);
+    end
+    if(U<(Q*Q))
+        y = floor(1. + log(U)/logQ);
+    else
+        if(U>Q)
+            y = 1;
+        else
+            y = 2;
+        end
+    end
+end
+
+end

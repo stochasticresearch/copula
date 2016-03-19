@@ -14,6 +14,7 @@
 %*
 %* You should have received a copy of the GNU General Public License
 %* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+%**************************************************************************
 
 function [ y ] = logserrnd( p, n, varargin )
 %LOGSERRND generates samples from the Log-Series discrete distribution with
