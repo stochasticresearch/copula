@@ -29,6 +29,8 @@ Contains many tools useful for copula modeling in Matlab that do not exist direc
   | *logserrnd.m* | Samples from the Log-Series distribution |
   | *pseudoobs.m* | Computes pseudo-observations for a given (multivariate) random vector |
   | *stable1rnd.m* | Samples from the Stable Distribution |
+  | *etstablernd.m* | Samples from the Exponentially Tilted Distribution |
+  | *logrnd.m* | Samples from the Log Distribution |
 
   - **clg/** - contains code for building Conditional Linear Gaussian Bayesian Networks
     
