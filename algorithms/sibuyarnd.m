@@ -17,55 +17,47 @@
 %*                                                                        *
 %**************************************************************************
 
-function [ y ] = logrnd( n, p, Ip )
-%RLOG Sample a Log(p) distribution with the algorithm "LK" of Kemp (1981).
-%Generating random variates from a Log(p) distribution with PMF
-%          p_k = p^k/(-log(1-p)k), k in IN,
+function [ y ] = sibuyarnd( n, alpha )
 
+y = zeros(n,1);
+for ii=1:n
+    y(ii) = sibuyarnd_single(alpha);
+end
+
+end
+
+function [ y ] = sibuyarnd_single( alpha )
+%SIBUYARND generates a random variate from the Sibuya (alpha) distribution
+%with CDF F(n) = 1-1/(n*B(n,1-alpha)), n in IN, with Laplace-Stieltjes 
+% transform 1-(1-exp(-t))^alpha via the algorithm of Hofert (2011).
+%
 % Inputs:
-%  n - the # of variables to generate
-%  p - value between (0,1)
-%
+%  alpha - theta0/theta1 in (0,1]
 % Outputs:
-%  y - random variate from this distribution
+%  y - a random variate from F
 %
-% Acknowledgements - R implementation of rLog by:
+% Acknowledgements - R implementation of rSibuya by:
 %   Marius Hofert, Martin Maechler
 
-if(p <= 0. ||  p > 1.)
-	error('rLog(): p must be inside (0,1)');
-else
-    y = zeros(n,1);
-    for ii=1:n
-        y(ii) = logrnd_single(p, Ip);
-    end
-end
-
-end
-
-function [ y ] = logrnd_single( p, Ip )
+DBL_EPSILON = 2.2204460492503131e-16;
 
 U = rand();
-if(U>p)
-    y = 1;
-else
-    if(p<0.5)
-        Q = - expm1(log1p(-p) * rand()); % = 1-(1-p)^unif
-        logQ = log(Q);
+if(U <= alpha)
+	y = 1.;    
+else  % < alpha < U < 1 */
+    gamma_1_a = gamma(1-alpha);
+	xMax = 1.0/DBL_EPSILON; % ==> floor(x) == ceil(x)  for x >= xMax
+	Ginv = ((1-U)*gamma_1_a)^(-1/alpha);
+    fGinv = floor(Ginv);
+    
+    if(Ginv > xMax)
+        y = fGinv;
+    elseif(1-U < 1/(fGinv*beta(fGinv, 1.-alpha)))
+        y = ceil(Ginv);
     else
-        iQ = Ip.^rand(); % = (1-p)^unif
-        Q = 1 - iQ;
-        logQ = log1p(-iQ);
+        y = fGinv;
     end
-    if(U<(Q*Q))
-        y = floor(1. + log(U)/logQ);
-    else
-        if(U>Q)
-            y = 1;
-        else
-            y = 2;
-        end
-    end
+    
 end
 
 end

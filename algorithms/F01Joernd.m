@@ -17,55 +17,33 @@
 %*                                                                        *
 %**************************************************************************
 
-function [ y ] = logrnd( n, p, Ip )
-%RLOG Sample a Log(p) distribution with the algorithm "LK" of Kemp (1981).
-%Generating random variates from a Log(p) distribution with PMF
-%          p_k = p^k/(-log(1-p)k), k in IN,
-
+function [ y ] = F01Joernd( V0, alpha, approx )
+%F01JOERND Sample V01 ~ F01 with Laplace-Stieltjes transform 
+%((1-(1-exp(-t))^alpha))^V0
 % Inputs:
-%  n - the # of variables to generate
-%  p - value between (0,1)
+%  V0 - a vector of V0 parameters
+%  alpha - theta0/theta1 in (0,1]
+%  approx - largest number of summands before asymptotics is used  
 %
 % Outputs:
-%  y - random variate from this distribution
+%  y - a random variate from F
 %
-% Acknowledgements - R implementation of rLog by:
+% Acknowledgements - R implementation of rF01Joe by:
 %   Marius Hofert, Martin Maechler
 
-if(p <= 0. ||  p > 1.)
-	error('rLog(): p must be inside (0,1)');
-else
-    y = zeros(n,1);
-    for ii=1:n
-        y(ii) = logrnd_single(p, Ip);
-    end
+y = zeros(size(V0));
+for idx=1:length(V0)
+    y(idx) = F01Joernd_single(V0(idx), alpha, approx);
 end
 
 end
 
-function [ y ] = logrnd_single( p, Ip )
+function [ y ] = F01Joernd_single( V0, alpha, approx )
 
-U = rand();
-if(U>p)
-    y = 1;
+if(V0 > approx)
+    y = V0.^(1.0/alpha)*rstable0(alpha);
 else
-    if(p<0.5)
-        Q = - expm1(log1p(-p) * rand()); % = 1-(1-p)^unif
-        logQ = log(Q);
-    else
-        iQ = Ip.^rand(); % = (1-p)^unif
-        Q = 1 - iQ;
-        logQ = log1p(-iQ);
-    end
-    if(U<(Q*Q))
-        y = floor(1. + log(U)/logQ);
-    else
-        if(U>Q)
-            y = 1;
-        else
-            y = 2;
-        end
-    end
+    y = sum(sibuyarnd(round(V0),alpha));
 end
 
 end

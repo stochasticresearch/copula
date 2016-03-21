@@ -17,54 +17,58 @@
 %*                                                                        *
 %**************************************************************************
 
-function [ y ] = logrnd( n, p, Ip )
-%RLOG Sample a Log(p) distribution with the algorithm "LK" of Kemp (1981).
-%Generating random variates from a Log(p) distribution with PMF
-%          p_k = p^k/(-log(1-p)k), k in IN,
-
+function [ V ] = F01Frankrnd( V0, theta0, theta1, rej, approx )
+%F01JOERND Generate a vector of variates V01 ~ F01 with Laplace-Stieltjes 
+% transform ((1-(1-exp(-t)*(1-e^(-theta1)))^alpha)/(1-e^(-theta0)))^V0.
 % Inputs:
-%  n - the # of variables to generate
-%  p - value between (0,1)
+%  V0 - vector of random variates from F0
+%  theta0 - parameter in (0,infinity)
+%  theta1 - parameter in [theta0, infinity)
+%  rej - if V0*theta_0*p0^(V0-1) > rej a rejection
+%        from F01 of Joe is applied (otherwise, the sum is
+%        sampled via a logarithmic envelope for the summands)
+%  approx - approx largest number of summands before asymptotics is used
 %
 % Outputs:
-%  y - random variate from this distribution
+%  y - vector of random variates V01
 %
-% Acknowledgements - R implementation of rLog by:
+% Acknowledgements - R implementation of rF01Frank by:
 %   Marius Hofert, Martin Maechler
+p0 = -expm1(-theta0);
+p1 = -expm1(-theta1);
+iAlpha = (theta1 - theta0) / theta1;
+gamma_1_a = gamma(iAlpha);
 
-if(p <= 0. ||  p > 1.)
-	error('rLog(): p must be inside (0,1)');
-else
-    y = zeros(n,1);
-    for ii=1:n
-        y(ii) = logrnd_single(p, Ip);
-    end
+V = zeros(size(V0));
+for idx=1:length(V0)
+    V(idx) = F01Frankrnd_single(V0(idx), theta0, theta1, p0, p1, gamma_1_a, rej, approx);
 end
 
 end
 
-function [ y ] = logrnd_single( p, Ip )
+function [ V ] = F01Frankrnd_single( V0, theta0, theta1, p0, p1, gamma_1_a, rej, approx )
 
-U = rand();
-if(U>p)
-    y = 1;
-else
-    if(p<0.5)
-        Q = - expm1(log1p(-p) * rand()); % = 1-(1-p)^unif
-        logQ = log(Q);
-    else
-        iQ = Ip.^rand(); % = (1-p)^unif
-        Q = 1 - iQ;
-        logQ = log1p(-iQ);
+alpha = theta0 / theta1;
+iAlpha = (theta1-theta0)/theta1;
+
+if(V0*theta0*p0^(V0-1.0) > rej)
+    condition = 1;
+    while(condition)
+        U = rand();
+        V = F01Joernd(V0, alpha,gamma_1_a, approx);
+        condition = U > (p1^V);
     end
-    if(U<(Q*Q))
-        y = floor(1. + log(U)/logQ);
-    else
-        if(U>Q)
-            y = 1;
-        else
-            y = 2;
+else
+    Ip = exp(-theta1);
+    V = 0;
+    for j=1:V0
+        condition = 1;
+        while(condition)
+            U = rand();
+            X = logrnd(1,p1,Ip);
+            condition = U*(X-alpha) > 1.0/beta(X, iAlpha);
         end
+        V = V + X;
     end
 end
 

@@ -17,13 +17,23 @@
 %**************************************************************************
 
 % Script which compares the distribution of numbers generated from
-% rlog in R and the Matlab port
+% rSibuya in R and the Matlab port
+
+% we do Q-Q plots of the log of the random variates because values are
+% bunched up in smaller values, and log smoothes this out. Is this valid?
 
 clear;
 clc;
+close all;
 
-% Test 1 -> p = 0.2
-y_R = csvread('../../testfiles/rlog_output1.csv');
-y_Matlab = logrnd(length(y_R), 0.2, 0.8);
-subplot(1,2,1); hist(y_R);
-subplot(1,2,2); hist(y_Matlab);
+% Test 1 -> alpha = 0.3
+y_R = csvread('../../testfiles/rSibuya_output1.csv');
+y_Matlab = sibuyarnd(length(y_R), 0.3);
+figure;
+qqplot(log(y_R), log(y_Matlab));
+
+% Test 1 -> alpha = 0.9
+y_R = csvread('../../testfiles/rSibuya_output2.csv');
+y_Matlab = sibuyarnd(length(y_R), 0.9);
+figure;
+qqplot(log(y_R), log(y_Matlab));
