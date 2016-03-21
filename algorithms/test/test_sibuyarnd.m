@@ -28,12 +28,12 @@ close all;
 
 % Test 1 -> alpha = 0.3
 y_R = csvread('../../testfiles/rSibuya_output1.csv');
-y_Matlab = sibuyarnd(length(y_R), 0.3);
+y_Matlab = sibuyarnd(length(y_R), 0.3, gamma(0.7));
 figure;
 qqplot(log(y_R), log(y_Matlab));
 
 % Test 1 -> alpha = 0.9
 y_R = csvread('../../testfiles/rSibuya_output2.csv');
-y_Matlab = sibuyarnd(length(y_R), 0.9);
+y_Matlab = sibuyarnd(length(y_R), 0.9, gamma(0.1));
 figure;
 qqplot(log(y_R), log(y_Matlab));

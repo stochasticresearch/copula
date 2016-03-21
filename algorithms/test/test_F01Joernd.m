@@ -25,11 +25,11 @@ clc;
 % Test 1 -> alpha = 0.3
 V0 = csvread('../../testfiles/rF01Joe_input1.csv');
 y_R = csvread('../../testfiles/rF01Joe_output1.csv');
-y_Matlab = F01Joernd(V0, 0.3, 100000);
+y_Matlab = F01Joernd(V0, 0.3, gamma(0.7), 100000);
 figure; qqplot(y_R, y_Matlab); title('Test 1')
 
 % Test 2 --> alpha = 0.8
 V0 = csvread('../../testfiles/rF01Joe_input2.csv');
 y_R = csvread('../../testfiles/rF01Joe_output2.csv');
-y_Matlab = F01Joernd(V0, 0.8, 100000);
+y_Matlab = F01Joernd(V0, 0.8, gamma(0.2), 100000);
 figure; qqplot(y_R, y_Matlab); title('Test 2')

@@ -16,18 +16,22 @@
 %* along with this program.  If not, see <http://www.gnu.org/licenses/>.
 %**************************************************************************
 
-function [ y ] = stable1rnd(n, alpha, beta, gamma, delta, pm)
-% Generates a random variate from the stable distribution.
+function [ y ] = stable1rnd(n, alpha, gamma, delta)
+% Generates n random variates from the stable distribution.
 % Algorithms copied directly from R source code of the copula package
 %    - rstable1.R
 %    - retstable.c
+% Only valid when beta = 1, pm = 1
 
-    y = stable_c_rnd(n, alpha) * gamma + delta;
+    y = stable_c_rnd(n, alpha) .* gamma + delta;
 
 end
 
 
 function [ y ] = stable_c_rnd(n, alpha)
-    y = cos(pi/2.0*alpha).^(-1.0/alpha) * stable0rnd(alpha);
+    y = zeros(n,1);
+    for ii=1:n
+        y(ii) = cos(pi/2.0*alpha).^(-1.0/alpha) * stable0rnd(alpha);
+    end
 end
 

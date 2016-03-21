@@ -42,11 +42,9 @@ end
 U = zeros(M,D);
 for ii=1:M
     a  = 1.0/alpha;
-    b  = 1;
     g  = cos(pi/(2.0*alpha)).^alpha;
     d  = 0;
-    pm = 1;
-    vv = stable1rnd(1,a,b,g,d,pm);
+    vv = stable1rnd(1,a,g,d);
 
     % sample N independent uniform random variables
     x_i = rand(1,D);

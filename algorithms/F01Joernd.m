@@ -17,7 +17,7 @@
 %*                                                                        *
 %**************************************************************************
 
-function [ y ] = F01Joernd( V0, alpha, approx )
+function [ y ] = F01Joernd( V0, alpha, gamma_1_a, approx )
 %F01JOERND Sample V01 ~ F01 with Laplace-Stieltjes transform 
 %((1-(1-exp(-t))^alpha))^V0
 % Inputs:
@@ -33,17 +33,17 @@ function [ y ] = F01Joernd( V0, alpha, approx )
 
 y = zeros(size(V0));
 for idx=1:length(V0)
-    y(idx) = F01Joernd_single(V0(idx), alpha, approx);
+    y(idx) = F01Joernd_single(V0(idx), alpha, gamma_1_a, approx);
 end
 
 end
 
-function [ y ] = F01Joernd_single( V0, alpha, approx )
+function [ y ] = F01Joernd_single( V0, alpha, gamma_1_a, approx )
 
 if(V0 > approx)
     y = V0.^(1.0/alpha)*rstable0(alpha);
 else
-    y = sum(sibuyarnd(round(V0),alpha));
+    y = sum(sibuyarnd(round(V0),alpha, gamma_1_a));
 end
 
 end

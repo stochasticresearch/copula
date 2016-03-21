@@ -17,16 +17,16 @@
 %*                                                                        *
 %**************************************************************************
 
-function [ y ] = sibuyarnd( n, alpha )
+function [ y ] = sibuyarnd( n, alpha, gamma_1_a )
 
 y = zeros(n,1);
 for ii=1:n
-    y(ii) = sibuyarnd_single(alpha);
+    y(ii) = sibuyarnd_single(alpha, gamma_1_a);
 end
 
 end
 
-function [ y ] = sibuyarnd_single( alpha )
+function [ y ] = sibuyarnd_single( alpha, gamma_1_a )
 %SIBUYARND generates a random variate from the Sibuya (alpha) distribution
 %with CDF F(n) = 1-1/(n*B(n,1-alpha)), n in IN, with Laplace-Stieltjes 
 % transform 1-(1-exp(-t))^alpha via the algorithm of Hofert (2011).
@@ -45,7 +45,6 @@ U = rand();
 if(U <= alpha)
 	y = 1.;    
 else  % < alpha < U < 1 */
-    gamma_1_a = gamma(1-alpha);
 	xMax = 1.0/DBL_EPSILON; % ==> floor(x) == ceil(x)  for x >= xMax
 	Ginv = ((1-U)*gamma_1_a)^(-1/alpha);
     fGinv = floor(Ginv);
