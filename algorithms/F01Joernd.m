@@ -43,7 +43,7 @@ function [ y ] = F01Joernd_single( V0, alpha, gamma_1_a, approx )
 if(V0 > approx)
     y = V0.^(1.0/alpha)*rstable0(alpha);
 else
-    y = sum(sibuyarnd(round(V0),alpha, gamma_1_a));
+    y = sum(sibuyarnd(fix(V0),alpha, gamma_1_a));
 end
 
 end

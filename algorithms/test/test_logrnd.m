@@ -22,8 +22,16 @@
 clear;
 clc;
 
-% Test 1 -> p = 0.2
+% Test 1 -> p = 0.15
 y_R = csvread('../../testfiles/rlog_output1.csv');
-y_Matlab = logrnd(length(y_R), 0.2, 0.8);
-subplot(1,2,1); hist(y_R);
-subplot(1,2,2); hist(y_Matlab);
+y_Matlab = logrnd(length(y_R), 0.15, 0.85);
+% subplot(1,2,1); hist(y_R);
+% subplot(1,2,2); hist(y_Matlab);
+figure; qqplot(y_R, y_Matlab); grid on;
+
+% Test 1 -> p = 0.6
+y_R = csvread('../../testfiles/rlog_output2.csv');
+y_Matlab = logrnd(length(y_R), 0.9, 0.1);
+% subplot(1,2,1); hist(y_R);
+% subplot(1,2,2); hist(y_Matlab);
+figure; qqplot(y_R, y_Matlab); grid on;

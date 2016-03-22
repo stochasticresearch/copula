@@ -49,11 +49,11 @@ U = rand();
 if(U>p)
     y = 1;
 else
-    if(p<0.5)
-        Q = - expm1(log1p(-p) * rand()); % = 1-(1-p)^unif
+    if(p<=0.5)
+        Q = -expm1(log1p(-p) * rand()); % = 1-(1-p)^unif
         logQ = log(Q);
     else
-        iQ = Ip.^rand(); % = (1-p)^unif
+        iQ = Ip^rand(); % = (1-p)^unif
         Q = 1 - iQ;
         logQ = log1p(-iQ);
     end

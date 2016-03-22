@@ -28,7 +28,8 @@ function [ St ] = etstablernd( V0, h, alpha )
 % Inputs:
 %  V0 - vector of random variates V0
 %  h - parameter in [0,infinity)
-%  alpha - parameter in (0,1]
+%  alpha - parameter in (0,1].  WARNING, alpha IS ONLY SUPPORTED TO BE A
+%                               SCALAR AND THUS APPLIES TO EVERY V0!!
 % Outputs:
 %  St - vector of random variates
 %
