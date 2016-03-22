@@ -28,7 +28,7 @@ function [ y ] = stable0rnd(alpha)
             W = exprnd(1);
             condition = (W==0);
         end
-        y = ( A(pi*U,alpha)/(W.^(1.0-alpha)) ).^(1.0/alpha);
+        y = ( A(pi*U,alpha)/(W^(1.0-alpha)) )^(1.0/alpha);
     end
 end
 

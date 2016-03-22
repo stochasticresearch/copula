@@ -40,19 +40,35 @@ end
 
 % Algorithm 1 described in both the SAS Copula Procedure, as well as the
 % paper: "High Dimensional Archimedean Copula Generation Algorithm"
-U = zeros(M,D);
-for ii=1:M
-    p = -1.0*expm1(-1*alpha);
-    if (abs(1 - p) <= eps(p))
-        % boundary protection
-        p = 1 - eps;
-    end
-    vv = logserrnd(p, 1);
+% U = zeros(M,D);
+% for ii=1:M
+%     p = -1.0*expm1(-1*alpha);
+%     if (abs(1 - p) <= eps(p))
+%         % boundary protection
+%         p = 1 - eps;
+%     end
+%     vv = logserrnd(1, p);
+% 
+%     % sample N independent uniform random variables
+%     x_i = rand(1,D);
+%     t = -1*log(x_i)./vv;
+%     U(ii,:) = -1.0*log1p( exp(-t)*expm1(-1.0*alpha))/alpha;
+% end
 
-    % sample N independent uniform random variables
-    x_i = rand(1,D);
-    t = -1*log(x_i)./vv;
-    U(ii,:) = -1.0*log1p( exp(-t)*expm1(-1.0*alpha))/alpha;
+% vectorized version below :)
+
+p = -1.0*expm1(-1*alpha);
+if (abs(1 - p) <= eps(p))
+    % boundary protection
+    p = 1 - eps;
 end
+vv = logserrnd(M, p);
+vv = repmat(vv, 1, D);
+
+% sample N independent uniform random variables
+x_i = rand(M,D);
+t = -1*log(x_i)./vv;
+U = -1.0*log1p( exp(-t)*expm1(-1.0*alpha))/alpha;
+
 
 end % function

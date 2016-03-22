@@ -51,7 +51,7 @@ else  % < alpha < U < 1 */
     
     if(Ginv > xMax)
         y = fGinv;
-    elseif(1-U < 1/(fGinv*beta(fGinv, 1.-alpha)))
+    elseif( (1-U) < (1/(fGinv*beta(fGinv, 1.-alpha))) )
         y = ceil(Ginv);
     else
         y = fGinv;

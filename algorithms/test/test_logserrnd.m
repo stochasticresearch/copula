@@ -17,23 +17,27 @@
 %**************************************************************************
 
 % Script which compares the distribution of numbers generated from
-% rSibuya in R and the Matlab port
+% rlogseries in R and the Matlab port
 
-% we do Q-Q plots of the log of the random variates because values are
-% bunched up in smaller values, and log smoothes this out. Is this valid?
 
 clear;
 clc;
 close all;
 
-% Test 1 -> alpha = 0.3
-y_R = csvread('../../testfiles/rSibuya_output1.csv');
-y_Matlab = sibuyarnd(length(y_R), 0.3, gamma(0.7));
+% Test 1 -> alpha = 0.75
+y_R = csvread('../../testfiles/rlogseries_output1.csv');
+y_Matlab = logserrnd(length(y_R), 0.75);
 figure;
-qqplot(log(y_R), log(y_Matlab)); title('Test 1'); grid on
+qqplot(log(y_R), log(y_Matlab)); title('Test 1 - \alpha = 0.75'); grid on
 
-% Test 1 -> alpha = 0.7
-y_R = csvread('../../testfiles/rSibuya_output2.csv');
-y_Matlab = sibuyarnd(length(y_R), 0.7, gamma(0.3));
+% Test 1 -> alpha = 0.25
+y_R = csvread('../../testfiles/rlogseries_output2.csv');
+y_Matlab = logserrnd(length(y_R), 0.25);
 figure;
-qqplot(log(y_R), log(y_Matlab)); title('Test 1'); grid on
+qqplot(log(y_R), log(y_Matlab)); title('Test 2 - \alpha=0.25'); grid on
+
+% Test 1 -> alpha = 0.99
+y_R = csvread('../../testfiles/rlogseries_output3.csv');
+y_Matlab = logserrnd(length(y_R), 0.99);
+figure;
+qqplot(log(y_R), log(y_Matlab)); title('Test 3 - \alpha=0.99'); grid on
