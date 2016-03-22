@@ -45,8 +45,8 @@ if(alpha == 1.)
 else
     St = zeros(length(V0),1);
     for ii=1:n
-        m = max(1, round( V0(ii)*h.^alpha ) );
-        c = (V0(ii)/m).^(1/alpha);
+        m = max(1, round( V0(ii)* (h^alpha) ) );
+        c = (V0(ii)/m)^(1/alpha);
         
         St(ii) = 0;     % will be result after summation
         for kk=1:m

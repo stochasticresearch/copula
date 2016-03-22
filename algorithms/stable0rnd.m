@@ -22,14 +22,13 @@ function [ y ] = stable0rnd(alpha)
         y = 1.0;
     else
         U = rand();
-        while 1
+        condition = 1;
+        while condition
             % generate non-zero exponential random variable
             W = exprnd(1);
-            if(W~=0)
-                break;
-            end
+            condition = (W==0);
         end
-        y = (A(pi*U,alpha)/(W.^(1.0-alpha)) ).^(1.0/alpha);
+        y = ( A(pi*U,alpha)/(W.^(1.0-alpha)) ).^(1.0/alpha);
     end
 end
 
@@ -39,6 +38,5 @@ function [ y ] = A(x, alpha)
 end
 
 function [ y ] = A_3(x, alpha, Ialpha)
-    y = ( (Ialpha* sinc(Ialpha*x/pi)).^Ialpha ) * ...
-        ( ( (alpha * sinc(alpha *x/pi)).^alpha ) ./ sinc(x./pi) );
+    y = sin(alpha*x)^alpha * sin((Ialpha)*x)^(Ialpha) / sin(x);
 end
