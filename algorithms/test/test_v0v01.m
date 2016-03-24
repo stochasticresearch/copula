@@ -46,8 +46,8 @@ V01_R = csvread('../../testfiles/gumbel_v01.csv');
 V0_matlab = gumbelV0rnd(1000, 1.1);
 V01_matlab = gumbelV01rnd(V0_R, 1.1, 2.55);
 figure;
-subplot(2,2,1); qqplot(log(V0_R), log(V0_matlab)); title('V0 - Gumbel'); grid on
-subplot(2,2,2); qqplot(log(V01_R), log(V01_matlab)); title('V01 - Gumbel'); grid on
+subplot(1,2,1); qqplot(log(V0_R), log(V0_matlab)); title('V0 - Gumbel'); grid on
+subplot(1,2,2); qqplot(log(V01_R), log(V01_matlab)); title('V01 - Gumbel'); grid on
 
 %%
 

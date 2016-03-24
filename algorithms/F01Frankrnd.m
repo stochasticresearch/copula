@@ -61,12 +61,12 @@ if(V0*theta0*p0^(V0-1.0) > rej)
 else
     Ip = exp(-theta1);
     V = 0;
-    for j=1:V0
+    for j=1:fix(V0)
         condition = 1;
         while(condition)
             U = rand();
             X = logrnd(1,p1,Ip);
-            condition = U*(X-alpha) > 1.0/beta(X, iAlpha);
+            condition = ( U*(X-alpha) ) > ( 1.0/beta(X, iAlpha) );
         end
         V = V + X;
     end

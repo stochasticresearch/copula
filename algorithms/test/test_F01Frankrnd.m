@@ -22,10 +22,10 @@
 clear;
 clc;
 
-% Test 1 -> theta0 = 0.4, theta1 = 3, rej = 10, approx = 100
+% Test 1 -> theta0 = 0.4, theta1 = 3, rej = 0.1, approx = 100
 V0 = csvread('../../testfiles/rF01Frank_input1.csv');
 y_R = csvread('../../testfiles/rF01Frank_output1.csv');
-y_Matlab = F01Frankrnd(V0, 0.4, 3, 10, 100);
+y_Matlab = F01Frankrnd(V0, 0.4, 3, 0.1, 100);
 figure; qqplot(y_R, y_Matlab); title('Test 1')
 
 % Test 2 -> theta0 = 0.8, theta1 = 8, rej = 50, approx = 200

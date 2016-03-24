@@ -5,7 +5,7 @@ function [y] = gumbelV0rnd(n, theta)
 %
 % Inputs:
 %  n - the number of V0's to generate
-%  theta - dependency parameter
+%  theta - dependency parameter, WARNING -- must be a scalar!
 %
 % Outputs:
 %  y - a column vector of n random variables which follows the distribution 
