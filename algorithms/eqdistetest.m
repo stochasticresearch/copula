@@ -17,7 +17,7 @@
 %* 
 %**************************************************************************
 
-function [ h, p ] = mvdistgof( X, Y, alpha, nperm )
+function [ p ] = eqdistetest( X, Y, nperm )
 %MVDISTGOF Test if samples from two multivariate distributions of the same
 %dimensionality come from the same distribution, based on the paper:
 %TESTING FOR EQUAL DISTRIBUTIONS IN HIGH DIMENSION by 
@@ -37,7 +37,7 @@ function [ h, p ] = mvdistgof( X, Y, alpha, nperm )
 
 % default the number of permutations to compare to 10000 (if arg is not
 % provided)
-if(nargin<4)
+if(nargin<3)
     nperm = 10000;
 end
 
@@ -45,57 +45,74 @@ if(size(X,2)~=size(Y,2))
     error('X and Y must be of the same dimension!');
 end
 
-T = energyteststatistic(X, Y);
-
 n1 = size(X,1);
 n2 = size(Y,1);
 n = n1 + n2;
 XY_concat = [X;Y];
+D = squareform(pdist(XY_concat));
 
-p = 0;
+perm = 1:n;
+T = multisampleE(D, 2, [n1 n2], perm)
+% T = twosampleE(D, n1, n2, perm)
+
+ek = 0;
+h = 0;
 for ii=1:nperm
-    permidx = randperm(n)';
-    XY_perm = XY_concat(permidx,:);
-    X_permute = XY_perm(1:n1,:);
-    Y_permute = XY_perm(n1+1,:);
-    T_ii = energyteststatistic(X_permute, Y_permute);
-    p = p + (T_ii < T);
+    perm = randperm(n);
+    T_ii = multisampleE(D, 2, [n1 n2], perm);
+    ek = ek + (T < T_ii);
     fprintf('T_ii=%f T=%f\n', T_ii, T);
 end
-p = p / nperm;
-h = ~(p < alpha);
+p = (ek+1) / (nperm+1);
 
 end
 
+function [e] = multisampleE( D, nsamps, sizes, perm)
 
-function [e] = energyteststatistic( X, Y )
+startIdxs = ones(1,nsamps);
+for ii=2:nsamps
+    startIdxs(ii) = startIdxs(ii-1) + sizes(ii-1);
+end
+
+e = 0;
+for ii=1:nsamps
+    m = sizes(ii);
+    for jj=ii+1:nsamps
+        n = sizes(jj);
+        e = e + twosampleE(D, m, n, perm);
+    end
+end
+
+end
+
+function [e] = twosampleE( D, m, n, perm )
 % computes the test statistic defined by Equation 5 in the paper referenced
 % above
 
-n1 = size(X,1);
-n2 = size(Y,1);
-
-v1 = 0;
-for ii=1:n1
-    for mm=1:n2
-        v1 = v1 + norm(X(ii,:) - Y(mm,:));
+sumxx = 0;
+for ii=1:m
+    for jj=ii+1:m
+        sumxx = sumxx + D(perm(ii),perm(jj));
     end
 end
+sumxx = sumxx* 2/(m*m);
 
-v2 = 0;
-for ii=1:n1
-    for jj=1:n1
-        v2 = v2 + norm(X(ii,:) - X(jj,:));
+sumyy = 0;
+for ii=1:n
+    for jj=ii+1:n
+        sumyy = sumyy + D(perm(ii+m),perm(jj+m));
     end
 end
+sumyy = sumyy * 2/(n*n);
 
-v3 = 0;
-for ll=1:n2
-    for mm=1:n2
-        v3 = v3 + norm(Y(ll,:) - Y(mm,:));
+sumxy = 0;
+for ii=1:m
+    for jj=1:n
+        sumxy = sumxy + D(perm(ii),perm(jj+m));
     end
 end
+sumxy = sumxy/(m*n);
 
-e = n1*n2/(n1 + n2) * ( (2/(n1*n2))*v1 + (1/n1^2)*v2 + (1/n2^2)*v3 );
+e = m*n/(m+n) * (2*sumxy - sumxx - sumyy);
 
 end

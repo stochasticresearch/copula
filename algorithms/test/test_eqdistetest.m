@@ -17,15 +17,12 @@
 %* 
 %**************************************************************************
 
-% Test the mvdistgof against various examples
-%% compare MVNRND against MVTRND
+% Test the eqdistetest w/ R implementation
 clear;
 clc;
 
-SIGMA = [1 0.8;0.8 1];
-X = mvnrnd([0 0], SIGMA, 100);
-Y = mvtrnd(SIGMA, 3, 100);
+u = csvread('/home/kiran/stochasticresearch/energy-r/testfiles/test1_input1.csv');
+v = csvread('/home/kiran/stochasticresearch/energy-r/testfiles/test1_input2.csv');
 
-alpha = 0.05;
-nperm = 100;
-[h, p] = mvdistgof(X, Y, alpha, nperm)
+nperm = 200;
+p = eqdistetest(u,v,nperm)
