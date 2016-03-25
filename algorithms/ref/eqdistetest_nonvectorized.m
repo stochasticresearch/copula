@@ -17,7 +17,7 @@
 %* 
 %**************************************************************************
 
-function [ p, T ] = eqdistetest( X, sizes, nperm )
+function [ p ] = eqdistetest_nonvectorized( X, Y, nperm )
 %MVDISTGOF Test if samples from two multivariate distributions of the same
 %dimensionality come from the same distribution, based on the paper:
 %TESTING FOR EQUAL DISTRIBUTIONS IN HIGH DIMENSION by 
@@ -25,42 +25,48 @@ function [ p, T ] = eqdistetest( X, sizes, nperm )
 %p-value
 % 
 % Inputs:
-%  X - pooled samples from the p distributions to compare
-%       dimension [(n_1+n_2+...+n_p) x D]
-%  sizes - a vector w/ the info [n_1 n_2 ... n_p]
+%  X - samples from the first distribution, dimension [n1 x D]
+%  Y - samples from the second distribution, dimension - [n2 x D]
+%  alpha - significance level for p-value test
 %  nperm - [optional] the number of permutations to test in the
-%          computation of the p-value, defaults to 500
+%          computation of the p-value, defaults to 10000
 %
 % Outputs:
+%  h - 1 if X and Y are from the same distribution according to this test
 %  p - the computed p-value
-%  T - the computed test statistic
 
-% default the number of permutations to compare to 500 (if arg is not
+% default the number of permutations to compare to 10000 (if arg is not
 % provided)
 if(nargin<3)
-    nperm = 500;
+    nperm = 10000;
 end
 
-n = sum(sizes);
-nsamps = length(sizes);
-D = squareform(pdist(X));
+if(size(X,2)~=size(Y,2))
+    error('X and Y must be of the same dimension!');
+end
 
-T = multisampleE(D, nsamps, sizes);
+n1 = size(X,1);
+n2 = size(Y,1);
+n = n1 + n2;
+XY_concat = [X;Y];
+D = squareform(pdist(XY_concat));
+
+perm = 1:n;
+T = multisampleE(D, 2, [n1 n2], perm)
 
 ek = 0;
+h = 0;
 for ii=1:nperm
     perm = randperm(n);
-    X_permute = X(perm,:);
-    D = squareform(pdist(X_permute));
-    T_ii = multisampleE(D, nsamps, sizes);
+    T_ii = multisampleE(D, 2, [n1 n2], perm);
     ek = ek + (T < T_ii);
-%     fprintf('T_ii=%f T=%f\n', T_ii, T);
+    fprintf('T_ii=%f T=%f\n', T_ii, T);
 end
 p = (ek+1) / (nperm+1);
 
 end
 
-function [e] = multisampleE( D, nsamps, sizes)
+function [e] = multisampleE( D, nsamps, sizes, perm)
 
 startIdxs = ones(1,nsamps);
 for ii=2:nsamps
@@ -72,26 +78,38 @@ for ii=1:nsamps
     m = sizes(ii);
     for jj=ii+1:nsamps
         n = sizes(jj);
-        e = e + twosampleE(D, m, n);
+        e = e + twosampleE(D, m, n, perm);
     end
 end
 
 end
 
-function [e] = twosampleE( D, m, n )
+function [e] = twosampleE( D, m, n, perm )
 % computes the test statistic defined by Equation 5 in the paper referenced
 % above
 
-xx = D(1:m,1:m);
-sumxx = sum(xx(:))/2;
+sumxx = 0;
+for ii=1:m
+    for jj=ii+1:m
+        sumxx = sumxx + D(perm(ii),perm(jj));
+    end
+end
 sumxx = sumxx* 2/(m*m);
 
-yy = D(m+1:end,m+1:end);
-sumyy = sum(yy(:))/2;
+sumyy = 0;
+for ii=1:n
+    for jj=ii+1:n
+        sumyy = sumyy + D(perm(ii+m),perm(jj+m));
+    end
+end
 sumyy = sumyy * 2/(n*n);
 
-xy = D(1:m,m+1:end);
-sumxy = sum(xy(:));
+sumxy = 0;
+for ii=1:m
+    for jj=1:n
+        sumxy = sumxy + D(perm(ii),perm(jj+m));
+    end
+end
 sumxy = sumxy/(m*n);
 
 e = m*n/(m+n) * (2*sumxy - sumxx - sumyy);

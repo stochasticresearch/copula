@@ -17,12 +17,49 @@
 %* 
 %**************************************************************************
 
+%% TEST 1
 % Test the eqdistetest w/ R implementation
 clear;
 clc;
 
-u = csvread('/home/kiran/stochasticresearch/energy-r/testfiles/test1_input1.csv');
-v = csvread('/home/kiran/stochasticresearch/energy-r/testfiles/test1_input2.csv');
+u = csvread('../../testfiles/eqdisttest1_input1.csv');
+v = csvread('../../testfiles/eqdisttest1_input2.csv');
 
 nperm = 200;
-p = eqdistetest(u,v,nperm)
+
+X = [u;v];
+sizes = [size(u,1) size(v,1)];
+p1 = eqdistetest(X, sizes, nperm);
+fprintf('p = %f -- should be close to 0\n', p1);
+
+X = [u;u];
+sizes = [size(u,1) size(u,1)];
+p2 = eqdistetest(X, sizes, nperm);
+fprintf('p = %f -- should be close to 1\n', p2);
+
+X = [v;v];
+sizes = [size(v,1) size(v,1)];
+p3 = eqdistetest(X, sizes, nperm);
+fprintf('p = %f -- should be close to 1\n', p3);
+
+%% TEST 2
+
+u = csvread('../../testfiles/eqdisttest2_input1.csv');
+v = csvread('../../testfiles/eqdisttest2_input2.csv');
+
+nperm = 200;
+
+X = [u;v];
+sizes = [size(u,1) size(v,1)];
+p1 = eqdistetest(X, sizes, nperm);
+fprintf('p = %f -- should be close to 0\n', p1);
+
+X = [u;u];
+sizes = [size(u,1) size(u,1)];
+p2 = eqdistetest(X, sizes, nperm);
+fprintf('p = %f -- should be close to 1\n', p2);
+
+X = [v;v];
+sizes = [size(v,1) size(v,1)];
+p3 = eqdistetest(X, sizes, nperm);
+fprintf('p = %f -- should be close to 1\n', p3);
