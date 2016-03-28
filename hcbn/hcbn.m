@@ -431,7 +431,13 @@ classdef hcbn < handle
             for m=1:M
                 % compute empirical distribution log likelihood (for just
                 % the child node)
-                ll_val = ll_val + log(obj.empInfo{nodeIdx}.queryDensity(X_in(m,1)));
+                f_xi = obj.empInfo{nodeIdx}.queryDensity(X_in(m,1));
+                if(f_xi<=0)     % do this for numerical reasons
+                    log_f_xi = 0;
+                else
+                    log_f_xi = log(f_xi);
+                end
+                ll_val = ll_val + log_f_xi;
                 
                 % generate u, avoid values of u being 0 or 1
                 uIdx = 1;
