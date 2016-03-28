@@ -46,7 +46,10 @@ for ii=1:d
         error('Need to specify atleast one of the two: C or c');
     end
     
-    idx = round(U(ii)*K_ii);
+    idx = ceil(U(ii)*K_ii); % WARNING -- used to be :: idx = round(U(ii)*K_ii);
+                            % but w/ testing, I think ceil works better,
+                            % this is due to the way linspace generates
+                            % data
     if(idx>K_ii)
         idx = K_ii;
     elseif(idx<1)
@@ -59,6 +62,8 @@ for ii=1:d
         linearIdx = linearIdx + (idx-1)*(K_ii.^(ii-1));
     end
 end
+
+% fprintf('u1=%f u2=%f linearIdx=%d\n', U(1), U(2), linearIdx);
 
 % extract value of C_u from those
 if(~isempty(C))

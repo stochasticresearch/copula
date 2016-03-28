@@ -281,6 +281,7 @@ classdef hcbn < handle
                     else
                         % all continuous marginals, lets fit to a copula
                         % model (for now, we only do Gaussian)
+                        % TODO: use other models as well
                         type = 'model';
                         C = []; c = [];
                         C_parents = []; c_parents = [];
@@ -336,6 +337,9 @@ classdef hcbn < handle
             if(strcmpi(copFam.type, 'empirical'))
                 U = empcopularnd(copFam.c, M);
             else
+                % TODO: when other copula models are introduced into the
+                % continuous case, we need to change copularnd here to
+                % incorporate the other copula types
                 U = copularnd('Gaussian', copFam.Rho, M);
             end
             D_family = size(U,2);

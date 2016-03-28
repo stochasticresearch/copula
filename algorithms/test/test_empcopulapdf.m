@@ -27,30 +27,26 @@ u = linspace(0,1,K);
 [U1,U2] = ndgrid(u);
 c2 = copulapdf(copulaType, [U1(:) U2(:)],5);
 c2 = reshape(c2, K,K);
-h3 = subplot(1,3,3);
+h3 = subplot(1,2,1);
 surf(U1,U2,c2);
 xlabel('u1')
 ylabel('u2')
+title('Matlab Implementation')
 
 X = copularnd(copulaType,5,1000);
-
-h = .05;
-[c1] = empcopdens_betak_v2(X(:,1), X(:,2), h, K);
-h1 = subplot(1,3,1);
-surf(U1,U2,c1);
-xlabel('u1')
-ylabel('u2')
+h = 0.05;
 
 c1 = empcopulapdf(X, h, K, 'betak');
-h2 = subplot(1,3,2);
+h2 = subplot(1,2,2);
 surf(U1,U2,c1);
 xlabel('u1')
 ylabel('u2')
+title('Estimated w/ Beta-Kernel')
 
 mse = mean((c1(:)-c2(:)).^2);
 fprintf('MSE = %f\n', mse);
 
-hlink = linkprop([h1,h2,h3],{'CameraPosition','CameraUpVector'});
+hlink = linkprop([h1,h2],{'CameraPosition','CameraUpVector'});
 rotate3d on
 %%
 clear;
