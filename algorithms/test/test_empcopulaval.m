@@ -26,13 +26,13 @@ M = 1000;
 D = 2;
 K = 25;
 
-numMCSims = 1;
+numMCSims = 10;
 mse_empcopulaval_query_cellarr = cell(1,numMCSims);
 mse_est_cellarr = cell(1,numMCSims);
 
 dispstat('','init'); % One time only initialization
 dispstat(sprintf('Begining the simulation...'),'keepthis','timestamp');
-hVec = .01:.01:.1;
+hVec = .01:.03:.1;
 Kvec = 25:25:100;
 progressIdx = 1;
 for h=hVec
@@ -40,8 +40,7 @@ for h=hVec
         for mcSimNum=1:numMCSims
             
             progress = progressIdx*100/(length(hVec)*length(Kvec)*numMCSims);
-            
-            dispstat(sprintf('Progress %0.02f%%',progress),'timestamp');
+            dispstat(sprintf('Progress: h=%0.02f K=%d %0.02f%%',h,K,progress),'timestamp');
 
             % generate data for the simulation
             U = frankcopularnd(M, D, alpha);
@@ -65,7 +64,6 @@ for h=hVec
             se1 = (c_actual_query-c_est_query).^2;
             mse_empcopulaval_query_cellarr{mcSimNum} = se1;    
         end
-        dispstat('Finished.','keepprev');
 
         mse_empcopulaval_query_mat = mse_empcopulaval_query_cellarr{1};
         for ii=2:numMCSims
@@ -92,3 +90,4 @@ for h=hVec
         progressIdx = progressIdx + 1;
     end
 end
+dispstat('Finished.','keepprev');
