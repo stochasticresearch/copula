@@ -431,7 +431,13 @@ classdef hcbn < handle
             for m=1:M
                 % compute empirical distribution log likelihood (for just
                 % the child node)
-                ll_val = ll_val + log(obj.empInfo{nodeIdx}.queryDensity(X_in(m,1)));
+                f_xi = obj.empInfo{nodeIdx}.queryDensity(X_in(m,1));
+                if(f_xi<=0)     % do this for numerical reasons
+                    log_f_xi = 0;
+                else
+                    log_f_xi = log(f_xi);
+                end
+                ll_val = ll_val + log_f_xi;
                 
                 % generate u, avoid values of u being 0 or 1
                 uIdx = 1;
@@ -462,7 +468,7 @@ classdef hcbn < handle
                 if(isnan(ll_val) || isinf(ll_val))
                     warning('Wrote DEBUG INFORMATION!');
                     1;      % PUT DEBUG ON AT THIS LINE FOR INTERACTIVE DEBUGGING
-                    fid = fopen(sprintf('/home/kiran/ownCloud/PhD/sim_results/copulall_%d.txt', 'a', obj.SIM_NUM));
+                    fid = fopen(sprintf('/home/kiran/ownCloud/PhD/sim_results/copulall_%d.txt', obj.SIM_NUM), 'a');
                     fprintf(fid, 'sample=%d Rc_val=%f Rc_num=%f Rc_den=%f nodeIdx=%d ll_val_prev=%f u=%s \n', ...
                         m, Rc, num_val, den_val, nodeIdx, ll_val_prev, sprintf('%f,', u) );
                     fclose(fid);
