@@ -462,7 +462,7 @@ classdef hcbn < handle
                 if(isnan(ll_val) || isinf(ll_val))
                     warning('Wrote DEBUG INFORMATION!');
                     1;      % PUT DEBUG ON AT THIS LINE FOR INTERACTIVE DEBUGGING
-                    fid = fopen(sprintf('/home/kiran/ownCloud/PhD/sim_results/copulall_%d.txt', 'a', obj.SIM_NUM));
+                    fid = fopen(sprintf('/home/kiran/ownCloud/PhD/sim_results/copulall_%d.txt', obj.SIM_NUM), 'a');
                     fprintf(fid, 'sample=%d Rc_val=%f Rc_num=%f Rc_den=%f nodeIdx=%d ll_val_prev=%f u=%s \n', ...
                         m, Rc, num_val, den_val, nodeIdx, ll_val_prev, sprintf('%f,', u) );
                     fclose(fid);
