@@ -52,39 +52,10 @@ X12 =   [a_dist.icdf(U(:,1)) ...
           b_dist.icdf(U(:,2))];
 % perform the inverse transform to generate the X data matrix
 if(strcmpi(continuousType,'Gaussian'))
-    % assume 0 mean, pick random std deviations 0.1 and 3
-    rhoD = 0.1 + 3*rand(1);
-    X3 = [norminv(U(:,3),0,rhoD)];
+    rhoD = 0.6;
+    X3 = norminv(U(:,3),0,rhoD);
 else
-    % pick random one parameter distributions
-    ii = randsample(5,1,true)';
-    % choice to rv type mapping:
-    %  1 -> Gaussian
-    %  2 -> Exponential
-    %  3 -> Gamma
-    %  4 -> Beta
-    %  5 -> Uniform
-
-    p1 = 0.1 + 3*rand(1);
-    if(ii~=5)
-        p2 = 0.1 + 3*rand(1);
-    else
-        p2 = p1 + 3*rand(1);
-    end
-    
-    switch ii
-        case 1
-            X3 = norminv(U(:,3),0,p1);
-        case 2
-            X3 = expinv(U(:,3),p1);
-        case 3
-            X3 = gaminv(U(:,3),p1,p2);
-        case 4
-            X3 = betainv(U(:,3),p1,p2);
-        case 5
-            X3 = unifinv(U(:,3),p1,p2);
-    end
-    
+    X3 = betainv(U(:,3),2,5);
 end
 
 X = [X12 X3];
