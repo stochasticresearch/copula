@@ -58,7 +58,7 @@ if(strcmpi(method, 'betak'))
 
             value = floor(value/K);
         end
-        gridPoints = gridPoints/(K-1);      % this calculates 0 ... 1 (spacing will be 1/(K+1))
+        gridPoints = gridPoints/(K-1);      % this calculates 0 ... 1 (spacing will be 1/K)
                                             % to maintain K points
         gridPoints = fliplr(gridPoints);    % flip this to calculate column wise so that reshape
                                             % will restore c to expected dimensions

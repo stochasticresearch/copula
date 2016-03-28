@@ -65,7 +65,10 @@ classdef hcbn < handle
                                 
                                 
         DEBUG_MODE; % if turned on, will print out extra stuff to screen to
-                    % monitor what is going on
+                    % monitor what is going on and store extra debugging
+                    % variables (slower)
+        SIM_NUM;    % used for debugging
+        TYPE_NAME;  % used for debugging
     end
     
     methods
@@ -87,6 +90,8 @@ classdef hcbn < handle
             %
             
             obj.DEBUG_MODE = 0;
+            obj.SIM_NUM = 0;
+            obj.TYPE_NAME = '';
             
             % add BNT to the path
             addpath(genpath(bntPath));
@@ -100,7 +105,7 @@ classdef hcbn < handle
             
             obj.dag = zeros(obj.D,obj.D);
             
-            obj.K = 100;    % hard coded, this value seems to be a
+            obj.K = 25;    % hard coded, this value seems to be a
                             % reasonable tradeoff between accuracy and
                             % memory/computational requirements
             
@@ -136,6 +141,14 @@ classdef hcbn < handle
                 end
                 obj.setDag(candidateDag);
             end
+        end
+        
+        function [] = setSimNum(obj, simnum)
+            obj.SIM_NUM = simnum;
+        end
+        
+        function [] = setTypeName(obj, typeName)
+            obj.TYPE_NAME = typeName;
         end
         
         function [] = calcEmpInfo(obj)
@@ -336,7 +349,7 @@ classdef hcbn < handle
             end
         end
         
-        function [ ll_val ] = hcbnLogLikelihood(obj, X)
+        function [ ll_val, Rc_val_mat, Rc_num_mat, Rc_den_mat ] = hcbnLogLikelihood(obj, X)
             %HCBNLOGLIKELIHOOD - calculates the log-likelihood of the HCBN
             %                    model to the provided data
             % 
@@ -345,9 +358,26 @@ classdef hcbn < handle
             if(isempty(obj.dag))
                 ll_val = -Inf;
             else
+                localFunctionDebugMode = 0;
+                if(nargout>1)
+                    localFunctionDebugMode = 1;
+                    Rc_val_mat = zeros( obj.D, size(X,1) );
+                    Rc_num_mat = zeros( obj.D, size(X,1) );
+                    Rc_den_mat = zeros( obj.D, size(X,1) );
+                end
+                
                 ll_val = 0;
+                
                 for ii=1:obj.D
-                    ll_val = ll_val + obj.copulall(ii,X);
+                    if(localFunctionDebugMode)
+                        [tmp, Rc_val_vec, Rc_num_vec, Rc_den_vec] = obj.copulall(ii,X);
+                        Rc_val_mat(ii,:) = Rc_val_vec;
+                        Rc_num_mat(ii,:) = Rc_num_vec;
+                        Rc_den_mat(ii,:) = Rc_den_vec;
+                    else
+                        tmp = obj.copulall(ii,X);
+                    end
+                    ll_val = ll_val + tmp;
                 end
             end
         end
@@ -417,13 +447,25 @@ classdef hcbn < handle
                 
                 %%%%%%%%%%%%%%%%%%%% DEBUGGING %%%%%%%%%%%%%%%%%%%%%%%
                 if(nargout>1)
-                    Rc_val_vec(m) = Rc; % for DEBUG purposes
+                    Rc_val_vec(m) = Rc;
                     Rc_num_vec(m) = num_val;
                     Rc_den_vec(m) = den_val;
                 end
+                ll_val_prev = ll_val;
                 %%%%%%%%%%%%%%%%%%%% DEBUGGING %%%%%%%%%%%%%%%%%%%%%%%
                 
                 ll_val = ll_val + log(Rc);
+                if(isnan(ll_val) || isinf(ll_val))
+                    warning('Wrote DEBUG INFORMATION!');
+                    1;      % PUT DEBUG ON AT THIS LINE FOR INTERACTIVE DEBUGGING
+                    fid = fopen(sprintf('/home/kiran/ownCloud/PhD/sim_results/copulall_%d.txt', 'a', obj.SIM_NUM));
+                    fprintf(fid, 'sample=%d Rc_val=%f Rc_num=%f Rc_den=%f nodeIdx=%d ll_val_prev=%f u=%s \n', ...
+                        m, Rc, num_val, den_val, nodeIdx, ll_val_prev, sprintf('%f,', u) );
+                    fclose(fid);
+                    % save all the workspace variables for debugging
+                    save(sprintf('/home/kiran/ownCloud/PhD/sim_results/%s_%d.mat', ...
+                        obj.TYPE_NAME, obj.SIM_NUM));
+                end
             end
         end
         
