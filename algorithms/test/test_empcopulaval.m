@@ -20,6 +20,8 @@
 clear;
 clc;
 
+fid = fopen('/home/kiran/ownCloud/PhD/sim_results/test_empcopulaval.diary', 'w');
+
 % generate samples from Frank copula pdf
 alpha = 4;
 M = 1000;
@@ -40,7 +42,9 @@ for h=hVec
         for mcSimNum=1:numMCSims
             
             progress = progressIdx*100/(length(hVec)*length(Kvec)*numMCSims);
-            dispstat(sprintf('Progress: h=%0.02f K=%d %0.02f%%',h,K,progress),'timestamp');
+            progressStr = sprintf('Progress: h=%0.02f K=%d %0.02f%%',h,K,progress);
+            dispstat(progressStr,'timestamp');
+            fprintf(fid, '%s\n', progressStr);
 
             % generate data for the simulation
             U = frankcopularnd(M, D, alpha);
@@ -91,3 +95,4 @@ for h=hVec
     end
 end
 dispstat('Finished.','keepprev');
+fclose(fid);
