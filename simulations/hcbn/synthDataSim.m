@@ -21,6 +21,8 @@
 clear;
 clc;
 
+fid = fopen('/home/kiran/ownCloud/PhD/sim_results/synthDataSim.diary', 'w');
+
 % setup global parameters
 D = 3;
 
@@ -31,9 +33,12 @@ aa = 1; bb = 2; cc = 3;
 dag = zeros(D,D);
 dag(aa,cc) = 1;
 dag(bb,cc) = 1;
+discreteNodes = [aa bb];
 nodeNames = {'A', 'B', 'C'};
 bntPath = '../bnt';
 discreteNodeNames = {'A','B'};
+
+hcbn_K = 25;        % WARNING - change this in actual HCBN code for now :(
 
 % Generate the synthetic data set
 
@@ -42,18 +47,25 @@ nodeA = [0.4 0.3 0.2 0.1]; discreteType{1} = nodeA;
 nodeB = [0.6 0.1 0.05 0.25]; discreteType{2} = nodeB;
 
 % instantiate the CLG object
-numMCSims = 1000; numTest = 1000;
-trainVecSize = 500;
+numMCSims = 100; numTest = 1000;
+trainVecSize = 100:100:2000;
 M = max(trainVecSize)+numTest; 
-% (1,:) -> HCBN-Gaussian
-% (2,:) -> HCBN-Other
+% (1,:) -> CLG-Gaussian, (2,:) -> MTE-Gaussian, (3,:) -> HCBN-Gaussian
+% (4,:) -> CLG-Other     (5,:) -> MTE-Other     (6,:) -> HCBN-Other
 llValMat = zeros(2,length(trainVecSize),numMCSims);   
 
+dispstat('','init'); % One time only initialization
+dispstat(sprintf('Begining the simulation...'),'keepthis','timestamp');
+progressIdx = 1;
 for mcSimNumber=1:numMCSims
     idx = 1;
     for numTrain=trainVecSize
 
-        fprintf('Processing training size=%d -- MC Sim #=%d\n', numTrain, mcSimNumber);
+        numTotalLoops = numMCSims*length(trainVecSize);
+        progress = (progressIdx/numTotalLoops)*100;
+        progressStr = sprintf('ABC Progress: Training Size=%d %0.02f%%',numTrain, progress);
+        dispstat(progressStr,'timestamp');
+        fprintf(fid, '%s\n', progressStr);
 
         continuousType = 'Gaussian';
         X = genSynthData2(discreteType, continuousType, M);
@@ -63,6 +75,8 @@ for mcSimNumber=1:numMCSims
         hcbnObj = hcbn(bntPath, X_train, nodeNames, discreteNodeNames, dag);
         hcbnObj.setSimNum(mcSimNumber); hcbnObj.setTypeName('Gaussian');
         [hcbnLLVal_Gaussian,Rc_val_mat_Gaussian,Rc_num_mat_Gaussian,Rc_den_mat_Gaussian] = hcbnObj.hcbnLogLikelihood(X_test);
+        clgObj = clg(X_train, discreteNodes, dag); clgLLVal_Gaussian = clgObj.dataLogLikelihood(X_test);
+        mteObj = mte(X_train, discreteNodes, dag); mteLLVal_Gaussian = mteObj.dataLogLikelihood(X_test);
         
         continuousType = 'other';
         X = genSynthData2(discreteType, continuousType, M);
@@ -72,7 +86,9 @@ for mcSimNumber=1:numMCSims
         hcbnObj = hcbn(bntPath, X_train, nodeNames, discreteNodeNames, dag); 
         hcbnObj.setSimNum(mcSimNumber); hcbnObj.setTypeName('Other');
         [hcbnLLVal_Other,Rc_val_mat_Other,Rc_num_mat_Other,Rc_den_mat_Other] = hcbnObj.hcbnLogLikelihood(X_test);
-
+        clgObj = clg(X_train, discreteNodes, dag); clgLLVal_Other = clgObj.dataLogLikelihood(X_test);
+        mteObj = mte(X_train, discreteNodes, dag); mteLLVal_Other = mteObj.dataLogLikelihood(X_test);
+        
         if(mean(Rc_val_mat_Gaussian(1,:))~=1 || mean(Rc_val_mat_Gaussian(2,:))~=1 || ...
            mean(Rc_num_mat_Gaussian(1,:))~=1 || mean(Rc_num_mat_Gaussian(2,:))~=1 || ...
            mean(Rc_den_mat_Gaussian(1,:))~=1 || mean(Rc_den_mat_Gaussian(2,:))~=1 || ...
@@ -93,23 +109,46 @@ for mcSimNumber=1:numMCSims
                          title(sprintf('Other - Node C - %f',hcbnLLVal_Other));
         pause(1);
         
-        llValMat(1, idx, mcSimNumber) = hcbnLLVal_Gaussian;
-        llValMat(2, idx, mcSimNumber) = hcbnLLVal_Other;
+        llValMat(1, idx, mcSimNumber) = clgLLVal_Gaussian;
+        llValMat(2, idx, mcSimNumber) = mteLLVal_Gaussian;
+        llValMat(3, idx, mcSimNumber) = hcbnLLVal_Gaussian;
+        llValMat(4, idx, mcSimNumber) = clgLLVal_Other;
+        llValMat(5, idx, mcSimNumber) = mteLLVal_Other;
+        llValMat(6, idx, mcSimNumber) = hcbnLLVal_Other;
                 
         idx = idx + 1;
+        progressIdx = progressIdx + 1;
     end
 
 end
+dispstat('Finished.','keepprev');
 
-% analyze the variability of the likelihoods
-subplot(1,2,1); plot(squeeze(llValMat(1,1,:))); title('Gaussian Likelihoods'); grid on
-subplot(1,2,2); plot(squeeze(llValMat(2,1,:))); title('Non-Gaussian Likelihoods'); grid on
+llValsAvg = mean(llValMat,3);
 
-%% synthetic data simulation for HCBN, MTE and CLG
+fig1 = figure;
+
+subplot(2,1,1); 
+hold on;
+plot(trainVecSize, llValsAvg(1,:)); xlabel('Training Vector Size'); ylabel('Gaussian Data'); grid on
+plot(trainVecSize, llValsAvg(2,:)); 
+plot(trainVecSize, llValsAvg(3,:)); 
+legend('CLG','MTE', sprintf('HCBN - K=%d', hcbn_K));
+title('A->C B->C Structure')
+
+subplot(2,1,2); 
+hold on;
+plot(trainVecSize, llValsAvg(4,:)); xlabel('Training Vector Size'); ylabel('Non-Gaussian Likelihoods'); grid on
+plot(trainVecSize, llValsAvg(5,:)); 
+plot(trainVecSize, llValsAvg(6,:)); 
+legend('CLG','MTE', sprintf('HCBN - K=%d', hcbn_K));
+
+set(gcf, 'Position', get(0,'Screensize')); % Maximize figure.
+print(sprintf('/home/kiran/ownCloud/PhD/sim_results/simpleABC'),'-dpng')
+close(fig1);
+
+% synthetic data simulation for HCBN, MTE and CLG
 clear;
 clc;
-
-tic
 
 % setup global parameters
 D = 5;
@@ -126,6 +165,8 @@ nodeNames = {'A', 'B', 'C', 'D', 'E'};
 bntPath = '../bnt';
 discreteNodeNames = {'A','B'};
 
+hcbn_K = 25;        % WARNING - change this in actual HCBN code for now :(
+
 % Generate the synthetic data set
 
 discreteType = {};
@@ -136,16 +177,24 @@ nodeB = [0.6 0.1 0.05 0.25]; discreteType{2} = nodeB;
 
 % instantiate the CLG object
 numMCSims = 100; numTest = 1000;
-trainVecSize = 500:250:2000;
+trainVecSize = 100:100:2000;
 M = max(trainVecSize)+numTest; 
 % (1,:) -> CLG-Gaussian, (2,:) -> MTE-Gaussian, (3,:) -> HCBN-Gaussian
 % (4,:) -> CLG-Other     (5,:) -> MTE-Other     (6,:) -> HCBN-Other
 llValMat = zeros(6,length(trainVecSize),numMCSims);   
+
+dispstat('','init'); % One time only initialization
+dispstat(sprintf('Begining the simulation...'),'keepthis','timestamp');
+progressIdx = 1;
 for mcSimNumber=1:numMCSims
     idx = 1;
     for numTrain=trainVecSize
 
-        fprintf('Processing training size=%d -- MC Sim #=%d\n', numTrain, mcSimNumber);
+        numTotalLoops = numMCSims*length(trainVecSize);
+        progress = (progressIdx/numTotalLoops)*100;
+        progressStr = sprintf('ABCDE Progress: Training Size=%d %0.02f%%',numTrain, progress);
+        dispstat(progressStr,'timestamp');
+        fprintf(fid, '%s\n', progressStr);
 
         continuousType = 'Gaussian';
         X = genSynthData(discreteType, continuousType, M);
@@ -175,53 +224,77 @@ for mcSimNumber=1:numMCSims
         llValMat(6, idx, mcSimNumber) = hcbnLLVal_Other;
                 
         idx = idx + 1;
+        progressIdx = progressIdx + 1;
     end
     
-    % save off results after every MC sim
-    fnameToSave = sprintf('/home/kiran/ownCloud/PhD/sim_results/llValMat_%d.mat', mcSimNumber);
-    save(fnameToSave, 'llValMat');
-
 end
 
-%% 
-clear;
-clc;
+dispstat('Finished.','keepprev');
 
-load('/home/kiran/ownCloud/PhD/sim_results/llValMat_100.mat');
-numMCSims = 100;
-trainVecSize = 500:250:2000;
+llValsAvg = mean(llValMat,3);
 
-% average the monte-carlo simulations
-llValMatIdxs = isfinite(llValMat);
-llValMatFiniteIdxs = [];
-% find MC sim number which doesn't have any NaN's or +/- INFs
-for mcSimNumber=1:numMCSims
-    if(sum(any(llValMatIdxs(:,:,mcSimNumber)==0))==0)
-        llValMatFiniteIdxs = [llValMatFiniteIdxs mcSimNumber];
-    else
-        fprintf('Found bad at %d\n', mcSimNumber);
-    end
-end
+fig1 = figure;
 
-llValsAvg = mean(llValMat(:,:,llValMatFiniteIdxs),3);
-gaussRef = llValsAvg(1,:);
-otherRef = llValsAvg(4,:);
-set(gca,'fontsize',30)
+subplot(2,1,1); 
 hold on;
-plot(trainVecSize, gaussRef./llValsAvg(1,:), 'b*-.', 'LineWidth',2);
-plot(trainVecSize, gaussRef./llValsAvg(2,:), 'r*-.', 'LineWidth',2);
-plot(trainVecSize, gaussRef./llValsAvg(3,:), 'k*-.', 'LineWidth',2);
-plot(trainVecSize, otherRef./llValsAvg(4,:), 'b+-.', 'LineWidth',2);
-plot(trainVecSize, otherRef./llValsAvg(5,:), 'r+-.', 'LineWidth',2);
-plot(trainVecSize, otherRef./llValsAvg(6,:), 'k+-.', 'LineWidth',2);
-grid on; xlabel('# Training Samples'); 
-legend('CLG (Gaussian)', ...
-       'MTE (Gaussian)', ...
-       'HCBN (Gaussian)', ...
-       'CLG (Other)', ...
-       'MTE (Other)', ...
-       'HCBN (Other)')
-hold off;
-save('/home/kiran/ownCloud/PhD/synthDataSim.mat')
+plot(trainVecSize, llValsAvg(1,:)); xlabel('Training Vector Size'); ylabel('Gaussian Data'); grid on
+plot(trainVecSize, llValsAvg(2,:)); 
+plot(trainVecSize, llValsAvg(3,:)); 
+legend('CLG','MTE', sprintf('HCBN - K=%d', hcbn_K));
+title('A->C A->D B->D B->E Structure')
 
-toc
+subplot(2,1,2); 
+hold on;
+plot(trainVecSize, llValsAvg(4,:)); xlabel('Training Vector Size'); ylabel('Non-Gaussian Likelihoods'); grid on
+plot(trainVecSize, llValsAvg(5,:)); 
+plot(trainVecSize, llValsAvg(6,:)); 
+legend('CLG','MTE', sprintf('HCBN - K=%d', hcbn_K));
+
+set(gcf, 'Position', get(0,'Screensize')); % Maximize figure.
+print(sprintf('/home/kiran/ownCloud/PhD/sim_results/simpleABCDE'),'-dpng')
+close(fig1);
+
+fclose(fid);
+
+% %% 
+% clear;
+% clc;
+% 
+% load('/home/kiran/ownCloud/PhD/sim_results/llValMat_100.mat');
+% numMCSims = 100;
+% trainVecSize = 500:250:2000;
+% 
+% % average the monte-carlo simulations
+% llValMatIdxs = isfinite(llValMat);
+% llValMatFiniteIdxs = [];
+% % find MC sim number which doesn't have any NaN's or +/- INFs
+% for mcSimNumber=1:numMCSims
+%     if(sum(any(llValMatIdxs(:,:,mcSimNumber)==0))==0)
+%         llValMatFiniteIdxs = [llValMatFiniteIdxs mcSimNumber];
+%     else
+%         fprintf('Found bad at %d\n', mcSimNumber);
+%     end
+% end
+% 
+% llValsAvg = mean(llValMat(:,:,llValMatFiniteIdxs),3);
+% gaussRef = llValsAvg(1,:);
+% otherRef = llValsAvg(4,:);
+% set(gca,'fontsize',30)
+% hold on;
+% plot(trainVecSize, gaussRef./llValsAvg(1,:), 'b*-.', 'LineWidth',2);
+% plot(trainVecSize, gaussRef./llValsAvg(2,:), 'r*-.', 'LineWidth',2);
+% plot(trainVecSize, gaussRef./llValsAvg(3,:), 'k*-.', 'LineWidth',2);
+% plot(trainVecSize, otherRef./llValsAvg(4,:), 'b+-.', 'LineWidth',2);
+% plot(trainVecSize, otherRef./llValsAvg(5,:), 'r+-.', 'LineWidth',2);
+% plot(trainVecSize, otherRef./llValsAvg(6,:), 'k+-.', 'LineWidth',2);
+% grid on; xlabel('# Training Samples'); 
+% legend('CLG (Gaussian)', ...
+%        'MTE (Gaussian)', ...
+%        'HCBN (Gaussian)', ...
+%        'CLG (Other)', ...
+%        'MTE (Other)', ...
+%        'HCBN (Other)')
+% hold off;
+% save('/home/kiran/ownCloud/PhD/synthDataSim.mat')
+% 
+% toc

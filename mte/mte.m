@@ -29,6 +29,7 @@ classdef mte < handle
         uniqueVals; % the number of unique values for each discrete node
         
         DEBUG_MODE;
+        LOG_CUTOFF;
     end
     
     methods
@@ -49,6 +50,7 @@ classdef mte < handle
             %   [ ] - 
             %
             obj.DEBUG_MODE = 0;
+            obj.LOG_CUTOFF = 10^-5;
             
             obj.N = size(X,1);
             obj.D = size(X,2);
@@ -197,9 +199,11 @@ classdef mte < handle
                                         error('Currently unsupported!');
                                     end
                                 else
-                                    fprintf('MTE COMBO not found!!\n');
+%                                     fprintf('MTE COMBO not found!!\n');
+                                    % TODO: what is the right thing to do
+                                    % here?
                                     domain = 1:10;
-                                    f = 0.00001*ones(1,10);
+                                    f = 10^-4*ones(1,10);
                                     mte_info = rvEmpiricalInfo(domain, f, []);
                                 end
                                 nodeBnParams{nodeBnParamsIdx} = mteNodeBnParam(node, combo, mte_info);
@@ -241,6 +245,9 @@ classdef mte < handle
                             end
                         end
                     end
+                end
+                if(nodeProb<=obj.LOG_CUTOFF)
+                    nodeProb = obj.LOG_CUTOFF;
                 end
                 llVal = llVal + log(nodeProb);
             end

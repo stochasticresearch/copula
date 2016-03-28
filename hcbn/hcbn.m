@@ -62,7 +62,7 @@ classdef hcbn < handle
                                 % "test" datasets, we will see how well the
                                 % model holds against the other datasets
         
-                                
+        LOG_CUTOFF;
                                 
         DEBUG_MODE; % if turned on, will print out extra stuff to screen to
                     % monitor what is going on and store extra debugging
@@ -92,6 +92,7 @@ classdef hcbn < handle
             obj.DEBUG_MODE = 0;
             obj.SIM_NUM = 0;
             obj.TYPE_NAME = '';
+            obj.LOG_CUTOFF = 10^-5;
             
             % add BNT to the path
             addpath(genpath(bntPath));
@@ -432,12 +433,10 @@ classdef hcbn < handle
                 % compute empirical distribution log likelihood (for just
                 % the child node)
                 f_xi = obj.empInfo{nodeIdx}.queryDensity(X_in(m,1));
-                if(f_xi<=0)     % do this for numerical reasons
-                    log_f_xi = 0;
-                else
-                    log_f_xi = log(f_xi);
+                if(f_xi<=obj.LOG_CUTOFF)     % do this for numerical reasons
+                    f_xi = obj.LOG_CUTOFF;
                 end
-                ll_val = ll_val + log_f_xi;
+                ll_val = ll_val + log(f_xi);
                 
                 % generate u, avoid values of u being 0 or 1
                 uIdx = 1;

@@ -29,6 +29,7 @@ classdef clg < handle
         uniqueVals; % the number of unique values for each discrete node
         
         DEBUG_MODE;
+        LOG_CUTOFF;
     end
     
     methods
@@ -49,6 +50,7 @@ classdef clg < handle
             %   [ ] - 
             %
             obj.DEBUG_MODE = 0;
+            obj.LOG_CUTOFF = 10^-5;
             
             obj.N = size(X,1);
             obj.D = size(X,2);
@@ -190,7 +192,9 @@ classdef clg < handle
                                         [Mean, Covariance] = ecmnmle(X_subset_continuous);
                                     end
                                 else
-                                    fprintf('CLG COMBO not found!\n');
+%                                     fprintf('CLG COMBO not found!\n');
+                                    % TODO: what is the right thing to do
+                                    % here?
                                     % use default Gaussian Parameters
                                     Mean = 0; Covariance = 1;
                                 end
@@ -258,6 +262,9 @@ classdef clg < handle
                             end
                         end
                     end
+                end
+                if(nodeProb<=obj.LOG_CUTOFF)
+                    nodeProb = obj.LOG_CUTOFF;
                 end
                 llVal = llVal + log(nodeProb);
             end
