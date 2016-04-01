@@ -145,10 +145,12 @@ legend('CLG','MTE', sprintf('HCBN - K=%d', hcbn_K));
 set(gcf, 'Position', get(0,'Screensize')); % Maximize figure.
 print(sprintf('/home/kiran/ownCloud/PhD/sim_results/simpleABC'),'-dpng')
 close(fig1);
+fclose(fid);
 
 % synthetic data simulation for HCBN, MTE and CLG
 clear;
 clc;
+fid = fopen('/home/kiran/ownCloud/PhD/sim_results/synthDataSim.diary', 'a');
 
 % setup global parameters
 D = 5;
