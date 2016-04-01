@@ -232,7 +232,7 @@ classdef mte < handle
             M = size(X,1);
             
             if(nargout>1)
-            	llVec = zeros(M,1);
+                llVec = zeros(M,1);
             end
             
             llVal = 0;
@@ -263,8 +263,8 @@ classdef mte < handle
                 log_familyProb = log(familyProb);
                 llVal = llVal + log_familyProb;
                 if(nargout>1)
-                	llVec(mm) = log_familyProb;
-            	end
+                    llVec(mm) = log_familyProb;
+                end
             end
         end
         

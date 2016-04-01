@@ -41,7 +41,7 @@ a_dist = makedist('Multinomial','Probabilities',discreteType{1});
 
 % generate the copula random variables
 D = 2; alpha = 4;
-U = frankcopularnd(M, D, alpha);
+U = claytoncopularnd(M, D, alpha);
 X = zeros(M,2);
 
 X(:,1) = a_dist.icdf(U(:,1));
@@ -51,26 +51,46 @@ if(strcmpi(continuousType,'Gaussian'))
     X(:,2) = norminv(U(:,2),0,rhoD);
 else
     % make it bimodal
-    x = [normrnd(-2,0.3,M/2,1); normrnd(2,0.5,M/2,1)];
-    [f,xi] = emppdf(x,0);
-    F = empcdf(x,0);
-    myObj = rvEmpiricalInfo(xi,f,F);
-    for ii=1:M
-        X(ii,2) = myObj.invDistribution(U(ii,2));
-    end
+%     x = [normrnd(-2,0.3,M/2,1); normrnd(2,0.5,M/2,1)];
+%     [f,xi] = emppdf(x,0);
+%     F = empcdf(x,0);
+%     myObj = rvEmpiricalInfo(xi,f,F);
+%     for ii=1:M
+%         X(ii,2) = myObj.invDistribution(U(ii,2));
+%     end
+    X(:,2) = unifinv(U(:,2),-2,2);
 end
 
 X = X(randperm(M),:);
 
 % compute the likelihood of each point to the generative model
-llvec = zeros(M,1);
-for ii=1:M
-	xi = X(ii,:);
-	u = [a_dist.cdf(xi(1)) myObj.queryDistribution(xi(2))];
-	% here we are just computing f(x1,x2) = f(x1)*f(x2)*c(F(x1),F(x2)) and then taking
-	% the LOG
-	llval = log( a_dist.pdf(xi(1))*myObj.queryDensity(xi(2))* frankcopulapdf(u, alpha) );
-	llvec(ii) = llval;
+if(nargout>1)
+    llvec = zeros(M,1);
+    for ii=1:M
+        xi = X(ii,:);
+%         u = [a_dist.cdf(xi(1)) myObj.queryDistribution(xi(2))];
+        u = [a_dist.cdf(xi(1)) unifcdf(xi(2),-2,2)];
+        uuvec = zeros(1,length(u));
+        for jj=1:length(u)
+            if(abs(u(jj)-1)<=.001)
+                uu = 0.999;
+            elseif(abs(u(jj)-.001)<=0.001)
+                uu = 0.001;
+            else
+                uu = u(jj);
+            end
+            uuvec(jj) = uu;
+        end
+        
+        % here we are just computing f(x1,x2) = f(x1)*f(x2)*c(F(x1),F(x2)) and then taking
+        % the LOG
+%         llval = log( a_dist.pdf(xi(1))*myObj.queryDensity(xi(2))* frankcopulapdf(uuvec, alpha) );
+        llval = log( a_dist.pdf(xi(1))*unifpdf(xi(2),-2,2)* frankcopulapdf(uuvec, alpha) );
+%         fprintf('%s || %s >> copulapdf=%0.02f >> f(x1)=%0.02f f(x2)=%0.02f ll=%0.02f\n', ...
+%             sprintf('%f,', xi), sprintf('%f,', uuvec), frankcopulapdf(uuvec, alpha), ... 
+%             a_dist.pdf(xi(1)), myObj.queryDensity(xi(2)), llval );
+        llvec(ii) = llval;
+    end
 end
 
 end

@@ -95,8 +95,8 @@ end
 X = [X12 X345];
 X = X(randperm(M),:);       % shuffle the data
 
-llvec = zeros(M,1);
 for ii=1:M
+    llvec = zeros(M,1);
 	xi = X(ii,:);
 	
 	u1 = [a_dist.cdf(xi(1)) betacdf(xi(3),2,5)];

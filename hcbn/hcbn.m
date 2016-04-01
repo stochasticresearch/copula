@@ -201,9 +201,14 @@ classdef hcbn < handle
             end
         end
         
-        function [] = setDag(obj, candidateDag)
+        function [] = setDag(obj, candidateDag, varargin)
+            % if you set varargin=1, then 
             obj.dag = candidateDag;
-            obj.estFamilyCopula();
+            nVarargin = length(varargin);
+            if(nVarargin==0 || varargin{1}~=0)
+                obj.estFamilyCopula();
+            end
+            
         end
         
         function [] = estFamilyCopula(obj)
@@ -337,7 +342,7 @@ classdef hcbn < handle
             end
         end
         
-        function [ ll_val, Rc_val_mat, Rc_num_mat, Rc_den_mat, llVec ] = dataLogLikelihood(obj, X)
+        function [ ll_val, Rc_val_mat, Rc_num_mat, Rc_den_mat ] = dataLogLikelihood(obj, X)
             %DATALOGLIKELIHOOD - calculates the log-likelihood of the HCBN
             %                    model to the provided data
             % 
@@ -349,7 +354,6 @@ classdef hcbn < handle
 				Rc_val_mat = zeros( obj.D, size(X,1) );
 				Rc_num_mat = zeros( obj.D, size(X,1) );
 				Rc_den_mat = zeros( obj.D, size(X,1) );
-				llVec = zeros(size(X,1), 1);
 			end
 			
 			ll_val = 0;
@@ -363,8 +367,7 @@ classdef hcbn < handle
 				else
 					tmp = obj.copulall(ii,X);
 				end
-				ll_val = ll_val + tmp;
-				llVec(ii) = tmp;
+				ll_val = ll_val + tmp;                
 			end
         end
         

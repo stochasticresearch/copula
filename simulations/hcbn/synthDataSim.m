@@ -47,8 +47,8 @@ nodeA = [0.4 0.3 0.2 0.1]; discreteType{1} = nodeA;
 nodeB = [0.6 0.1 0.05 0.25]; discreteType{2} = nodeB;
 
 % instantiate the CLG object
-numMCSims = 100; numTest = 1000;
-trainVecSize = 100:100:2000;
+numMCSims = 5; numTest = 1000;
+trainVecSize = 1000;
 M = max(trainVecSize)+numTest; 
 % (1,:) -> CLG-Gaussian, (2,:) -> MTE-Gaussian, (3,:) -> HCBN-Gaussian
 % (4,:) -> CLG-Other     (5,:) -> MTE-Other     (6,:) -> HCBN-Other
@@ -67,16 +67,16 @@ for mcSimNumber=1:numMCSims
         dispstat(progressStr,'timestamp');
         fprintf(fid, '%s\n', progressStr);
 
-        continuousType = 'Gaussian';
-        X = genSynthData2(discreteType, continuousType, M);
-        X_train_full = X(1:max(trainVecSize),:);
-        X_test = X(max(trainVecSize)+1:end,:);
-        X_train = X_train_full(1:numTrain,:);
-        hcbnObj = hcbn(bntPath, X_train, nodeNames, discreteNodeNames, dag);
-        hcbnObj.setSimNum(mcSimNumber); hcbnObj.setTypeName('Gaussian');
-        [hcbnLLVal_Gaussian,Rc_val_mat_Gaussian,Rc_num_mat_Gaussian,Rc_den_mat_Gaussian] = hcbnObj.dataLogLikelihood(X_test);
-        clgObj = clg(X_train, discreteNodes, dag); clgLLVal_Gaussian = clgObj.dataLogLikelihood(X_test);
-        mteObj = mte(X_train, discreteNodes, dag); mteLLVal_Gaussian = mteObj.dataLogLikelihood(X_test);
+%         continuousType = 'Gaussian';
+%         X = genSynthData2(discreteType, continuousType, M);
+%         X_train_full = X(1:max(trainVecSize),:);
+%         X_test = X(max(trainVecSize)+1:end,:);
+%         X_train = X_train_full(1:numTrain,:);
+%         hcbnObj = hcbn(bntPath, X_train, nodeNames, discreteNodeNames, dag);
+%         hcbnObj.setSimNum(mcSimNumber); hcbnObj.setTypeName('Gaussian');
+%         [hcbnLLVal_Gaussian,Rc_val_mat_Gaussian,Rc_num_mat_Gaussian,Rc_den_mat_Gaussian] = hcbnObj.dataLogLikelihood(X_test);
+%         clgObj = clg(X_train, discreteNodes, dag); clgLLVal_Gaussian = clgObj.dataLogLikelihood(X_test);
+%         mteObj = mte(X_train, discreteNodes, dag); mteLLVal_Gaussian = mteObj.dataLogLikelihood(X_test);
         
         continuousType = 'other';
         X = genSynthData2(discreteType, continuousType, M);
@@ -89,29 +89,29 @@ for mcSimNumber=1:numMCSims
         clgObj = clg(X_train, discreteNodes, dag); clgLLVal_Other = clgObj.dataLogLikelihood(X_test);
         mteObj = mte(X_train, discreteNodes, dag); mteLLVal_Other = mteObj.dataLogLikelihood(X_test);
         
-        if(mean(Rc_val_mat_Gaussian(1,:))~=1 || mean(Rc_val_mat_Gaussian(2,:))~=1 || ...
-           mean(Rc_num_mat_Gaussian(1,:))~=1 || mean(Rc_num_mat_Gaussian(2,:))~=1 || ...
-           mean(Rc_den_mat_Gaussian(1,:))~=1 || mean(Rc_den_mat_Gaussian(2,:))~=1 || ...
-           mean(Rc_val_mat_Other(1,:))~=1 || mean(Rc_val_mat_Other(2,:))~=1 || ...
-           mean(Rc_num_mat_Other(1,:))~=1 || mean(Rc_num_mat_Other(2,:))~=1 || ...
-           mean(Rc_den_mat_Other(1,:))~=1 || mean(Rc_den_mat_Other(2,:))~=1 )
-            error('Node A and/or B error!');
-        end
+%         if(mean(Rc_val_mat_Gaussian(1,:))~=1 || mean(Rc_val_mat_Gaussian(2,:))~=1 || ...
+%            mean(Rc_num_mat_Gaussian(1,:))~=1 || mean(Rc_num_mat_Gaussian(2,:))~=1 || ...
+%            mean(Rc_den_mat_Gaussian(1,:))~=1 || mean(Rc_den_mat_Gaussian(2,:))~=1 || ...
+%            mean(Rc_val_mat_Other(1,:))~=1 || mean(Rc_val_mat_Other(2,:))~=1 || ...
+%            mean(Rc_num_mat_Other(1,:))~=1 || mean(Rc_num_mat_Other(2,:))~=1 || ...
+%            mean(Rc_den_mat_Other(1,:))~=1 || mean(Rc_den_mat_Other(2,:))~=1 )
+%             error('Node A and/or B error!');
+%         end
         
-        subplot(1,2,1); plot(1:numTest, Rc_val_mat_Gaussian(3,:), 'b*', ...
-                             1:numTest, Rc_num_mat_Gaussian(3,:), 'r', ...
-                             1:numTest, Rc_den_mat_Gaussian(3,:), 'k'); grid on;        
-                         title(sprintf('Gaussian - Node C - %f',hcbnLLVal_Gaussian));
+%         subplot(1,2,1); plot(1:numTest, Rc_val_mat_Gaussian(3,:), 'b*', ...
+%                              1:numTest, Rc_num_mat_Gaussian(3,:), 'r', ...
+%                              1:numTest, Rc_den_mat_Gaussian(3,:), 'k'); grid on;        
+%                          title(sprintf('Gaussian - Node C - %f',hcbnLLVal_Gaussian));
+%         
+%         subplot(1,2,2); plot(1:numTest, Rc_val_mat_Other(3,:), 'b*', ...
+%                              1:numTest, Rc_num_mat_Other(3,:), 'r', ...
+%                              1:numTest, Rc_den_mat_Other(3,:), 'k'); grid on;        
+%                          title(sprintf('Other - Node C - %f',hcbnLLVal_Other));
+%         pause(1);
         
-        subplot(1,2,2); plot(1:numTest, Rc_val_mat_Other(3,:), 'b*', ...
-                             1:numTest, Rc_num_mat_Other(3,:), 'r', ...
-                             1:numTest, Rc_den_mat_Other(3,:), 'k'); grid on;        
-                         title(sprintf('Other - Node C - %f',hcbnLLVal_Other));
-        pause(1);
-        
-        llValMat(1, idx, mcSimNumber) = clgLLVal_Gaussian;
-        llValMat(2, idx, mcSimNumber) = mteLLVal_Gaussian;
-        llValMat(3, idx, mcSimNumber) = hcbnLLVal_Gaussian;
+%         llValMat(1, idx, mcSimNumber) = clgLLVal_Gaussian;
+%         llValMat(2, idx, mcSimNumber) = mteLLVal_Gaussian;
+%         llValMat(3, idx, mcSimNumber) = hcbnLLVal_Gaussian;
         llValMat(4, idx, mcSimNumber) = clgLLVal_Other;
         llValMat(5, idx, mcSimNumber) = mteLLVal_Other;
         llValMat(6, idx, mcSimNumber) = hcbnLLVal_Other;
@@ -123,29 +123,31 @@ for mcSimNumber=1:numMCSims
 end
 dispstat('Finished.','keepprev');
 
-llValsAvg = mean(llValMat,3);
+llValsAvg = mean(llValMat,3)
 
-fig1 = figure;
+% fig1 = figure;
 
-subplot(2,1,1); 
-hold on;
-plot(trainVecSize, llValsAvg(1,:)); xlabel('Training Vector Size'); ylabel('Gaussian Data'); grid on
-plot(trainVecSize, llValsAvg(2,:)); 
-plot(trainVecSize, llValsAvg(3,:)); 
-legend('CLG','MTE', sprintf('HCBN - K=%d', hcbn_K));
-title('A->C B->C Structure')
+% subplot(2,1,1); 
+% hold on;
+% plot(trainVecSize, llValsAvg(1,:)); xlabel('Training Vector Size'); ylabel('Gaussian Data'); grid on
+% plot(trainVecSize, llValsAvg(2,:)); 
+% plot(trainVecSize, llValsAvg(3,:)); 
+% legend('CLG','MTE', sprintf('HCBN - K=%d', hcbn_K));
+% title('A->C B->C Structure')
 
-subplot(2,1,2); 
-hold on;
-plot(trainVecSize, llValsAvg(4,:)); xlabel('Training Vector Size'); ylabel('Non-Gaussian Likelihoods'); grid on
-plot(trainVecSize, llValsAvg(5,:)); 
-plot(trainVecSize, llValsAvg(6,:)); 
-legend('CLG','MTE', sprintf('HCBN - K=%d', hcbn_K));
-
-set(gcf, 'Position', get(0,'Screensize')); % Maximize figure.
-print(sprintf('/home/kiran/ownCloud/PhD/sim_results/simpleABC'),'-dpng')
-close(fig1);
+% subplot(2,1,2); 
+% hold on;
+% plot(trainVecSize, llValsAvg(4,:)); xlabel('Training Vector Size'); ylabel('Non-Gaussian Likelihoods'); grid on
+% plot(trainVecSize, llValsAvg(5,:)); 
+% plot(trainVecSize, llValsAvg(6,:)); 
+% legend('CLG','MTE', sprintf('HCBN - K=%d', hcbn_K));
+% 
+% set(gcf, 'Position', get(0,'Screensize')); % Maximize figure.
+% print(sprintf('/home/kiran/ownCloud/PhD/sim_results/simpleABC'),'-dpng')
+% close(fig1);
 fclose(fid);
+
+%%
 
 % synthetic data simulation for HCBN, MTE and CLG
 clear;

@@ -17,7 +17,7 @@
 %*                                                                        *
 %**************************************************************************
 
-function [ X ] = genSynthData2( discreteType, continuousType, M )
+function [ X, llvec ] = genSynthData2( discreteType, continuousType, M )
 %GENSYNTHDATA Generates synthetic data for testing HCBN, MTE, and CLG from
 %the following BN (all arrows point downward):
 %       A   B      
@@ -71,14 +71,30 @@ X = [X12 X3];
 X = X(randperm(M),:);
 
 % compute the likelihood of each point to the generative model
-llvec = zeros(M,1);
-for ii=1:M
-	xi = X(ii,:);
-	u = [a_dist.cdf(xi(1)) b_dist.cdf(xi(2)) myObj.queryDistribution(xi(3))];
-	% here we are just computing f(x1,x2,x3) = f(x1)*f(x2)*f(x3)*c(F(x1),F(x2),F(x3)) and 
-    % then taking the LOG
-    llval = log( a_dist.pdf(xi(1))*b_dist.pdf(xi(2))*myObj.queryDensity(xi(3))* copulapdf('Gaussian', u, Rho_C1) );
-    llvec(ii) = llval;
+if(nargout>1)
+    llvec = zeros(M,1);
+    for ii=1:M
+        xi = X(ii,:);
+        u = [a_dist.cdf(xi(1)) b_dist.cdf(xi(2)) myObj.queryDistribution(xi(3))];
+        
+        uuvec = zeros(1,length(u));
+        for jj=1:length(u)
+            if(abs(u(jj)-1)<=.001)
+                uu = 0.999;
+            elseif(abs(u(jj)-.001)<=0.001)
+                uu = 0.001;
+            else
+                uu = u(jj);
+            end
+            uuvec(jj) = uu;
+        end
+        
+        % here we are just computing f(x1,x2,x3) = f(x1)*f(x2)*f(x3)*c(F(x1),F(x2),F(x3)) and 
+        % then taking the LOG
+        llval = log( a_dist.pdf(xi(1))*b_dist.pdf(xi(2))*myObj.queryDensity(xi(3))* copulapdf('Gaussian', uuvec, Rho_C1) );
+        fprintf('%s || %s copulapdf=%f\n', sprintf('%f,', xi), sprintf('%f,', uuvec), copulapdf('Gaussian', u, Rho_C1));
+        llvec(ii) = llval;
+    end
 end
 
 end

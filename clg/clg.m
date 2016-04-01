@@ -180,11 +180,14 @@ classdef clg < handle
                                         Mean = zeros(1,length(continuousNodesIdxs));
                                         Covariance = eye(length(continuousNodesIdxs));
                                     else
-                                        % ecmnmle works for univariate and
-                                        % multivariate data
-                                        [Mean, Covariance] = ecmnmle(X_subset_continuous);
+                                        % ecmnmle does not work well for 
+                                        % univariate data
+                                        if(size(X_subset_continuous,2)==1)
+                                            [Mean, Covariance] = normfit(X_subset_continuous);
+                                        else
+                                            [Mean, Covariance] = ecmnmle(X_subset_continuous);
+                                        end
                                     end
-
                                 else
                                     % use default Gaussian Parameters when
                                     % we don't have samples associated with
@@ -223,7 +226,7 @@ classdef clg < handle
             parentIdxs = find(obj.dag(:,nodeIdx))';
         end
 
-        function [llVal] = dataLogLikelihood(obj, X)
+        function [llVal,llVec] = dataLogLikelihood(obj, X)
             %DATALOGLIKELIHOOD - calculates the log-likelihood of the given
             %dataset to the calculated model of the data
             % Inputs:
@@ -232,8 +235,8 @@ classdef clg < handle
             %  llVal - the log-likelihood value
 			M = size(X,1);
 			
-			if(nargout>1)
-            	llVec = zeros(M,1);
+            if(nargout>1)
+                llVec = zeros(M,1);
             end
 			
 			llVal = 0;
@@ -260,7 +263,11 @@ classdef clg < handle
 							if(isequal(X_parent,obj.bnParams{node}{combo}.combo))
 								Mean = obj.bnParams{node}{combo}.Mean;
 								Covariance = obj.bnParams{node}{combo}.Covariance;
-								familyProb = familyProb * mvnpdf(X(mm,node), Mean, Covariance);
+                                if(length(Mean)==1)
+                                    familyProb = familyProb * normpdf(X(mm,node), Mean, Covariance);
+                                else
+                                    familyProb = familyProb * mvnpdf(X(mm,node), Mean, Covariance);
+                                end
 								break;
 							end
 						end
@@ -273,8 +280,8 @@ classdef clg < handle
 				log_familyProb = log(familyProb);
                 llVal = llVal + log_familyProb;
                 if(nargout>1)
-                	llVec(mm) = log_familyProb;
-            	end
+                    llVec(mm) = log_familyProb;
+                end
 			end
         end        
     end
