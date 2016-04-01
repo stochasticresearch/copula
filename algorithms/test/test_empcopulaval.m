@@ -66,7 +66,9 @@ for h=hVec
             end
 
             se1 = (c_actual_query-c_est_query).^2;
-            mse_empcopulaval_query_cellarr{mcSimNum} = se1;    
+            mse_empcopulaval_query_cellarr{mcSimNum} = se1;
+            
+            progressIdx = progressIdx + 1;
         end
 
         mse_empcopulaval_query_mat = mse_empcopulaval_query_cellarr{1};
@@ -91,7 +93,6 @@ for h=hVec
         set(gcf, 'Position', get(0,'Screensize')); % Maximize figure.
         print(sprintf('/home/kiran/ownCloud/PhD/sim_results/empcopulaval_K_%d_h_%0.02f', K, h),'-dpng')
         close(fig1);
-        progressIdx = progressIdx + 1;
     end
 end
 dispstat('Finished.','keepprev');
