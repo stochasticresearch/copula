@@ -17,7 +17,7 @@
 %*                                                                        *
 %**************************************************************************
 
-function [ X ] = genSynthData( discreteType, continuousType, M )
+function [ X, llvec ] = genSynthData( discreteType, continuousType, M )
 %GENSYNTHDATA Generates synthetic data for testing HCBN, MTE, and CLG from
 %the following BN (all arrows point downward):
 %       A   B      
@@ -93,5 +93,26 @@ else
 end
 
 X = [X12 X345];
+X = X(randperm(M),:);       % shuffle the data
+
+llvec = zeros(M,1);
+for ii=1:M
+	xi = X(ii,:);
+	
+	u1 = [a_dist.cdf(xi(1)) betacdf(xi(3),2,5)];
+	u2 = [a_dist.cdf(xi(1)) b_dist.cdf(xi(2)) gamcdf(xi(4),2,2)];
+	u2_parents = u2(1:2);
+	u3 = [b_dist.cdf(xi(2)) unifcdf(xi(5),2,6)];
+
+	% compute f(x1,x2,x3,x4,x5) = f(x1)*f(x2)*f(x3)*f(x4)*f(x5)*c1(F(x1),F(x3))*c2(F(x1),F(x2),F(x4))*c3(F(x2),F(x5))/c2_parents(F(x1),F(x2)) 
+    % and then taking the LOG.  This equation is valid for the BN structure defined above.
+	
+	indepProbs = a_dist.pdf(xi(1))*b_dist.pdf(xi(2))*betapdf(xi(3),2,5)*gampdf(xi(4),2,2)*unifpdf(xi(5),2,6);
+	numeratorCopulas = frankcopulapdf(u1,c1_alpha)*copulapdf('Gaussian',u2,Rho_C1)*claytoncopulapdf(u3,c3_alpha);
+	denominatorCopula = copulapdf('Gaussian',u2_parents,Rho_C2(1:2,1:2));
+	
+	llval = log( indepProbs*numeratorCopulas/denominatorCopula );
+	llvec(ii) = llval;
+end
 
 end

@@ -14,6 +14,8 @@
 %*
 %* You should have received a copy of the GNU General Public License
 %* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+%* 
+%**************************************************************************
 
 classdef clg < handle
     properties
@@ -33,7 +35,7 @@ classdef clg < handle
     end
     
     methods
-        function obj = clg(X, discreteNodes, dag)
+        function obj = clg(X, discreteNodes, varargin)
             % DAG - Constructs a HCBN object
             %  Inputs:
             %   X - a N x D matrix of the the observable data which the
@@ -56,7 +58,7 @@ classdef clg < handle
             obj.D = size(X,2);
             obj.X = X;
             obj.discreteNodes = discreteNodes;
-            obj.dag = dag;
+            obj.dag = zeros(obj.D,obj.D);
             obj.bnParams = cell(1,size(obj.dag,1));
             obj.uniqueVals = zeros(1,size(obj.dag,1));
             
@@ -64,6 +66,18 @@ classdef clg < handle
                 obj.uniqueVals(ii) = length(unique(X(:,ii)));
             end
             
+            nVarargs = length(varargin);
+            if(nVarargs>0)
+                candidateDag = varargin{1};
+                if(~acyclic(candidateDag))
+                    error('Specified DAG is not acyclic!\n');
+                end
+                obj.setDag(candidateDag);
+            end
+        end
+        
+        function [] = setDag(obj, candidateDag)
+            obj.dag = candidateDag;
             obj.calcClgParams();
         end
         
@@ -85,18 +99,11 @@ classdef clg < handle
                     X_univariate = obj.X(:,node);
                     % estimate the univariate distribution
                     if(any(node==obj.discreteNodes))
-                        % node is discrete, estimate w/ ecdf
-                        M = size(X_univariate,1);
-                        [F,x] = ecdf(X_univariate);
-                        F = F(2:end);
-                        x = x(2:end);
-                        f = zeros(1,length(x));
-                        idx = 1;
-                        for jj=1:length(x)
-                            f(idx) = sum(X_univariate==x(jj))/M;
-                            idx = idx + 1;
-                        end
-                        empInfoObj = rvEmpiricalInfo(x,f,[]);
+                        isdiscrete = 1;
+                        [F,x] = empcdf(X_univariate, isdiscrete);
+                        f = emppdf(X_univariate, isdiscrete);
+                        
+                        empInfoObj = rvEmpiricalInfo(x,f,F);
                         obj.bnParams{node} = empInfoObj;
                     else
                         % node is continuous, estimate as Gaussian and
@@ -124,6 +131,7 @@ classdef clg < handle
                         error('CLG model must not have discrete children w/ continuous parents!');
                     else
                         % make combinations for all the parents
+                        % TODO: figure out better way to code this :(
                         if(length(discreteParents)==1)
                             combos = 1:obj.uniqueVals(discreteParents(1));
                         elseif(length(discreteParents)==2)
@@ -156,48 +164,38 @@ classdef clg < handle
                                 % find all the data rows where this combo occurs
                                 X_subset = [];
                                 for ii=1:obj.N
-                                    comboFound = 1;
-                                    for jj=1:length(combo)
-                                        if(obj.X(ii,discreteParents(jj))~=combo(jj))
-                                            comboFound = 0;
-                                        end
-                                    end
-                                    if(comboFound)
+                                    if(isequal(obj.X(ii,discreteParents),combo))
                                         X_subset = [X_subset; obj.X(ii,:)];
                                     end
                                 end
+                                
+                                continuousNodesIdxs = [node continuousParents];
                                 if(~isempty(X_subset))
+%                                     fprintf('Training CLG w/ subset size = %d for combo %s\n', size(X_subset,1), sprintf('%d',combo'));
                                     % get all the continuous data associated with this combo
-                                    continuousNodesIdxs = [node continuousParents];
-                                    X_subset_continuous = zeros(size(X_subset,1),length(continuousNodesIdxs));
-                                    idx = 1;
-                                    for ii=continuousNodesIdxs
-                                        X_subset_continuous(:,idx) = X_subset(:,ii);
-                                        idx = idx + 1;
-                                    end
-
-                                    if(size(X_subset_continuous,2)==1)
-                                        if(size(X_subset_continuous,1)==1)
-                                            % here, we only found one
-                                            % data-point in our dataset, so
-                                            % use default Gaussian
-                                            % parameters
-                                            Mean = 0; Covariance = 1;
-                                        else
-                                            % estimate univariate Gaussian parameters
-                                            [Mean,Covariance] = normfit(X_subset_continuous);
-                                        end
+                                    X_subset_continuous = X_subset(:,continuousNodesIdxs);
+                                    if(size(X_subset_continuous,1)==1)
+                                        % we only have one sample, default
+                                        % mean and covar parameters
+                                        Mean = zeros(1,length(continuousNodesIdxs));
+                                        Covariance = eye(length(continuousNodesIdxs));
                                     else
-                                        % estimate the Multivariate Gaussian parameters
+                                        % ecmnmle works for univariate and
+                                        % multivariate data
                                         [Mean, Covariance] = ecmnmle(X_subset_continuous);
                                     end
+
                                 else
-%                                     fprintf('CLG COMBO not found!\n');
-                                    % TODO: what is the right thing to do
-                                    % here?
-                                    % use default Gaussian Parameters
-                                    Mean = 0; Covariance = 1;
+                                    % use default Gaussian Parameters when
+                                    % we don't have samples associated with
+                                    % this model
+                                    Mean = zeros(1,length(continuousNodesIdxs));
+                                    Covariance = eye(length(continuousNodesIdxs));
                                 end
+%                                 [zz,xzz] = ksdensity(X_subset_continuous); 
+%                                 yy = normpdf(xzz,Mean, Covariance);
+%                                 plot(xzz,zz,xzz,yy); title('CLG'); grid on; pause;
+                                
                                 nodeBnParam = clgNodeBnParam(node, combo, Mean, Covariance);
                                 nodeBnParams{nodeBnParamsIdx} = nodeBnParam;
                                 nodeBnParamsIdx = nodeBnParamsIdx + 1;
@@ -232,42 +230,52 @@ classdef clg < handle
             %  X - the dataset for which to calculate the log-likelihood
             % Outputs:
             %  llVal - the log-likelihood value
-            M = size(X,1);
-            llVal = 0;
-            for nn=1:M
-                nodeProb = 1;
-                for node=1:obj.D
-                    nodeBnParam = obj.bnParams{node};
-                    if(isa(nodeBnParam, 'rvEmpiricalInfo'))
-                        % discrete root node
-                        nodeProb = nodeProb * nodeBnParam.queryDensity(X(nn,node));
-                    elseif(length(nodeBnParam)==1)
-                        % continuous root node
-                        nodeProb = nodeProb * normpdf(X(nn,node), nodeBnParam.Mean, nodeBnParam.Covariance);
-                    else
-                        % leaf node - first we find the parents of this
-                        % leaf node, get the appropriate data
-                        parentNodes = obj.getParents(node);
-                        X_parent = X(nn,parentNodes);
-                        
-                        % search for the correct combination & calculate
-                        % the probability for the datapoint
-                        numCombos = length(obj.bnParams{node});
-                        for combo=1:numCombos
-                            if(isequal(X_parent,obj.bnParams{node}{combo}.combo))
-                                Mean = obj.bnParams{node}{combo}.Mean;
-                                Covariance = obj.bnParams{node}{combo}.Covariance;
-                                nodeProb = nodeProb * mvnpdf(X(nn,node), Mean, Covariance);
-                                break;
-                            end
-                        end
-                    end
-                end
-                if(nodeProb<=obj.LOG_CUTOFF)
-                    nodeProb = obj.LOG_CUTOFF;
-                end
-                llVal = llVal + log(nodeProb);
+			M = size(X,1);
+			
+			if(nargout>1)
+            	llVec = zeros(M,1);
             end
+			
+			llVal = 0;
+			for mm=1:M
+				familyProb = 1;
+				for node=1:obj.D
+					nodeBnParam = obj.bnParams{node};
+					if(isa(nodeBnParam, 'rvEmpiricalInfo'))
+						% discrete root node
+						familyProb = familyProb * nodeBnParam.queryDensity(X(mm,node));
+					elseif(length(nodeBnParam)==1)
+						% continuous root node
+						familyProb = familyProb * normpdf(X(mm,node), nodeBnParam.Mean, nodeBnParam.Covariance);
+					else
+						% leaf node - first we find the parents of this
+						% leaf node, get the appropriate data
+						parentNodes = obj.getParents(node);
+						X_parent = X(mm,parentNodes);
+					
+						% search for the correct combination & calculate
+						% the probability for the datapoint
+						numCombos = length(obj.bnParams{node});
+						for combo=1:numCombos
+							if(isequal(X_parent,obj.bnParams{node}{combo}.combo))
+								Mean = obj.bnParams{node}{combo}.Mean;
+								Covariance = obj.bnParams{node}{combo}.Covariance;
+								familyProb = familyProb * mvnpdf(X(mm,node), Mean, Covariance);
+								break;
+							end
+						end
+					end
+				end
+				if(familyProb<=obj.LOG_CUTOFF)
+					familyProb = obj.LOG_CUTOFF;
+				end
+				
+				log_familyProb = log(familyProb);
+                llVal = llVal + log_familyProb;
+                if(nargout>1)
+                	llVec(mm) = log_familyProb;
+            	end
+			end
         end        
     end
 end

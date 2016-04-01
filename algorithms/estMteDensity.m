@@ -14,6 +14,8 @@
 %*
 %* You should have received a copy of the GNU General Public License
 %* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+%* 
+%**************************************************************************
 
 function [mte_info] = estMteDensity(X)
 %ESTMTEDENSITYUNIVARIATE - estimates the density of a univariate dataset 
@@ -41,6 +43,12 @@ if(D==1)
         mte_pdf_estimate = [mte_pdf_estimate; mte_subset_reconstruct];
         xi = [xi; x];
     end
+    % eliminate any negative probabilities from curve-fitting
+    if(min(mte_pdf_estimate)<0)
+        mte_pdf_estimate = mte_pdf_estimate + abs(min(mte_pdf_estimate));
+    end
+    % normalize to integrate to 1
+    mte_pdf_estimate = mte_pdf_estimate/trapz(xi,mte_pdf_estimate);
     mte_info = rvEmpiricalInfo(xi, mte_pdf_estimate, []);
 else
     error('Currently unsupported!\n');
@@ -53,7 +61,8 @@ function [mte_params] = estMteDensityUnivariate(x)
 % with a mixture of truncated exponentials
 
 % perform KDE on the given dataset
-[f,xi] = ksdensity(x,'width',10);       % high bandwidth to avoid too many sub-intervals
+% [f,xi] = ksdensity(x,'width',10);       % high bandwidth to avoid too many sub-intervals
+[f,xi] = ksdensity(x);
 f = f(:); xi = xi(:);
 
 [intervals, numSubsets] = genIntervals(f,xi);

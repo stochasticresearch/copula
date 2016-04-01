@@ -14,12 +14,16 @@
 %*
 %* You should have received a copy of the GNU General Public License
 %* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+%* 
+%**************************************************************************
 
+%% Single Modal Gaussian Distribution test - low variance
 clear;
 clc;
 
 % Test script for estMteDensity
-x = normrnd(0,1,1000,1);
+numPts = 1000;
+x = normrnd(0,0.3,numPts,1);
 [f,xi] = ksdensity(x);
 mte_estimate = estMteDensity(x);
 
@@ -28,10 +32,51 @@ grid on;
 xlabel('x')
 legend('KDE', 'MTE')
 
-refLikelihood = -1*normlike([0,1],x)
+refLikelihood = -1*normlike([0,1],x);
 
 mteLLVal = 0;
-for ii=1:1000
+for ii=1:numPts
     mteLLVal = mteLLVal + log(mte_estimate.queryDensity(x(ii)));
 end
-mteLLVal
+title(sprintf('Ref LL=%0.02f, MTE LL=%0.02f', refLikelihood, mteLLVal));
+
+%% Single Modal Uniform Distribution test
+clear;
+clc;
+
+% Test script for estMteDensity
+numPts = 1000;
+x = unifrnd(0,5,numPts,1);
+[f,xi] = ksdensity(x);
+mte_estimate = estMteDensity(x);
+
+plot(xi,f,mte_estimate.domain,mte_estimate.density);
+grid on;
+xlabel('x')
+legend('KDE', 'MTE')
+
+mteLLVal = 0;
+for ii=1:numPts
+    mteLLVal = mteLLVal + log(mte_estimate.queryDensity(x(ii)));
+end
+title(sprintf('MTE LL=%0.02f', mteLLVal));
+
+%% Multimodal Gaussian Distrubtion Test
+clear;
+clc;
+
+numPts = 100;
+x = [normrnd(-2,0.3,numPts,1); normrnd(2,0.5,numPts,1)];
+[f,xi] = ksdensity(x);
+mte_estimate = estMteDensity(x);
+
+plot(xi,f,mte_estimate.domain,mte_estimate.density);
+grid on;
+xlabel('x')
+legend('KDE', 'MTE')
+
+mteLLVal = 0;
+for ii=1:numPts
+    mteLLVal = mteLLVal + log(mte_estimate.queryDensity(x(ii)));
+end
+title(sprintf('MTE LL=%0.02f', mteLLVal));

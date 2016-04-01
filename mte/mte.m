@@ -14,6 +14,8 @@
 %*
 %* You should have received a copy of the GNU General Public License
 %* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+%* 
+%**************************************************************************
 
 classdef mte < handle
     properties
@@ -27,13 +29,14 @@ classdef mte < handle
         bnParams;
         X;
         uniqueVals; % the number of unique values for each discrete node
+        MTE_DEFAULT_GAUSSIAN;
         
         DEBUG_MODE;
         LOG_CUTOFF;
     end
     
     methods
-        function obj = mte(X, discreteNodes, dag)
+        function obj = mte(X, discreteNodes, varargin)
             % DAG - Constructs a HCBN object
             %  Inputs:
             %   X - a N x D matrix of the the observable data which the
@@ -56,14 +59,29 @@ classdef mte < handle
             obj.D = size(X,2);
             obj.X = X;
             obj.discreteNodes = discreteNodes;
-            obj.dag = dag;
+            obj.dag = zeros(obj.D,obj.D);
             obj.bnParams = cell(1,size(obj.dag,1));
             obj.uniqueVals = zeros(1,size(obj.dag,1));
+            
+            load('mte_default_gaussian.mat');
+            obj.MTE_DEFAULT_GAUSSIAN = mte_default_gaussian;
             
             for ii=obj.discreteNodes
                 obj.uniqueVals(ii) = length(unique(X(:,ii)));
             end
             
+            nVarargs = length(varargin);
+            if(nVarargs>0)
+                candidateDag = varargin{1};
+                if(~acyclic(candidateDag))
+                    error('Specified DAG is not acyclic!\n');
+                end
+                obj.setDag(candidateDag);
+            end
+        end
+        
+        function [] = setDag(obj, candidateDag)
+            obj.dag = candidateDag;
             obj.calcMteParams();
         end
         
@@ -101,22 +119,15 @@ classdef mte < handle
                     X_univariate = obj.X(:,node);
                     % estimate the univariate distribution
                     if(any(node==obj.discreteNodes))
-                        % node is discrete, estimate w/ ecdf
-                        M = size(X_univariate,1);
-                        [F,x] = ecdf(X_univariate);
-                        F = F(2:end);
-                        x = x(2:end);
-                        f = zeros(1,length(x));
-                        idx = 1;
-                        for jj=1:length(x)
-                            f(idx) = sum(X_univariate==x(jj))/M;
-                            idx = idx + 1;
-                        end
-                        empInfoObj = rvEmpiricalInfo(x,f,[]);
+                        isdiscrete = 1;
+                        [F,x] = empcdf(X_univariate, isdiscrete);
+                        f = emppdf(X_univariate, isdiscrete);
+                        
+                        empInfoObj = rvEmpiricalInfo(x,f,F);
                         obj.bnParams{node} = empInfoObj;
                     else
-                        % node is continuous, estimate as Gaussian and
-                        % store paramters
+                        % node is continuous, estimate as Mixture of
+                        % Truncated Exponentials (MTE) and store paramters
                         mte_params = estMteDensity(X_univariate);
                         obj.bnParams{node} = mte_params;
                     end
@@ -136,87 +147,82 @@ classdef mte < handle
                     % is discrete, this violates the CLG model so we throw
                     % an error
                     if(~isempty(continuousParents) && any(node==obj.discreteNodes))
-                        error('CLG model must not have discrete children w/ continuous parents!');
-                    else
-                        % make combinations for all the parents
-                        if(length(discreteParents)==1)
-                            combos = 1:obj.uniqueVals(discreteParents(1));
-                        elseif(length(discreteParents)==2)
-                            combos = combvec(1:obj.uniqueVals(discreteParents(1)), ...
-                                             1:obj.uniqueVals(discreteParents(2)));
-                        elseif(length(discreteParents)==3)
-                            combos = combvec(1:obj.uniqueVals(discreteParents(1)), ...
-                                             1:obj.uniqueVals(discreteParents(2)), ...
-                                             1:obj.uniqueVals(discreteParents(3)));
-                        elseif(length(discreteParents)==4)
-                            combos = combvec(1:obj.uniqueVals(discreteParents(1)), ...
-                                             1:obj.uniqueVals(discreteParents(2)), ...
-                                             1:obj.uniqueVals(discreteParents(3)), ...
-                                             1:obj.uniqueVals(discreteParents(4)));
-                        else
-                            error('Figure out a better syntax to generalize this :)');
-                        end
-                        combos = combos';
-                        
-                        % for each combination, estimate the MTE parameter
-                        numCombos = size(combos,1);
-                        nodeBnParams = cell(1,numCombos);
-                        nodeBnParamsIdx = 1;
-                        for comboNum=1:numCombos
-                            combo = combos(comboNum,:);
-                            if(any(node==obj.discreteNodes))
-                                % for each unique value, create probability
-                                error('Currently unsupported :/ - need to add this functionality!');
-                            else
-                                % find all the data rows where this combo occurs
-                                X_subset = [];
-                                for ii=1:obj.N
-                                    comboFound = 1;
-                                    for jj=1:length(combo)
-                                        if(obj.X(ii,discreteParents(jj))~=combo(jj))
-                                            comboFound = 0;
-                                        end
-                                    end
-                                    if(comboFound)
-                                        X_subset = [X_subset; obj.X(ii,:)];
-                                    end
-                                end
-                                if(~isempty(X_subset))
-                                    % get all the continuous data associated with this combo
-                                    continuousNodesIdxs = [node continuousParents];
-                                    X_subset_continuous = zeros(size(X_subset,1),length(continuousNodesIdxs));
-                                    idx = 1;
-                                    for ii=continuousNodesIdxs
-                                        X_subset_continuous(:,idx) = X_subset(:,ii);
-                                        idx = idx + 1;
-                                    end
-
-                                    if(size(X_subset_continuous,2)==1)
-                                        % estimate univariate Gaussian parameters
-                                        mte_info = estMteDensity(X_subset_continuous);
-                                    else
-                                        % estimate the Multivariate Gaussian parameters
-                                        error('Currently unsupported!');
-                                    end
-                                else
-%                                     fprintf('MTE COMBO not found!!\n');
-                                    % TODO: what is the right thing to do
-                                    % here?
-                                    domain = 1:10;
-                                    f = 10^-4*ones(1,10);
-                                    mte_info = rvEmpiricalInfo(domain, f, []);
-                                end
-                                nodeBnParams{nodeBnParamsIdx} = mteNodeBnParam(node, combo, mte_info);
-                                nodeBnParamsIdx = nodeBnParamsIdx + 1;
-                            end
-                        end
-                        obj.bnParams{node} = nodeBnParams;
+                        error('MTE implementation doesnt support continuous parents w/ discrete children at the moment!');
                     end
+                    % make combinations for all the parents
+                    % TODO: figure out better way to code this :(
+                    if(length(discreteParents)==1)
+                        combos = 1:obj.uniqueVals(discreteParents(1));
+                    elseif(length(discreteParents)==2)
+                        combos = combvec(1:obj.uniqueVals(discreteParents(1)), ...
+                                         1:obj.uniqueVals(discreteParents(2)));
+                    elseif(length(discreteParents)==3)
+                        combos = combvec(1:obj.uniqueVals(discreteParents(1)), ...
+                                         1:obj.uniqueVals(discreteParents(2)), ...
+                                         1:obj.uniqueVals(discreteParents(3)));
+                    elseif(length(discreteParents)==4)
+                        combos = combvec(1:obj.uniqueVals(discreteParents(1)), ...
+                                         1:obj.uniqueVals(discreteParents(2)), ...
+                                         1:obj.uniqueVals(discreteParents(3)), ...
+                                         1:obj.uniqueVals(discreteParents(4)));
+                    else
+                        error('Figure out a better syntax to generalize this :)');
+                    end
+                    combos = combos';
+
+                    % for each combination, estimate the MTE parameter
+                    numCombos = size(combos,1);
+                    nodeBnParams = cell(1,numCombos);
+                    nodeBnParamsIdx = 1;
+                    for comboNum=1:numCombos
+                        combo = combos(comboNum,:);
+                        if(any(node==obj.discreteNodes))
+                            % for each unique value, create probability
+                            error('Currently unsupported :/ - need to add this functionality!');
+                        else
+                            % find all the data rows where this combo occurs
+                            X_subset = [];
+                            for ii=1:obj.N
+                                if(isequal(obj.X(ii,discreteParents),combo))
+                                    X_subset = [X_subset; obj.X(ii,:)];
+                                end
+                            end
+                            continuousNodesIdxs = [node continuousParents];
+                            if(~isempty(X_subset))
+%                                 fprintf('Training MTE w/ subset size = %d for combo %s\n', size(X_subset,1), sprintf('%d,',combo'));
+                                % get all the continuous data associated with this combo
+                                X_subset_continuous = X_subset(:,continuousNodesIdxs);
+
+                                if(size(X_subset_continuous,2)==1)
+                                    % estimate univariate MTE parameters
+                                    mte_info = estMteDensity(X_subset_continuous);
+                                else
+                                    % estimate the Multivariate MTE parameters
+                                    error('MTE -- Currently unsupported!');
+                                end
+                            else
+                                if(size(X_subset_continuous,2)==1)
+                                    warning('USING MTE DEFAULT');
+                                    mte_info = obj.MTE_DEFAULT_GAUSSIAN;
+                                else
+                                    error('MTE -- Currently unsupported!');
+                                end
+                            end
+%                             [zz,xzz] = ksdensity(X_subset_continuous); 
+%                             plot(xzz,zz,mte_info.domain,mte_info.density); 
+%                             title('MTE'); grid on;
+%                             pause;
+                            
+                            nodeBnParams{nodeBnParamsIdx} = mteNodeBnParam(node, combo, mte_info);
+                            nodeBnParamsIdx = nodeBnParamsIdx + 1;
+                        end
+                    end
+                    obj.bnParams{node} = nodeBnParams;
                 end
             end
         end
         
-        function [llVal] = dataLogLikelihood(obj, X)
+        function [llVal, llVec] = dataLogLikelihood(obj, X)
             %DATALOGLIKELIHOOD - calculates the log-likelihood of the given
             %dataset to the calculated model of the data
             % Inputs:
@@ -224,32 +230,41 @@ classdef mte < handle
             % Outputs:
             %  llVal - the log-likelihood value
             M = size(X,1);
+            
+            if(nargout>1)
+            	llVec = zeros(M,1);
+            end
+            
             llVal = 0;
-            for nn=1:M
-                nodeProb = 1;
+            for mm=1:M
+                familyProb = 1;
                 for node=1:obj.D
                     parentNodes = obj.getParents(node);
                     if(isempty(parentNodes))
                         nodeBnParam = obj.bnParams{node};
-                        nodeProb = nodeProb * nodeBnParam.queryDensity(X(nn,node));
+                        familyProb = familyProb * nodeBnParam.queryDensity(X(mm,node));
                     else
                         parentNodes = obj.getParents(node);
-                        X_parent = X(nn,parentNodes);
+                        X_parent = X(mm,parentNodes);
                         % find the correct combo
                         numCombos = length(obj.bnParams{node});
                         for combo=1:numCombos
                             if(isequal(X_parent,obj.bnParams{node}{combo}.combo))
                                 mte_info = obj.bnParams{node}{combo}.mte_info;
-                                nodeProb = nodeProb * mte_info.queryDensity(X(nn,node));
+                                familyProb = familyProb * mte_info.queryDensity(X(mm,node));
                                 break;
                             end
                         end
                     end
                 end
-                if(nodeProb<=obj.LOG_CUTOFF)
-                    nodeProb = obj.LOG_CUTOFF;
+                if(familyProb<=obj.LOG_CUTOFF)
+                    familyProb = obj.LOG_CUTOFF;
                 end
-                llVal = llVal + log(nodeProb);
+                log_familyProb = log(familyProb);
+                llVal = llVal + log_familyProb;
+                if(nargout>1)
+                	llVec(mm) = log_familyProb;
+            	end
             end
         end
         

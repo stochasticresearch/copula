@@ -14,6 +14,8 @@
 %*
 %* You should have received a copy of the GNU General Public License
 %* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+%* 
+%**************************************************************************
 
 classdef hcbn < handle
     %HCBN Definition of a Hybrid Copula Bayesian Network
@@ -55,13 +57,6 @@ classdef hcbn < handle
         
         h;          % the beta-kernel density estimation weighting
                         
-        dagLL_scalingFactor;    % a scaling factor for the log-likelihood
-                                % of the DAG with the training data.  This
-                                % scaling factor will make the likelihood
-                                % 1, and when we compare this against
-                                % "test" datasets, we will see how well the
-                                % model holds against the other datasets
-        
         LOG_CUTOFF;
                                 
         DEBUG_MODE; % if turned on, will print out extra stuff to screen to
@@ -159,22 +154,12 @@ classdef hcbn < handle
             for ii=1:obj.D
                 % check if this is a discrete or continuous node for
                 % density estimation, we handle these separately
+                isdiscrete = 0;
                 if(any(obj.discNodeIdxs==ii))
-                    M = size(obj.X,1);
-                    [F,x] = ecdf(obj.X(:,ii));
-                    F = F(2:end);
-                    x = x(2:end);
-                
-                    f = zeros(1,length(x));
-                    idx = 1;
-                    for jj=1:length(x)
-                        f(idx) = sum(obj.X(:,ii)==x(jj))/M;
-                        idx = idx + 1;
-                    end
-                else
-                    [f,x] = ksdensity(obj.X(:,ii));
-                    F = ksdensity(obj.X(:,ii),'function','cdf');
+                    isdiscrete = 1;
                 end
+                [F,x] = empcdf(obj.X(:,ii), isdiscrete);
+                f = emppdf(obj.X(:,ii), isdiscrete);
                 empInfoObj = rvEmpiricalInfo(x, f, F);
                 obj.empInfo{ii} = empInfoObj;
             end
@@ -219,8 +204,6 @@ classdef hcbn < handle
         function [] = setDag(obj, candidateDag)
             obj.dag = candidateDag;
             obj.estFamilyCopula();
-            llTrain = obj.hcbnLogLikelihood(obj.X);
-            obj.dagLL_scalingFactor = llTrain;
         end
         
         function [] = estFamilyCopula(obj)
@@ -354,37 +337,35 @@ classdef hcbn < handle
             end
         end
         
-        function [ ll_val, Rc_val_mat, Rc_num_mat, Rc_den_mat ] = hcbnLogLikelihood(obj, X)
-            %HCBNLOGLIKELIHOOD - calculates the log-likelihood of the HCBN
+        function [ ll_val, Rc_val_mat, Rc_num_mat, Rc_den_mat, llVec ] = dataLogLikelihood(obj, X)
+            %DATALOGLIKELIHOOD - calculates the log-likelihood of the HCBN
             %                    model to the provided data
             % 
             % Inputs
             %  X - the data for which to calculate the log-likelihood for
-            if(isempty(obj.dag))
-                ll_val = -Inf;
-            else
-                localFunctionDebugMode = 0;
-                if(nargout>1)
-                    localFunctionDebugMode = 1;
-                    Rc_val_mat = zeros( obj.D, size(X,1) );
-                    Rc_num_mat = zeros( obj.D, size(X,1) );
-                    Rc_den_mat = zeros( obj.D, size(X,1) );
-                end
-                
-                ll_val = 0;
-                
-                for ii=1:obj.D
-                    if(localFunctionDebugMode)
-                        [tmp, Rc_val_vec, Rc_num_vec, Rc_den_vec] = obj.copulall(ii,X);
-                        Rc_val_mat(ii,:) = Rc_val_vec;
-                        Rc_num_mat(ii,:) = Rc_num_vec;
-                        Rc_den_mat(ii,:) = Rc_den_vec;
-                    else
-                        tmp = obj.copulall(ii,X);
-                    end
-                    ll_val = ll_val + tmp;
-                end
-            end
+			localFunctionDebugMode = 0;
+			if(nargout>1)
+				localFunctionDebugMode = 1;
+				Rc_val_mat = zeros( obj.D, size(X,1) );
+				Rc_num_mat = zeros( obj.D, size(X,1) );
+				Rc_den_mat = zeros( obj.D, size(X,1) );
+				llVec = zeros(size(X,1), 1);
+			end
+			
+			ll_val = 0;
+			
+			for ii=1:obj.D
+				if(localFunctionDebugMode)
+					[tmp, Rc_val_vec, Rc_num_vec, Rc_den_vec] = obj.copulall(ii,X);
+					Rc_val_mat(ii,:) = Rc_val_vec;
+					Rc_num_mat(ii,:) = Rc_num_vec;
+					Rc_den_mat(ii,:) = Rc_den_vec;
+				else
+					tmp = obj.copulall(ii,X);
+				end
+				ll_val = ll_val + tmp;
+				llVec(ii) = tmp;
+			end
         end
         
         function [ ll_val, Rc_val_vec, Rc_num_vec, Rc_den_vec ] = copulall(obj, nodeIdx, X )
@@ -453,7 +434,9 @@ classdef hcbn < handle
                 
                 % compute copula ratio value
                 [Rc, num_val, den_val] = obj.copulaRatioVal(nodeIdx, u);
-                
+                if(Rc<=obj.LOG_CUTOFF)
+                    Rc = obj.LOG_CUTOFF;
+                end 
                 %%%%%%%%%%%%%%%%%%%% DEBUGGING %%%%%%%%%%%%%%%%%%%%%%%
                 if(nargout>1)
                     Rc_val_vec(m) = Rc;
@@ -524,63 +507,5 @@ classdef hcbn < handle
             Rc_val = c_val_numerator/c_val_denominator;
         end
         
-        function [] = learnStruct_hc(obj, seeddag)
-            %LEARNSTRUCT_HC learn the structure of the HCBN network using
-            %               the hill climbing algorithm as described in 
-            %               Koller and Friedman (2009).  The code for this 
-            %               is based off the structure learning toolbox 
-            %               within BNT.  See BNT/SLP/learn_struct_hc.m.
-            %               This will use the X dataset that was passed to 
-            %               the constructor to learn the structure.
-            %
-            % Inputs:
-            %  seeddag - a DAG which can be used as a reference DAG as a
-            %            starting point for the search process.  This is
-            %            optional, and can be an empty array if no seed is
-            %            desired.
-            
-            % ensure that the seeddag is acyclic
-            if(~obj.acyclic(seeddag))
-                obj.setDag(zeros(obj.D,obj.D));
-            else
-                obj.setDag(seeddag);
-            end
-            
-            % get the baseline score
-            bestScore = obj.hcbnLogLikelihood(obj.X);
-            done = 0;
-            while ~done
-                % make dag's which are addition, reversal, and subtraction
-                % of edges
-                [candidateDags,~,~] = mk_nbrs_of_dag(obj.dag);
-                
-                % score all the dags
-                scores = -Inf*ones(1,length(candidateDags));
-                for ii=1:length(candidateDags)
-                    obj.setDag(candidateDags{ii});
-                    scores(ii) = obj.hcbnLogLikelihood(obj.X);
-                end
-                
-                % find the maximum scoring DAG, and see if it is better
-                % than the current best
-                maxScore = max(scores);
-                % see if multiple candidate dag's had the same maximum
-                % score, and if so, choose randomely among those dag's
-                new = find(scores == maxScore );
-                % update best candidate dag as new dag and continue search
-                if ~isempty(new) && (maxScore > bestScore)
-                    p = sample_discrete(normalise(ones(1, length(new))));
-                    bestScore = maxScore;
-                    obj.setDag(candidateDags{new(p)});
-                else
-                    done = 1;
-                end 
-            end
-            
-            % TODO: topo-sort the DAG, and sort the names cell array to
-            % match the topologically sorted DAG
-            
-            % TODO: print out DAG structure
-        end
     end
 end
