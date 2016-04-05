@@ -41,7 +41,8 @@ a_dist = makedist('Multinomial','Probabilities',discreteType{1});
 
 % generate the copula random variables
 D = 2; alpha = 4;
-U = claytoncopularnd(M, D, alpha);
+% U = gumbelcopularnd(M, D, alpha);
+U = copularnd('Gumbel', alpha, M);
 X = zeros(M,2);
 
 X(:,1) = a_dist.icdf(U(:,1));
@@ -51,14 +52,14 @@ if(strcmpi(continuousType,'Gaussian'))
     X(:,2) = norminv(U(:,2),0,rhoD);
 else
     % make it bimodal
-%     x = [normrnd(-2,0.3,M/2,1); normrnd(2,0.5,M/2,1)];
-%     [f,xi] = emppdf(x,0);
-%     F = empcdf(x,0);
-%     myObj = rvEmpiricalInfo(xi,f,F);
-%     for ii=1:M
-%         X(ii,2) = myObj.invDistribution(U(ii,2));
-%     end
-    X(:,2) = unifinv(U(:,2),-2,2);
+    x = [normrnd(-2,0.3,M/2,1); normrnd(2,0.5,M/2,1)];
+    [f,xi] = emppdf(x,0);
+    F = empcdf(x,0);
+    myObj = rvEmpiricalInfo(xi,f,F);
+    for ii=1:M
+        X(ii,2) = myObj.invDistribution(U(ii,2));
+    end
+%     X(:,2) = unifinv(U(:,2),-2,2);
 end
 
 X = X(randperm(M),:);

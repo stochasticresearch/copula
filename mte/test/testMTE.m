@@ -56,7 +56,6 @@ for trainVecSize=numTrain
     fprintf(progressStr);
 end
 
-
 %%
 clear;
 clc;
@@ -122,109 +121,8 @@ fprintf('numTrain=%d CLG_Gaussian_LL_Avg=%f MTE_Gaussian_LL_Avg=%f CLG_Other_LL_
 fprintf('numTrain=%d CLG_Gaussian_LL_Avg=%f MTE_Gaussian_LL_Avg=%f CLG_Other_LL_Avg=%f MTE_Other_LL_Avg=%f\n', ...
     1000, llValsAvg(1,2), llValsAvg(2,2), llValsAvg(3,2), llValsAvg(4,2));
 
-%% Compare what the generative models's density of the multimodal distribution looks like
-clear;
-clc;
 
-% generate a small synthetic dataset
-% setup global parameters
-D = 2;
-
-%       A-->B      
-
-aa = 1; bb = 2;
-dag = zeros(D,D);
-dag(aa,bb) = 1;
-discreteNodes = [aa];
-nodeNames = {'A', 'B'};
-bntPath = '../bnt'; addpath(genpath(bntPath));
-discreteNodeNames = {'A'};
-
-discreteType = {};
-nodeA = [0.4 0.3 0.2 0.1]; discreteType{1} = nodeA;
-
-numTest = 500;
-numTrain = 500;
-M = max(numTrain)+numTest; 
-
-rng(12345);
-
-continuousType = 'other';
-X = genSynthData3(discreteType, continuousType, M);
-
-X_train_full = X(1:max(numTrain),:);
-xtestIdxStart = max(numTrain)+1;
-X_test = X(xtestIdxStart:end,:);
-X_train = X_train_full(1:numTrain,:);
-mteObj = mte(X_train, discreteNodes, dag); mteLLVal_Other = mteObj.dataLogLikelihood(X_test);
-clgObj = clg(X_train, discreteNodes, dag); clgLLVal_Other = clgObj.dataLogLikelihood(X_test);
-
-% create the "true" conditional distribution
-bnNodeParams = cell(1,4);
-for combo=1:4
-    X_continuous_subset = [];
-    for jj=1:numTrain
-        if(X_train(jj,1)==combo)
-            X_continuous_subset = [X_continuous_subset; X_train(jj,2)];
-        end
-    end
-    % estimate the empirical PDF/CDF for this
-    isdiscrete = 0;
-    [f,xi] = emppdf(X_continuous_subset, isdiscrete);
-    F = empcdf(X_continuous_subset, isdiscrete);
-    bnNodeParams{combo} = rvEmpiricalInfo(xi, f, F);
-end
-
-trueDistConditionalLL = 0; clgConditionalLL = 0; mteConditionalLL = 0;
-trueDistLL = 0; clgLL = 0; mteLL = 0;
-for ii=1:numTest
-    xi = X_test(ii,:);
-    comboVal = xi(1);
-    trueDistInfo = bnNodeParams{comboVal};
-    clgDistInfo = clgObj.bnParams{2}{comboVal};
-    mteDistInfo = mteObj.bnParams{2}{comboVal}.mte_info;
-    
-    continuousVal = xi(2);
-    
-    trueDistConditionalLikelihood = trueDistInfo.queryDensity(continuousVal);
-    clgConditionalLikelihood = normpdf(continuousVal,clgDistInfo.Mean,clgDistInfo.Covariance);
-    mteConditionalLikelihood = mteDistInfo.queryDensity(continuousVal);
-    
-    trueDistLikelihood = trueDistConditionalLikelihood*nodeA(comboVal);
-    clgLikelihood = clgConditionalLikelihood*clgObj.bnParams{1}.density(comboVal);
-    mteLikelihood = mteConditionalLikelihood*mteObj.bnParams{1}.density(comboVal);
-
-%     pause;
-    
-%     % plot all 3 distributions on top of each other
-%     fig1 = figure(1);
-%     plot(trueDistInfo.domain, trueDistInfo.density, ...
-%          trueDistInfo.domain, normpdf(trueDistInfo.domain, clgDistInfo.Mean, clgDistInfo.Covariance), ...
-%          mteDistInfo.domain, mteDistInfo.density);
-%     grid on; legend('True','CLG','MTE');
-%     hold on;
-%     % plot the data points and their respective probabilities calculated    
-%     plot(continuousVal,trueDistLikelihood, '+');
-%     plot(continuousVal,clgLikelihood, '*');
-%     plot(continuousVal,mteLikelihood, 'o');
-%     
-%     pause(1);
-%     clf(fig1);
-    
-    trueDistConditionalLL = trueDistConditionalLL + log(trueDistConditionalLikelihood);
-    clgConditionalLL = clgConditionalLL + log(clgConditionalLikelihood);
-    mteConditionalLL = mteConditionalLL + log(mteConditionalLikelihood);
-    
-    trueDistLL = trueDistLL + log(trueDistLikelihood);
-    clgLL = clgLL + log(clgLikelihood);
-    mteLL = mteLL + log(mteLikelihood);
-end
-
-fprintf('Condtional(True LL)=%f Conditional(CLG LL)=%f Conditional(MTE LL)=%f\n', ...
-         trueDistConditionalLL, clgConditionalLL, mteConditionalLL);
-fprintf('True LL=%f CLG LL=%f MTE LL=%f CLG_LL_calc=%f MTE_LL_calc=%f\n', ...
-         trueDistLL, clgLL, mteLL, clgLLVal_Other, mteLLVal_Other);
-
+     
 %%
 clear;
 clc;
