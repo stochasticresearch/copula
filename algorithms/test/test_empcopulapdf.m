@@ -185,10 +185,13 @@ u = linspace(0,1,K);
 c_expect = copulapdf('Gaussian', [U1(:) U2(:)],Rho);
 c_expect = reshape(c_expect,K,K);
 
-
-h1 = subplot(1,2,1); surf(U1,U2,c_expect); grid on; title('Reference'); xlabel('U_1'); ylabel('U_2');
-h2 = subplot(1,2,2); surf(U1,U2,c); grid on; title('Estimated'); xlabel('U_1'); ylabel('U_2');
+h1 = subplot(3,2,1); surf(U1,U2,c_expect); grid on; title('Reference'); xlabel('U_1'); ylabel('U_2');
+h2 = subplot(3,2,2); surf(U1,U2,c); grid on; title('Estimated'); xlabel('U_1'); ylabel('U_2');
 linkprop([h1,h2],{'CameraPosition','CameraUpVector'}); rotate3d on;
+subplot(3,2,3); scatter(X(:,1),X(:,2)); grid on; title('Reference Observations');
+subplot(3,2,4); scatter(X_xform(:,1),X_xform(:,2)); grid on; title('Continued Observations');
+subplot(3,2,5); scatter(U(:,1),U(:,2)); grid on; title('Reference Pseudo-Observations');
+subplot(3,2,6); scatter(U_in(:,1),U_in(:,2)); grid on; title('Estimated Pseudo-Observations');
 
 %% Test empcopulapdf heuristically w/ discrete marginals & Gumbel Copula
 clear;
@@ -218,9 +221,14 @@ c = empcopulapdf(U_in, h, K, 'betak');
 c_expect = copulapdf(copType, [U1(:) U2(:)],alpha);
 c_expect = reshape(c_expect,K,K);
 
-h1 = subplot(1,2,1); surf(U1,U2,c_expect); grid on; title('Reference'); xlabel('U_1'); ylabel('U_2');
-h2 = subplot(1,2,2); surf(U1,U2,c); grid on; title('Estimated'); xlabel('U_1'); ylabel('U_2');
+h1 = subplot(3,2,1); surf(U1,U2,c_expect); grid on; title('Reference'); xlabel('U_1'); ylabel('U_2');
+h2 = subplot(3,2,2); surf(U1,U2,c); grid on; title('Estimated'); xlabel('U_1'); ylabel('U_2');
 linkprop([h1,h2],{'CameraPosition','CameraUpVector'}); rotate3d on;
+subplot(3,2,3); scatter(X(:,1),X(:,2)); grid on; title('Reference Observations');
+subplot(3,2,4); scatter(X_xform(:,1),X_xform(:,2)); grid on; title('Continued Observations');
+subplot(3,2,5); scatter(U(:,1),U(:,2)); grid on; title('Reference Pseudo-Observations');
+subplot(3,2,6); scatter(U_in(:,1),U_in(:,2)); grid on; title('Estimated Pseudo-Observations');
+
 
 %% Test empcopulapdf heuristically w/ discrete marginals & Gumbel Copula
 clear;

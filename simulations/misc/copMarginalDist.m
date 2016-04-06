@@ -44,6 +44,7 @@ for numPtToTest=numPtsToTest
     pause;
     clf(fig1);
 end
+close(fig1);
 
 %%
 
@@ -71,7 +72,7 @@ probs = [0.15 0.35 0.4 0.1];
 a_dist = makedist('Multinomial','Probabilities',probs);
 
 % make both X1 and X2 multimodal distributions
-x2 = [normrnd(-2,0.1,M/2,1); normrnd(2,0.8,M/2,1)];
+x2 = [normrnd(-2,0.3,M/2,1); normrnd(2,0.8,M/2,1)];
 x2 = x2(randperm(M),:);
 
 [f2,xi2] = emppdf(x2,0);
@@ -134,13 +135,17 @@ for x1_discrete_conditional=x1_discrete_conditional_vec
     for ii=1:length(xi2)
         xi_val = xi2(ii);
         uuGenerative = [a_dist.cdf(x1_discrete_conditional) continuousMarg2.queryDistribution(xi_val)];
-        fx2_givenx1_copula(ii) = frankcopulapdf(uuGenerative, alpha)*f2(ii);
+        uuGenerative = fixU(uuGenerative);
+        
+        fx2_givenx1_copula(ii) = copulapdf('Frank', uuGenerative, alpha)*f2(ii);
         uuEst = [discreteEstDistInfo.queryDistribution(x1_discrete_conditional) ...
                  continuousEstDistInfo.queryDistribution(xi_val)];
+        uuEst = fixU(uuEst);
         fx2_givenx1_copulaest(ii) = empcopula_val(c_est, uuEst)*f2est(ii);
         
         uuHcbn = [hcbnObj.empInfo{1}.distribution(x1_discrete_conditional) ...
                   hcbnObj.empInfo{2}.queryDistribution(xi_val)];
+        uuHcbn = fixU(uuHcbn);
         c_hcbn = empcopula_val(hcbnObj.copulaFamilies{2}.c, fliplr(uuHcbn));        % I think this should be a fliplr
         f_x2_hcbn = hcbnObj.empInfo{2}.density(ii);
         fx2_givenx1_hcbn(ii) = c_hcbn*f_x2_hcbn;

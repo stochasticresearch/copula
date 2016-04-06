@@ -127,6 +127,7 @@ for numTrain=numTrainVec
             mteConditionalLikelihood = mteContinuousDistInfo.queryDensity(continuousVal);
             % compute hcbn conditional log likelihood
             u = [discreteDistInfo.queryDistribution(comboVal) continuousDistInfo.queryDistribution(continuousVal)];
+            u = fixU(u);
 %             copVal = empcopula_val(estimatedCopula, u);
 %             copVal = empcopula_val(actualCopula, u);
             copVal = copulapdf('Gumbel', u, alpha);
@@ -248,7 +249,6 @@ mteTotalDiff = ((trueDistLL_mean-mteLL_mean)./abs(trueDistLL_mean)) * 100;
 clgTotalDiff = ((trueDistLL_mean-clgLL_mean)./abs(trueDistLL_mean)) * 100;
 hcbnTotalDiff = ((trueDistLL_mean-hcbnLL_mean)./abs(trueDistLL_mean)) * 100;
 
-% TODO: ADD HCBN CONDITIONAL 
 plot(numTrainVec,mteConditionalDiff,...
     numTrainVec,clgConditionalDiff,...
     numTrainVec,hcbnConditionalDiff, ...
