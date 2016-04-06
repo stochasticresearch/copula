@@ -246,7 +246,8 @@ classdef hcbn < handle
                     % Gaussian copula)
                     allIdxs = [nodeIdx parentIdxs];
                     if(sum(ismember(allIdxs, obj.discNodeIdxs)))
-                        U_in = pseudoobs(X_in);     % WARNING: before, it used to be pseudoobs(X_in, 'ecdf', 100);
+                        U_in = pseudoobs(X_in, 'ecdf', 100);
+%                         U_in = pseudoobs(X_in);     % the above seems to work better w/ hybrid distributions, don't know why?
                         
                         M = size(X_in,1);
                         C = [];         % TODO: estimate this, but not necessary for hcbn
