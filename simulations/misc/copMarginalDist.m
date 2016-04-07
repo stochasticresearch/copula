@@ -65,10 +65,10 @@ bntPath = '../bnt'; addpath(genpath(bntPath));
 discreteNodeNames = {'A'};
 
 % parametrization variables
-mVec = 250:250:2000; mVecIdx = 1;
+mVec = 500:500:2000;    % TODO: more finer grained after you like results
 copulaTypeVec = {'Frank', 'Gumbel', 'Clayton'};
-alphaVec = 1:1:10; alphaVecIdx = 1;
-x2DistTypeVec = {'Multimodal', 'Uniform', 'UnimodalSkewed', 'Gaussian', 'ThickTailed'};
+alphaVec = 1:3:10;
+x2DistTypeVec = {'Multimodal', 'Uniform', 'Gaussian', 'ThickTailed'};
 numKLDivCalculated = 7;
 probs = [0.15 0.35 0.4 0.1];        % TODO: parametrize this also
 a_dist = makedist('Multinomial','Probabilities',probs);
@@ -80,7 +80,7 @@ klDivMat = zeros(length(copulaTypeVec),...
                  numKLDivCalculated, ...
                  length(probs));
 
-numMCSims = 50;
+numMCSims = 25;
 klDivMCMat = zeros(numKLDivCalculated,length(probs),numMCSims);
 
 fid = fopen('/home/kiran/ownCloud/PhD/sim_results/copMarginalDist.txt', 'a');
@@ -91,10 +91,12 @@ numTotalLoops = length(copulaTypeVec)*length(x2DistTypeVec)*length(alphaVec)*len
 progressIdx = 1;
 for copulaTypeVecIdx=1:length(copulaTypeVec)
     for x2DistTypeVecIdx=1:length(x2DistTypeVec)
-        for alpha=alphaVec
-            for M=mVec
+        for alphaVecIdx=1:length(alphaVec)
+            for mVecIdx=1:length(mVec)
                 copulaType = copulaTypeVec{copulaTypeVecIdx};
                 x2DistType = x2DistTypeVec{x2DistTypeVecIdx};
+                alpha = alphaVec(alphaVecIdx);
+                M = mVec(mVecIdx);
                 
                 %%%%%%%%%%% MAIN SIMULATION CODE %%%%%%%%%%
                 for mcSimNum=1:numMCSims
@@ -286,12 +288,8 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                     end
                     progressIdx = progressIdx + 1;
                 end
-                
                 %%%%%%%%%%% END OF MAIN SIMULATION CODE %%%%%%%%%%
-                
-                mVecIdx = mVecIdx + 1;
             end
-            alphaVecIdx = alphaVecIdx + 1;
         end
     end
 end
