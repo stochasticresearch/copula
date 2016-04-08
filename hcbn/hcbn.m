@@ -67,7 +67,7 @@ classdef hcbn < handle
     end
     
     methods
-        function obj = hcbn(bntPath, X, nodes, discreteNodes, varargin)
+        function obj = hcbn(bntPath, X, nodes, discreteNodes, K, h, varargin)
             % HCBN - Constructs a HCBN object
             %  Inputs:
             %   X - a N x D matrix of the the observable data which the
@@ -101,16 +101,12 @@ classdef hcbn < handle
             
             obj.dag = zeros(obj.D,obj.D);
             
-            obj.K = 25;    % hard coded, this value seems to be a
-                            % reasonable tradeoff between accuracy and
-                            % memory/computational requirements
-                            % WARNING - WHEN YOU CHANGE THIS CHANGE IT IN
-                            % CMPALLMODELSSYNTHDATA also!!
+            obj.K = K;
+            obj.h = h;
             
             obj.X = X;
             obj.X_xform = X;
 
-            obj.h = 0.05;
             
             obj.discreteNodes = discreteNodes;
             obj.discNodeIdxs = zeros(1,length(obj.discreteNodes));
