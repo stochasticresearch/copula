@@ -101,9 +101,11 @@ classdef hcbn < handle
             
             obj.dag = zeros(obj.D,obj.D);
             
-            obj.K = 100;    % hard coded, this value seems to be a
+            obj.K = 25;    % hard coded, this value seems to be a
                             % reasonable tradeoff between accuracy and
                             % memory/computational requirements
+                            % WARNING - WHEN YOU CHANGE THIS CHANGE IT IN
+                            % CMPALLMODELSSYNTHDATA also!!
             
             obj.X = X;
             obj.X_xform = X;
