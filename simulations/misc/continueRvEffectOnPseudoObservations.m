@@ -36,6 +36,8 @@ prob = fliplr([0.5 0.15 0.15 0.05 0.05 0.05 0.025 0.025]);  % skew right
 discreteDistTypeVec{9} = makedist('Multinomial','Probabilities',prob); discreteDistTypeDescriptionVec{9} = '8-SkewRight';
 
 fig_num = 1;
+numTotalLoops = length(copulaTypeVec)*length(continuousDistTypeVec)*length(alphaVec)*length(discreteDistTypeVec)*length(mVec);
+fid = fopen('/home/kiran/ownCloud/PhD/sim_results/idea/progress.txt', 'a');
 for copulaTypeVecIdx=1:length(copulaTypeVec)
     for continuousDistTypeVecIdx=1:length(continuousDistTypeVec)
         for alphaVecIdx=1:length(alphaVec)
@@ -53,7 +55,10 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                         alphaPrint = alpha;
                     end
                     M = mVec(mVecIdx);
-
+                    
+                    fprintf(fid, 'Progress=%0.02f %%\n', (fig_num/numTotalLoops)*100);
+                    fprintf('Progress=%0.02f %%\n', (fig_num/numTotalLoops)*100);
+                    
                     % Generate U
                     U = copularnd(copulaType, alpha, M);
 
@@ -116,3 +121,4 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
         end
     end
 end
+fclose(fid);
