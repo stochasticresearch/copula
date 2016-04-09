@@ -63,9 +63,9 @@ global numKLDivCalculated numMC bntPath logFile K h
 
 K = 100; h = 0.05;      % beta kernel estimation parameters
 bntPath = '../bnt'; addpath(genpath(bntPath));
-mVec = 250:250:2000; %mVec = 1000;
-copulaTypeVec = {'Frank', 'Gumbel', 'Clayton', 'Gaussian'}; %copulaTypeVec = {'Frank'};
-alphaVec = 1:3:10; alphaVec=4;
+mVec = 250:250:2000; mVec = 1000;
+copulaTypeVec = {'Frank', 'Gumbel', 'Clayton', 'Gaussian'}; copulaTypeVec = {'Clayton'};
+alphaVec = 1:3:10; alphaVec=10;
 RhoVecs_2D = cell(1,length(alphaVec)); 
 RhoVecs_2D{1} = [1 -0.9; -0.9 1]; RhoVecs_2D{2} = [1 -0.65; -0.65 1];
 RhoVecs_2D{3} = [1 0.35; 0.35 1]; RhoVecs_2D{4} = [1 0.1; 0.1 1];
@@ -403,7 +403,7 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                         set(h_legend4,'FontSize',12);
                         set(h_legend4,'Interpreter','latex')
                         xlabel('x_2');
-                        title(sprintf('M=%d\n', M));
+                        title(sprintf('%s M=%d\n', continuousDistType, M));
                         
                         pause;
                         clf(fig1);
