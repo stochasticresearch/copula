@@ -24,38 +24,33 @@ classdef copulafamily
         parentNodeNames;
         parentNodeIdxs;
         
-        type;
-        
         C;              % the copula of the node and it's parents
         c;              % the copula density of the node and it's parents
-        
+        C_discrete_integrate;   % the partial derivative of the copula function, w.r.t. the continuous nodes
+                                
         C_parents;      % the copula of the parents (which is the
                         % marginalized coupla of the entire family, with
                         % the first argument = 1)
         c_parents;      % the copula density of the parent's of the node which represents this family
+        C_parents_discrete_integrate; % the partial derivative of the copula for the parents, w.r.t. the
+                                      % continuous nodes among the parents
         
-        Rho;
-        Rho_parents;    
     end
     
     methods
-        function obj = copulafamily(nn, ni, pnn, pni, t, CC, cc, RR, ...
-                CC_parents, cc_parents, RR_parents)
+        function obj = copulafamily(nn, ni, pnn, pni, CC, cc, CC_discrete_integrate, CC_parents, cc_parents, CC_parents_discrete_integrate)
             obj.nodeName = nn;
             obj.nodeIdx = ni;
             obj.parentNodeNames = pnn;
             obj.parentNodeIdxs = pni;
             
-            obj.type = t;
-            
             obj.C = CC;
             obj.c = cc;
-            
-            obj.Rho = RR;
+            obj.C_discrete_integrate = CC_discrete_integrate;
             
             obj.C_parents = CC_parents;
             obj.c_parents = cc_parents;
-            obj.Rho_parents = RR_parents;
+            obj.C_parents_discrete_integrate = CC_parents_discrete_integrate;
         end
     end
     

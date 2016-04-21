@@ -21,7 +21,7 @@
 clear;
 clc;
 
-K = 25;
+K = 100;
 
 copulaType = 'Clayton';
 
@@ -31,7 +31,7 @@ c = copulapdf(copulaType, [U1(:) U2(:)],5);
 C = copulacdf(copulaType, [U1(:) U2(:)],5);
 c = reshape(c, K,K); C = reshape(C, K, K);
 
-U = copularnd(copulaType,5,1000); h = 0.05;
+U = copularnd(copulaType,5,1000); h = 0.01;
 c_est_betak = empcopulapdf(U, h, K, 'betak');
 C_est_dehuvels = empcopulacdf(U, K, 'deheuvels');
 C_est_betakIntegration = c_est_betak;

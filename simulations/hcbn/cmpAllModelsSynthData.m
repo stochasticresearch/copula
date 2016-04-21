@@ -17,7 +17,7 @@
 %* 
 %**************************************************************************
 
-function [resultsMat] = cmpAllModelsSynthData( D, numMCSims, cfg, logFilename )
+function [resultsMat] = cmpAllModelsSynthData( D, numMCSims, cfg, logFilename, plotOption )
 %CMPALLMODELSSYNTHDATA - compares all the models for hybrid networks
 % (CLG, HCBN, MTE, [CBN], [MULTINOMIAL]) with synthetic data generated with
 % various different dependencies
@@ -60,12 +60,19 @@ function [resultsMat] = cmpAllModelsSynthData( D, numMCSims, cfg, logFilename )
 % parametrization variables
 global mVec copulaTypeVec alphaVec RhoVecs_2D RhoVecs_3D continuousDistTypeVec 
 global numKLDivCalculated numMC bntPath logFile K h
+global plotFlag
+
+if(nargin>4)
+    plotFlag = plotOption;
+else
+    plotFlag = 0;
+end
 
 K = 100; h = 0.05;      % beta kernel estimation parameters
 bntPath = '../bnt'; addpath(genpath(bntPath));
 mVec = 250:250:2000; mVec = 1000;
-copulaTypeVec = {'Frank', 'Gumbel', 'Clayton', 'Gaussian'}; copulaTypeVec = {'Frank'};
-alphaVec = 1:3:10; alphaVec=10;
+copulaTypeVec = {'Frank', 'Gumbel', 'Clayton', 'Gaussian'};
+alphaVec = 1:3:10;
 RhoVecs_2D = cell(1,length(alphaVec)); 
 RhoVecs_2D{1} = [1 -0.9; -0.9 1]; RhoVecs_2D{2} = [1 -0.65; -0.65 1];
 RhoVecs_2D{3} = [1 0.35; 0.35 1]; RhoVecs_2D{4} = [1 0.1; 0.1 1];
@@ -167,6 +174,7 @@ end
 function [klDivMat] = runD2(a_probs)
 global mVec copulaTypeVec alphaVec RhoVecs_2D continuousDistTypeVec 
 global numKLDivCalculated numMC bntPath logFile K h
+global plotFlag
 
 a_dist = makedist('Multinomial','Probabilities',a_probs);
 
@@ -311,7 +319,10 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                         u2Val = zeros(1,length(xiContinuous));
                         
                         % compute the conditional density w/ the formula
-                        % f(x2|x1) = c(F(x1),F(x2))*f(x2)
+                        % given by Eq.9 in Joint Regression 
+                        % Analysis of Correlated Data Using Gaussian 
+                        % Copulas -- Biometrics 2009
+                        % Authors: Song, Li, Yuan
                         for ii=1:length(xiContinuous)
                             xiContinuous_val = xiContinuous(ii);
                             uuGenerative1 = [a_dist.cdf(x1_discrete_conditional) continuousDistInfo.queryDistribution(xiContinuous_val)];
@@ -322,14 +333,17 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                             uuEst2 = [distAEst.queryDistribution(x1_discrete_conditional-1) ...
                                       distBEst.queryDistribution(xiContinuous_val)];
 %                             uuEst = fixU(uuEst);
-                            uuHcbn = [hcbnObj.empInfo{1}.distribution(x1_discrete_conditional) ...
+                            uuHcbn1 = [hcbnObj.empInfo{1}.queryDistribution(x1_discrete_conditional) ...
                                       hcbnObj.empInfo{2}.queryDistribution(xiContinuous_val)];
-                            uuHcbn = fixU(uuHcbn);
+                            uuHcbn2 = [hcbnObj.empInfo{1}.queryDistribution(x1_discrete_conditional-1) ...
+                                      hcbnObj.empInfo{2}.queryDistribution(xiContinuous_val)];
+%                             uuHcbn = fixU(uuHcbn);
 %                             c_X1X2 = copulapdf(copulaType, uuGenerative, alpha);
                             c_X1X2 = empcopula_val(C_actual_discrete_integrate, uuGenerative1)-empcopula_val(C_actual_discrete_integrate, uuGenerative2);
 %                             c_hat_X1X2 = empcopula_val(c_est, uuEst);
                             c_hat_X1X2 = empcopula_val(C_est_discrete_integrate, uuEst1) - empcopula_val(C_est_discrete_integrate, uuEst2);
-                            c_hcbn = empcopula_val(hcbnObj.copulaFamilies{2}.c, fliplr(uuHcbn));        % I think this should be a fliplr b/c copula
+                            c_hcbn = empcopula_val(hcbnObj.copulaFamilies{2}.C_discrete_integrate, fliplr(uuHcbn1)) - ...
+                                     empcopula_val(hcbnObj.copulaFamilies{2}.C_discrete_integrate, fliplr(uuHcbn2));        
                             
                             fX2 = continuousDistInfo.queryDensity(xiContinuous_val);
                             fX2_hat = distBEst.queryDensity(xiContinuous_val);                                                                            % was estimated w/ [u2 u1]
@@ -355,6 +369,7 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                         end
                         
                         % normalize all the conditional probabilities
+                        % TODO: should we have to do this?
                         fx2_givenx1_generative = fx2_givenx1_generative/trapz(xiContinuous, fx2_givenx1_generative);
                         fx2_givenx1_copulaestf2est = fx2_givenx1_copulaestf2est/trapz(xiContinuous,fx2_givenx1_copulaestf2est);
                         fx2_givenx1_copulaestf2Actual = fx2_givenx1_copulaestf2Actual/trapz(xiContinuous,fx2_givenx1_copulaestf2Actual);
@@ -384,60 +399,62 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                         klDivMCMat(7,x1_discrete_conditional,mcSimNum) = div_clg;
 
                         % plot the actual vs the copula version and compare the differences
-                        fig1 = figure(1); subplot(2,2,1);
-                        plot(xiContinuous, fx2_givenx1_generative, 'b*-', ...
-                             xiContinuous, fx2_givenx1_copulaestf2est, ...
-                             xiContinuous, fx2_givenx1_copulaestf2Actual, ...
-                             xiContinuous, fx2_givenx1_copulaActualf2est, ...
-                             xiContinuous, fx2_givenx1_copulahcbnf2hcbn, 'o-',...
-                             xiContinuous, fx2_givenx1_copulahcbnf2Actual); 
-                        grid on; title(sprintf('X_1=%d',x1_discrete_conditional));
-                        h_legend1 = legend('$c*f(x_2)$', ...
-                            strcat('$\hat{c}_{RANK}*\hat{f}(x_2)$', sprintf(' KLdiv=%0.02f', div_cEstf2Est)), ...
-                            strcat('$\hat{c}_{RANK}*f(x_2)$', sprintf(' KLdiv=%0.02f', div_cEstf2Actual)), ...
-                            strcat('$c*\hat{f}(x_2)$', sprintf(' KLdiv=%0.02f', div_cActualf2Est)), ...
-                            strcat('$\hat{c}_{HCBN-ECDF}*\hat{f}(x_2)_{HCBN}$', sprintf(' KLdiv=%0.02f', div_chcbnf2hcbn)), ...
-                            strcat('$\hat{c}_{HCBN-ECDF}*f(x_2)$', sprintf(' KLdiv=%0.02f', div_chcbnF2Actual)) );
-                        set(h_legend1,'FontSize',12);
-                        set(h_legend1,'Interpreter','latex')
-                        
-                        subplot(2,2,2);
-                        plot(xiContinuous, fx2_givenx1_generative, 'b*-', ...
-                             xiContinuous, fx2_givenx1_conditionalKDE, ...
-                             xiContinuous, fx2_givenx1_mte, ...
-                             xiContinuous, fx2_givenx1_clg); 
-                        grid on; title(sprintf('X_1=%d EstimationSize=%d',x1_discrete_conditional, length(X_continuous_subset)));
-                        h_legend2 = legend('$c*f(x_2)$', ...
-                            strcat('KDE', sprintf(' KLdiv=%0.02f', div_kde)), ...
-                            strcat('MTE', sprintf(' KLdiv=%0.02f', div_mte)), ...
-                            strcat('CLG', sprintf(' KLdiv=%0.02f', div_clg)) );
-                        set(h_legend2,'FontSize',12);
-                        set(h_legend2,'Interpreter','latex')
-                        
-                        subplot(2,2,3);
-                        plot(u2Val, copulaActual, ...
-                             u2Val, copulaEst, ...
-                             u2Val, copulaHcbn);
-                        grid on;
-                        title(sprintf('%s Marginal Copula u_1=%0.02f', copulaType, uuGenerative1(1)));
-                        h_legend3 = legend('$c$', '$\hat{c}_{RANK}$', '$\hat{c}_{HCBN-ECDF}$');
-                        xlabel('u_2');
-                        set(h_legend3,'FontSize',12);
-                        set(h_legend3,'Interpreter','latex')
-                        
-                        subplot(2,2,4);
-                        plot(xiContinuous, f2Actual, ...
-                             xiContinuous, f2Est, 'k',...
-                             xiContinuous, f2Hcbn, 'rp');
-                        grid on;
-                        h_legend4 = legend('$f(x_2)$', '$\hat{f}(x_2)$', '$\hat{f}(x_2)_{HCBN}$');
-                        set(h_legend4,'FontSize',12);
-                        set(h_legend4,'Interpreter','latex')
-                        xlabel('x_2');
-                        title(sprintf('%s M=%d\n', continuousDistType, M));
-                        
-                        pause;
-                        clf(fig1);
+                        if(plotFlag)
+                            fig1 = figure(1); subplot(2,2,1);
+                            plot(xiContinuous, fx2_givenx1_generative, 'b*-', ...
+                                 xiContinuous, fx2_givenx1_copulaestf2est, ...
+                                 xiContinuous, fx2_givenx1_copulaestf2Actual, ...
+                                 xiContinuous, fx2_givenx1_copulaActualf2est, ...
+                                 xiContinuous, fx2_givenx1_copulahcbnf2hcbn, 'o-',...
+                                 xiContinuous, fx2_givenx1_copulahcbnf2Actual); 
+                            grid on; title(sprintf('X_1=%d',x1_discrete_conditional));
+                            h_legend1 = legend('$c*f(x_2)$', ...
+                                strcat('$\hat{c}_{RANK}*\hat{f}(x_2)$', sprintf(' KLdiv=%0.02f', div_cEstf2Est)), ...
+                                strcat('$\hat{c}_{RANK}*f(x_2)$', sprintf(' KLdiv=%0.02f', div_cEstf2Actual)), ...
+                                strcat('$c*\hat{f}(x_2)$', sprintf(' KLdiv=%0.02f', div_cActualf2Est)), ...
+                                strcat('$\hat{c}_{HCBN-ECDF}*\hat{f}(x_2)_{HCBN}$', sprintf(' KLdiv=%0.02f', div_chcbnf2hcbn)), ...
+                                strcat('$\hat{c}_{HCBN-ECDF}*f(x_2)$', sprintf(' KLdiv=%0.02f', div_chcbnF2Actual)) );
+                            set(h_legend1,'FontSize',12);
+                            set(h_legend1,'Interpreter','latex')
+
+                            subplot(2,2,2);
+                            plot(xiContinuous, fx2_givenx1_generative, 'b*-', ...
+                                 xiContinuous, fx2_givenx1_conditionalKDE, ...
+                                 xiContinuous, fx2_givenx1_mte, ...
+                                 xiContinuous, fx2_givenx1_clg); 
+                            grid on; title(sprintf('X_1=%d EstimationSize=%d',x1_discrete_conditional, length(X_continuous_subset)));
+                            h_legend2 = legend('$c*f(x_2)$', ...
+                                strcat('KDE', sprintf(' KLdiv=%0.02f', div_kde)), ...
+                                strcat('MTE', sprintf(' KLdiv=%0.02f', div_mte)), ...
+                                strcat('CLG', sprintf(' KLdiv=%0.02f', div_clg)) );
+                            set(h_legend2,'FontSize',12);
+                            set(h_legend2,'Interpreter','latex')
+
+                            subplot(2,2,3);
+                            plot(u2Val, copulaActual, ...
+                                 u2Val, copulaEst, ...
+                                 u2Val, copulaHcbn);
+                            grid on;
+                            title(sprintf('%s Marginal Copula u_1=%0.02f', copulaType, uuGenerative1(1)));
+                            h_legend3 = legend('$c$', '$\hat{c}_{RANK}$', '$\hat{c}_{HCBN-ECDF}$');
+                            xlabel('u_2');
+                            set(h_legend3,'FontSize',12);
+                            set(h_legend3,'Interpreter','latex')
+
+                            subplot(2,2,4);
+                            plot(xiContinuous, f2Actual, ...
+                                 xiContinuous, f2Est, 'k',...
+                                 xiContinuous, f2Hcbn, 'rp');
+                            grid on;
+                            h_legend4 = legend('$f(x_2)$', '$\hat{f}(x_2)$', '$\hat{f}(x_2)_{HCBN}$');
+                            set(h_legend4,'FontSize',12);
+                            set(h_legend4,'Interpreter','latex')
+                            xlabel('x_2');
+                            title(sprintf('%s M=%d\n', continuousDistType, M));
+
+                            pause;
+                            clf(fig1);
+                        end
                     end
                     progressIdx = progressIdx + 1;
                 end

@@ -33,6 +33,7 @@ dag(aa,bb) = 1;
 discreteNodes = [aa];
 nodeNames = {'A', 'B'};
 discreteNodeNames = {'A'};
+bntPath = '../bnt'; addpath(genpath(bntPath));
 
 % generate the data
 M = 1000;
@@ -61,16 +62,16 @@ X_hybrid_continued(:,1) = continueRv(X_hybrid(:,1));
 % U_hybrid_continued = pseudoobs(X_hybrid_continued, 'ecdf', 100); %% HCBN
 U_hybrid_continued = pseudoobs(X_hybrid_continued);        %% not HCBN
 
-K = 200; h = 0.01;
+K = 100; h = 0.01;
 u = linspace(0,1,K);
 [U1,U2] = ndgrid(u);
 
-c_est = empcopulapdf(U_hybrid_continued, h, K, 'betak');
+c_est = empcopulapdf(fliplr(U_hybrid_continued), h, K, 'betak');        % do a fliplr to emulate how hcbn.m processes the data
 c_actual = reshape(copulapdf(copulaType, [U1(:) U2(:)], alpha), K, K);
 
 % integrate the discrete dimnesion (u1).  This equates to taking the
 % partial derivative of C w.r.t. u2 (the continuous dimension)
-C_est_discreteIntegrate = cumtrapz(u,c_est,1);
+C_est_discreteIntegrate = cumtrapz(u,c_est,2);      % because we did a fliplr, the discrete dimension is dim=2 now
 C_actual_discreteIntegrate = cumtrapz(u,c_actual,1);
 
 % now compute the expression for f(y1,y2), where y1 is discrete, and y2 is
@@ -115,8 +116,11 @@ for y1=1:4
     for xi_idx=1:length(xi_y2)
         xi = xi_y2(xi_idx);
         
-        u2_est = [disty1Est.queryDistribution(y1) disty2Est.queryDistribution(xi)];
-        u1_est = [disty1Est.queryDistribution(y1-1) disty2Est.queryDistribution(xi)];
+        % notice, we flip the arguments for u2_est and u1_est to be the
+        % continuous first, then discrete, this is b/c this is how hcbn.m
+        % estiamtes the copula (see how c_est was generated above).  
+        u2_est = [disty2Est.queryDistribution(xi) disty1Est.queryDistribution(y1)];
+        u1_est = [disty2Est.queryDistribution(xi) disty1Est.queryDistribution(y1-1)];
         
         u2_actual = [a_dist.cdf(y1) continuousDistInfo.queryDistribution(xi)];
         u1_actual = [a_dist.cdf(y1-1) continuousDistInfo.queryDistribution(xi)];

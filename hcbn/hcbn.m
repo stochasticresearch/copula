@@ -64,6 +64,8 @@ classdef hcbn < handle
                     % variables (slower)
         SIM_NUM;    % used for debugging
         TYPE_NAME;  % used for debugging
+        
+        PSEUDO_OBS_CALC_METHOD;     % should be either RANK or ECDF
     end
     
     methods
@@ -88,6 +90,8 @@ classdef hcbn < handle
             obj.SIM_NUM = 0;
             obj.TYPE_NAME = '';
             obj.LOG_CUTOFF = 10^-5;
+            
+            obj.PSEUDO_OBS_CALC_METHOD = 'ECDF';
             
             % add BNT to the path
             addpath(genpath(bntPath));
@@ -238,60 +242,58 @@ classdef hcbn < handle
                     X_in(:,1) = obj.X_xform(:,nodeIdx);
                     kk = 2:2+length(parentIdxs)-1;
                     X_in(:,kk) = obj.X_xform(:,parentIdxs);
-                    % check to see if any of the indices that we extracted
-                    % from were discrete, if so, we calculate the empirical
-                    % copula, if not we fit to a copula model (for now only
-                    % Gaussian copula)
-                    allIdxs = [nodeIdx parentIdxs];
-                    if(sum(ismember(allIdxs, obj.discNodeIdxs)))
+                    
+                    % fit all continuous and hybrid models w/ an empirical
+                    % copula
+                    if(strcmpi(obj.PSEUDO_OBS_CALC_METHOD, 'ecdf'))
                         U_in = pseudoobs(X_in, 'ecdf', 100);
-%                         U_in = pseudoobs(X_in);     % the above seems to work better w/ hybrid distributions, don't know why?
-                        
-                        M = size(X_in,1);
-                        C = [];         % TODO: estimate this, but not necessary for hcbn
-                        c = empcopulapdf(U_in, obj.h, obj.K, 'betak');
-                        type = 'empirical';
-                        Rho = [];
-                        Rho_parents = [];
-                        if(length(parentIdxs)==1)
-                            % the density will be used directly, so there
-                            % is no need to calculate these copula's (they
-                            % don't actually make sense because there is
-                            % only one dimension, no concept of "joint"
-                            % distribution)
-                            C_parents = [];
-                            c_parents = [];
-                        else
-                            U_in_parents = U_in(:,2:end);
-                            C_parents = []; % TODO: estimate this, but not necessary for hcbn
-                            c_parents = empcopulapdf(U_in_parents, obj.h, obj.K, 'betak');
-                        end
                     else
-                        % all continuous marginals, lets fit to a copula
-                        % model (for now, we only do Gaussian)
-                        % TODO: use other models as well
-                        type = 'model';
-                        C = []; c = [];
-                        C_parents = []; c_parents = [];
-                        u = zeros(size(X_in));
-                        M = size(X_in,1);
-                        for m=1:M
-                            uIdx = 1;
-                            for jj=allIdxs
-                                u(m,uIdx) = obj.empInfo{jj}.queryDistribution(X_in(m,uIdx));
-                                uIdx = uIdx + 1;
-                            end
+                        U_in = pseudoobs(X_in);
+                    end
+
+                    c = empcopulapdf(U_in, obj.h, obj.K, 'betak');
+                    C = c; u = linspace(0,1,obj.K);
+                    for dim=1:1+length(parentNames)
+                        C = cumtrapz(u,C,dim);
+                    end
+                    
+                    allIdxs = [nodeIdx parentIdxs];
+                    % find which dimensions are discrete, and integrate
+                    % those out of c.  This is the equivalent of takign the
+                    % partial derivative of the copula function w.r.t. only
+                    % the continuous variables
+                    [~,discreteDimensions,~] = intersect(allIdxs,obj.discNodeIdxs);
+                    C_discrete_integrate = c;
+                    for discreteDimension=discreteDimensions
+                        C_discrete_integrate = cumtrapz(u,C_discrete_integrate,discreteDimension);
+                    end
+                    
+                    if(length(parentIdxs)==1)
+                        % the density will be used directly, so there
+                        % is no need to calculate these copula's (they
+                        % don't actually make sense because there is
+                        % only one dimension, no concept of "joint")
+                        C_parents = [];
+                        c_parents = [];
+                        C_parents_discrete_integrate = [];
+                    else
+                        U_in_parents = U_in(:,2:end);
+                        % TODO: probably we can just integrate OUT the
+                        % child node dimension and get the same value?
+                        % speed up some processing this way :D
+                        c_parents = empcopulapdf(U_in_parents, obj.h, obj.K, 'betak');
+                        C_parents = c_parents; u = linspace(0,1,obj.K);
+                        for dim=1:length(parentNames)
+                            C_parents = cumtrapz(u,C_parents,dim);
                         end
-                        Rho = copulafit('Gaussian', u);
-                        if(length(parentIdxs)==1)
-                            Rho_parents = [];
-                        else
-                            u_parents = u(:,2:end);
-                            Rho_parents = copulafit('Gaussian', u_parents);
+                        [~,discreteDimensionsParents,~] = intersect(allIdxs,obj.discNodeIdxs);
+                        C_parents_discrete_integrate = c_parents;
+                        for discreteDimension=discreteDimensionsParents
+                            C_parents_discrete_integrate = cumtrapz(u,C_parents_discrete_integrate,discreteDimension);
                         end
                     end
-                    copFam = copulafamily(node, nodeIdx, parentNames, parentIdxs, type, ...
-                            C, c, Rho, C_parents, c_parents, Rho_parents);
+                    copFam = copulafamily(node, nodeIdx, parentNames, parentIdxs, ...
+                            C, c, C_discrete_integrate, C_parents, c_parents, C_parents_discrete_integrate);
                     obj.copulaFamilies{nodeIdx} = copFam;
                 end
             end
@@ -322,14 +324,7 @@ classdef hcbn < handle
             
             % generate U from the copula that was "learned"
             copFam = obj.copulaFamilies{nodeIdx};
-            if(strcmpi(copFam.type, 'empirical'))
-                U = empcopularnd(copFam.c, M);
-            else
-                % TODO: when other copula models are introduced into the
-                % continuous case, we need to change copularnd here to
-                % incorporate the other copula types
-                U = copularnd('Gaussian', copFam.Rho, M);
-            end
+            U = empcopularnd(copFam.c, M);
             D_family = size(U,2);
             X = zeros(size(U));
             % invert each U appropriately to generate X
@@ -481,7 +476,7 @@ classdef hcbn < handle
                 % be 1
                 c_val_numerator = 1;
                 c_val_denominator = 1;
-            elseif(strcmp(copFam.type, 'empirical'))
+            else
                 % get the copula density for this family
                 c = copFam.c;
                 c_parents = copFam.c_parents;
@@ -493,16 +488,6 @@ classdef hcbn < handle
                     c_val_denominator = 1;
                 else
                     c_val_denominator = empcopula_val(c_parents,u_denom);
-                end
-            else
-                % assume we fit the Gaussian model to the data
-                c_val_numerator = copulapdf('Gaussian', u, copFam.Rho);
-                
-                u_denom = u(2:end);
-                if(length(u_denom)==1)
-                    c_val_denominator = 1;
-                else
-                    c_val_denominator = copulapdf('Gaussian', u_denom, copFam.Rho_parents);
                 end
             end
             
