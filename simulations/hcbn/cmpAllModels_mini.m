@@ -1,0 +1,151 @@
+%**************************************************************************
+%* 
+%* Copyright (C) 2016  Kiran Karra <kiran.karra@gmail.com>
+%*
+%* This program is free software: you can redistribute it and/or modify
+%* it under the terms of the GNU General Public License as published by
+%* the Free Software Foundation, either version 3 of the License, or
+%* (at your option) any later version.
+%*
+%* This program is distributed in the hope that it will be useful,
+%* but WITHOUT ANY WARRANTY; without even the implied warranty of
+%* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%* GNU General Public License for more details.
+%*
+%* You should have received a copy of the GNU General Public License
+%* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+%* 
+%**************************************************************************
+
+% A script to see the performace of a simple BN w/ a discrete and
+% continuous node w/ the copula construction.  Here, we use the full joint
+% distribution formula given by Song, Li, Yuan.  See Joint Regression 
+% Analysis of Correlated Data Using Gaussian Copulas -- Biometrics 2009,
+% pp. 3
+
+clear;
+clc;
+
+aa = 1; bb = 2;
+D = 2;
+dag = zeros(D,D);
+dag(aa,bb) = 1;
+discreteNodes = [aa];
+nodeNames = {'A', 'B'};
+discreteNodeNames = {'A'};
+
+% generate the data
+M = 1000;
+
+copulaType = 'Frank';
+alpha = 8;
+U = copularnd(copulaType, alpha, M);
+
+a_probs = [0.25 0.25 0.25 0.25];
+a_dist = makedist('Multinomial','Probabilities',a_probs);
+
+xContinuous = [normrnd(-2,0.3,M/2,1); normrnd(2,0.8,M/2,1)];
+xContinuous = xContinuous(randperm(M),:);
+[fContinous,xiContinuous] = emppdf(xContinuous,0);
+FContinuous = empcdf(xContinuous,0);
+continuousDistInfo = rvEmpiricalInfo(xiContinuous,fContinous,FContinuous);
+X_hybrid(:,1) = a_dist.icdf(U(:,1));
+for ii=1:M
+    X_hybrid(ii,2) = continuousDistInfo.invDistribution(U(ii,2));
+end
+
+% estimate the copula density
+X_hybrid_continued = X_hybrid;
+X_hybrid_continued(:,1) = continueRv(X_hybrid(:,1));
+% generate pseudo-observations
+% U_hybrid_continued = pseudoobs(X_hybrid_continued, 'ecdf', 100); %% HCBN
+U_hybrid_continued = pseudoobs(X_hybrid_continued);        %% not HCBN
+
+K = 200; h = 0.01;
+u = linspace(0,1,K);
+[U1,U2] = ndgrid(u);
+
+c_est = empcopulapdf(U_hybrid_continued, h, K, 'betak');
+c_actual = reshape(copulapdf(copulaType, [U1(:) U2(:)], alpha), K, K);
+
+% integrate the discrete dimnesion (u1).  This equates to taking the
+% partial derivative of C w.r.t. u2 (the continuous dimension)
+C_est_discreteIntegrate = cumtrapz(u,c_est,1);
+C_actual_discreteIntegrate = cumtrapz(u,c_actual,1);
+
+% now compute the expression for f(y1,y2), where y1 is discrete, and y2 is
+% continuous
+% The expression for f(y) is:
+% f(y1,y2) = g2(y2)*[C(G1(y1),G2(y2)) - C(G1(y1-),G2(y2))], where C is the
+% partial derivative of the copula w.r.t. u2, b/c u1 is discrete dimension
+
+isdiscrete = 0;
+[f_y2_est, xi_y2] = emppdf(X_hybrid(:,2),isdiscrete);
+F_y2_est = empcdf(X_hybrid(:,2),isdiscrete);
+disty2Est = rvEmpiricalInfo(xi_y2,f_y2_est,F_y2_est);
+
+isdiscrete = 1;
+[f_y1_est, xi_y1] = emppdf(X_hybrid(:,1),isdiscrete);
+F_y1_est = empcdf(X_hybrid(:,1),isdiscrete);
+disty1Est = rvEmpiricalInfo(xi_y1,f_y1_est,F_y1_est);
+
+mteObj = mte(X_hybrid, discreteNodes, dag);
+clgObj = clg(X_hybrid, discreteNodes, dag);
+
+for y1=1:4
+    
+    f_y1_y2_est = zeros(1,length(xiContinuous));
+    f_y1_y2 = zeros(1,length(xiContinuous));
+    f_y1_y2_KDE = zeros(1,length(xiContinuous));
+    f_y1_y2_clg = zeros(1,length(xiContinuous));
+    f_y1_y2_mte = zeros(1,length(xiContinuous));
+    
+    % estimate KDE, MTE, and CLG
+    X_continuous_subset = [];
+    for jj=1:M
+        if(X_hybrid(jj,1)==y1)
+            X_continuous_subset = [X_continuous_subset; X_hybrid(jj,2)];
+        end
+    end
+    isdiscrete = 0;
+    [f_kde,xi_kde] = emppdf(X_continuous_subset, isdiscrete);
+    F_kde = empcdf(X_continuous_subset, isdiscrete);
+    conditionalKDE = rvEmpiricalInfo(xi_kde, f_kde, F_kde);
+        
+    for xi_idx=1:length(xi_y2)
+        xi = xi_y2(xi_idx);
+        
+        u2_est = [disty1Est.queryDistribution(y1) disty2Est.queryDistribution(xi)];
+        u1_est = [disty1Est.queryDistribution(y1-1) disty2Est.queryDistribution(xi)];
+        
+        u2_actual = [a_dist.cdf(y1) continuousDistInfo.queryDistribution(xi)];
+        u1_actual = [a_dist.cdf(y1-1) continuousDistInfo.queryDistribution(xi)];
+        
+        f_y1_y2(xi_idx) = continuousDistInfo.queryDensity(xi)*(empcopula_val(C_actual_discreteIntegrate,u2_actual) - ...
+                                                                  empcopula_val(C_actual_discreteIntegrate,u1_actual) );
+        f_y1_y2_est(xi_idx) = disty2Est.queryDensity(xi)*(empcopula_val(C_est_discreteIntegrate,u2_est) - ...
+                                                         empcopula_val(C_est_discreteIntegrate,u1_est));
+        f_y1_y2_KDE(xi_idx) = conditionalKDE.queryDensity(xi);
+        
+        f_y1_y2_clg(xi_idx) = normpdf(xi, clgObj.bnParams{2}{y1}.Mean, clgObj.bnParams{2}{y1}.Covariance);
+        f_y1_y2_mte(xi_idx) = mteObj.bnParams{2}{y1}.mte_info.queryDensity(xi);
+                                    
+    end
+    % scale to make density integrate to 1
+    f_y1_y2 = f_y1_y2/trapz(xiContinuous,f_y1_y2);
+    f_y1_y2_est = f_y1_y2_est/trapz(xiContinuous,f_y1_y2_est);
+    f_y1_y2_KDE = f_y1_y2_KDE/trapz(xiContinuous,f_y1_y2_KDE);
+    f_y1_y2_clg = f_y1_y2_clg/trapz(xiContinuous,f_y1_y2_clg);
+    f_y1_y2_mte = f_y1_y2_mte/trapz(xiContinuous,f_y1_y2_mte);
+    
+    f = figure(1);
+    plot(xiContinuous,f_y1_y2, ...
+         xiContinuous, f_y1_y2_est, ...
+         xiContinuous, f_y1_y2_KDE, ...
+         xiContinuous, f_y1_y2_clg, ...
+         xiContinuous, f_y1_y2_mte); grid on;
+    legend('Generative Model', 'Copula Estimate', 'KDE Estimate', 'CLG', 'MTE'); title(sprintf('Y_1 = %d',y1));
+    pause;
+    clf(f);
+    
+end
