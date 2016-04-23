@@ -26,6 +26,8 @@
 clear;
 clc;
 
+rng(12345);
+
 aa = 1; bb = 2;
 D = 2;
 dag = zeros(D,D);
@@ -92,14 +94,16 @@ disty1Est = rvEmpiricalInfo(xi_y1,f_y1_est,F_y1_est);
 
 mteObj = mte(X_hybrid, discreteNodes, dag);
 clgObj = clg(X_hybrid, discreteNodes, dag);
+hcbnObj = hcbn(bntPath, X_hybrid, nodeNames, discreteNodeNames, K, h, dag); 
 
 for y1=1:4
     
-    f_y2_given_y1_est = zeros(1,length(xiContinuous));
+    f_y2_given_y1_copula_est = zeros(1,length(xiContinuous));
     f_y2_given_y1 = zeros(1,length(xiContinuous));
     f_y2_given_y1_KDE = zeros(1,length(xiContinuous));
     f_y2_given_y1_clg = zeros(1,length(xiContinuous));
     f_y2_given_y1_mte = zeros(1,length(xiContinuous));
+    f_y2_given_y1_hcbn = zeros(1,length(xiContinuous));
     
     % estimate KDE, MTE, and CLG
     X_continuous_subset = [];
@@ -127,22 +131,24 @@ for y1=1:4
         
         f_y2_given_y1(xi_idx) = (continuousDistInfo.queryDensity(xi)*(empcopula_val(C_actual_discreteIntegrate,u2_actual) - ...
                                                                empcopula_val(C_actual_discreteIntegrate,u1_actual) ))/ a_dist.pdf(y1);
-        f_y2_given_y1_est(xi_idx) = (disty2Est.queryDensity(xi)*(empcopula_val(C_est_discreteIntegrate,u2_est) - ...
-                                                          empcopula_val(C_est_discreteIntegrate,u1_est)))/a_dist.pdf(y1);
+        f_y2_given_y1_copula_est(xi_idx) = (disty2Est.queryDensity(xi)*(empcopula_val(C_est_discreteIntegrate,u2_est) - ...
+                                                          empcopula_val(C_est_discreteIntegrate,u1_est)))/disty1Est.queryDensity(y1);
         f_y2_given_y1_KDE(xi_idx) = conditionalKDE.queryDensity(xi);
         
         f_y2_given_y1_clg(xi_idx) = normpdf(xi, clgObj.bnParams{2}{y1}.Mean, clgObj.bnParams{2}{y1}.Covariance);
         f_y2_given_y1_mte(xi_idx) = mteObj.bnParams{2}{y1}.mte_info.queryDensity(xi);
-                                    
+        f_y2_given_y1_hcbn(xi_idx) = hcbnObj.computeMixedConditionalProbability_([y1 xi], [bb aa], bb);
     end
     
     f = figure(1);
-    plot(xiContinuous,f_y2_given_y1, ...
-         xiContinuous, f_y2_given_y1_est, ...
+    plot(xiContinuous,f_y2_given_y1, 'b*-', ...
+         xiContinuous, f_y2_given_y1_copula_est, 'rp--', ...
          xiContinuous, f_y2_given_y1_KDE, ...
          xiContinuous, f_y2_given_y1_clg, ...
-         xiContinuous, f_y2_given_y1_mte); grid on;
-    legend('Generative Model', 'Copula Estimate', 'KDE Estimate', 'CLG', 'MTE'); title(sprintf('Y_1 = %d',y1));
+         xiContinuous, f_y2_given_y1_mte, ...
+         xiContinuous, f_y2_given_y1_hcbn, 'kh--'); grid on;
+    legend('Generative Model', 'Copula Estimate_{RANK}', 'KDE Estimate', 'CLG', 'MTE', 'HCBN_{ECDF}'); 
+    title(sprintf('Y_1 = %d',y1));
     pause;
     clf(f);
     

@@ -211,7 +211,6 @@ classdef hcbn < handle
             nVarargin = length(varargin);
             if(nVarargin==0 || varargin{1}~=0)
                 obj.estFamilyCopula();
-                obj.estNodePdfs();
             end
         end
         
@@ -338,7 +337,7 @@ classdef hcbn < handle
             end
         end
         
-        function [mixedProbability] = computeMixedJointProbability_(X, idxs, nodeNum, parentsFlag)
+        function [mixedProbability] = computeMixedJointProbability_(obj, X, idxs, nodeNum, parentsFlag)
             %COMPUTEMIXEDPROBABILITY - computes the joint probability of a
             %mixed probability distribution for the indices given by idxs.
             % Inputs:
@@ -350,54 +349,58 @@ classdef hcbn < handle
             %  parentsFlag - 1 if we are calculating the mixed prob of the
             %                parents
             
-            [~,discreteIdxs,~] = intersect(idxs,obj.discNodeIdxs); discreteIdxs = discreteIdxs';
-            continuousIdxs = setdiff(1:length(allIdxs),discreteIdxs);
+            if(length(idxs)==1)
+                mixedProbability = obj.empInfo{idxs}.queryDensity(X(idxs));
+            else
+                [~,discreteIdxs,~] = intersect(idxs,obj.discNodeIdxs); discreteIdxs = discreteIdxs';
+                continuousIdxs = setdiff(1:length(idxs),discreteIdxs);
 
-            u = zeros(1,length(idxs));
+                u = zeros(1,length(idxs));
 
-            % fill the u w/ the continuous values, since we
-            % already performed the partial derivative w.r.t.
-            % the continuous variables for the copula
-            for continuousIdx=continuousIdxs
-                continuousNodeNum = idxs(continuousIdx);
-                % query that node's distribution and insert into u
-                u(continuousIdx) = obj.empInfo{continuousNodeNum}.queryDistribution(X(continuousNodeNum));
-            end
-
-            % compute the coupla value for the discrete
-            % portions through rectangle differencing
-            vals = [0:2^length(discreteIdxs) - 1];
-            rectangleDiffStates = dec2bin(vals)-'0';
-            mixedProbability = 0;
-            for ii=1:size(rectangleDiffStates,1)
-                rectangleDiffState = rectangleDiffStates(ii,:);
-                diffStateIdx = 1;
-                for diffState=rectangleDiffState
-                    discreteIdx = discreteIdxs(diffStateIdx);
-                    discreteNodeNum = idxs(discreteIdx);
-                    u(discreteIdx) = obj.empInfo{discreteNodeNum}.queryDistribution(X(discreteNodeNum)-diffState);
-                    diffStateIdx = diffStateIdx + 1;
+                % fill the u w/ the continuous values, since we
+                % already performed the partial derivative w.r.t.
+                % the continuous variables for the copula
+                for continuousIdx=continuousIdxs
+                    continuousNodeNum = idxs(continuousIdx);
+                    % query that node's distribution and insert into u
+                    u(continuousIdx) = obj.empInfo{continuousNodeNum}.queryDistribution(X(continuousNodeNum));
                 end
-                if(parentsFlag)
-                    tmp = (-1)^(sum(rectangleDiffState))*(obj.copulaFamilies{nodeNum}.C_parents_discrete_integrate(u));
-                else
-                    tmp = (-1)^(sum(rectangleDiffState))*(obj.copulaFamilies{nodeNum}.C_discrete_integrate(u));
-                end
-                                
-                mixedProbability = mixedProbability + tmp;
-            end
 
-            % multiply w/ the marginal distributions of the
-            % continuous variables
-            for continuousIdx=continuousIdxs
-                continuousNodeNum = idxs(continuousIdx);
-                mixedProbability = mixedProbability * obj.empInfo{continuousNodeNum}.queryDensity(X(mm,continuousNodeNum));
+                % compute the coupla value for the discrete
+                % portions through rectangle differencing
+                vals = [0:2^length(discreteIdxs) - 1];
+                rectangleDiffStates = dec2bin(vals)-'0';
+                mixedProbability = 0;
+                for ii=1:size(rectangleDiffStates,1)
+                    rectangleDiffState = rectangleDiffStates(ii,:);
+                    diffStateIdx = 1;
+                    for diffState=rectangleDiffState
+                        discreteIdx = discreteIdxs(diffStateIdx);
+                        discreteNodeNum = idxs(discreteIdx);
+                        u(discreteIdx) = obj.empInfo{discreteNodeNum}.queryDistribution(X(discreteNodeNum)-diffState);
+                        diffStateIdx = diffStateIdx + 1;
+                    end
+                    if(parentsFlag)
+                        tmp = (-1)^(sum(rectangleDiffState))*empcoupla_val(obj.copulaFamilies{nodeNum}.C_parents_discrete_integrate, u);
+                    else
+                        tmp = (-1)^(sum(rectangleDiffState))*empcopula_val(obj.copulaFamilies{nodeNum}.C_discrete_integrate, u);
+                    end
+
+                    mixedProbability = mixedProbability + tmp;
+                end
+
+                % multiply w/ the marginal distributions of the
+                % continuous variables
+                for continuousIdx=continuousIdxs
+                    continuousNodeNum = idxs(continuousIdx);
+                    mixedProbability = mixedProbability * obj.empInfo{continuousNodeNum}.queryDensity(X(continuousNodeNum));
+                end
             end
         end
         
-        function [conditionalProb] = computeMixedConditionalProbability_(X, idxs, nodeNum)
-            jointProbAllNodes = computeMixedJointProbability_(X, idxs, nodeNum, 0);
-            jointProbParentNodes = computeMixedJointProbability_(X, idxs(2:end), nodeNum, 1);
+        function [conditionalProb] = computeMixedConditionalProbability_(obj, X, idxs, nodeNum)
+            jointProbAllNodes = obj.computeMixedJointProbability_(X, idxs, nodeNum, 0);
+            jointProbParentNodes = obj.computeMixedJointProbability_(X, idxs(2:end), nodeNum, 1);
             conditionalProb = jointProbAllNodes/jointProbParentNodes;
         end
         
