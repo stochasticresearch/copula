@@ -35,8 +35,9 @@ classdef hcbn < handle
                     % node.  empInfo{i} is the empirical information for
                     % the node nodeNames{nodeVals{i}}.  Empirical
                     % information consits of 3 things, 1.) the domain of
-                    % the random variable, the empirical density function,
-                    % and the empirical distribution function
+                    % the random variable, the empirical marginal density 
+                    % function for node i, and the empirical marginal 
+                    % distribution function for node i
         copulaFamilies; % a cell array of the copula of the family associated 
                         % with nodeNames{nodeVals{i}}
         X;          % an N x D matrix of the observable data.  This can be
@@ -204,13 +205,14 @@ classdef hcbn < handle
         end
         
         function [] = setDag(obj, candidateDag, varargin)
-            % if you set varargin=1, then 
+            % if you set varargin=1, then the copula families will not be
+            % estimated automatically
             obj.dag = candidateDag;
             nVarargin = length(varargin);
             if(nVarargin==0 || varargin{1}~=0)
                 obj.estFamilyCopula();
+                obj.estNodePdfs();
             end
-            
         end
         
         function [] = estFamilyCopula(obj)
@@ -333,6 +335,100 @@ classdef hcbn < handle
                 for dd=1:D_family
                     X(ii,dd) = obj.empInfo{allIdxs(dd)}.invDistribution(U(ii,dd));
                 end
+            end
+        end
+        
+        function [mixedProbability] = computeMixedJointProbability_(X, idxs, nodeNum, parentsFlag)
+            %COMPUTEMIXEDPROBABILITY - computes the joint probability of a
+            %mixed probability distribution for the indices given by idxs.
+            % Inputs:
+            %  X - the data point, should be the entire dimension obj.D,
+            %      this function picks the appropriate points from that
+            %      according to idxs
+            %  idxs - the indices of the nodes for which to calculate the
+            %         mixed joint probability.
+            %  parentsFlag - 1 if we are calculating the mixed prob of the
+            %                parents
+            
+            [~,discreteIdxs,~] = intersect(idxs,obj.discNodeIdxs); discreteIdxs = discreteIdxs';
+            continuousIdxs = setdiff(1:length(allIdxs),discreteIdxs);
+
+            u = zeros(1,length(idxs));
+
+            % fill the u w/ the continuous values, since we
+            % already performed the partial derivative w.r.t.
+            % the continuous variables for the copula
+            for continuousIdx=continuousIdxs
+                continuousNodeNum = idxs(continuousIdx);
+                % query that node's distribution and insert into u
+                u(continuousIdx) = obj.empInfo{continuousNodeNum}.queryDistribution(X(continuousNodeNum));
+            end
+
+            % compute the coupla value for the discrete
+            % portions through rectangle differencing
+            vals = [0:2^length(discreteIdxs) - 1];
+            rectangleDiffStates = dec2bin(vals)-'0';
+            mixedProbability = 0;
+            for ii=1:size(rectangleDiffStates,1)
+                rectangleDiffState = rectangleDiffStates(ii,:);
+                diffStateIdx = 1;
+                for diffState=rectangleDiffState
+                    discreteIdx = discreteIdxs(diffStateIdx);
+                    discreteNodeNum = idxs(discreteIdx);
+                    u(discreteIdx) = obj.empInfo{discreteNodeNum}.queryDistribution(X(discreteNodeNum)-diffState);
+                    diffStateIdx = diffStateIdx + 1;
+                end
+                if(parentsFlag)
+                    tmp = (-1)^(sum(rectangleDiffState))*(obj.copulaFamilies{nodeNum}.C_parents_discrete_integrate(u));
+                else
+                    tmp = (-1)^(sum(rectangleDiffState))*(obj.copulaFamilies{nodeNum}.C_discrete_integrate(u));
+                end
+                                
+                mixedProbability = mixedProbability + tmp;
+            end
+
+            % multiply w/ the marginal distributions of the
+            % continuous variables
+            for continuousIdx=continuousIdxs
+                continuousNodeNum = idxs(continuousIdx);
+                mixedProbability = mixedProbability * obj.empInfo{continuousNodeNum}.queryDensity(X(mm,continuousNodeNum));
+            end
+        end
+        
+        function [conditionalProb] = computeMixedConditionalProbability_(X, idxs, nodeNum)
+            jointProbAllNodes = computeMixedJointProbability_(X, idxs, nodeNum, 0);
+            jointProbParentNodes = computeMixedJointProbability_(X, idxs(2:end), nodeNum, 1);
+            conditionalProb = jointProbAllNodes/jointProbParentNodes;
+        end
+        
+        function [ ll_val ] = dataLL(obj, X)
+            M = size(X,1);
+            if(size(X,2)~=obj.D)
+                error('Input data for LL calculation must be the same dimensions as the BN!');
+            end      
+            ll_val = 0;
+            for mm=1:M
+                % for each D-dimensional data point, compute the likelihood
+                totalProb = 1;
+                for dd=1:obj.D
+                    % get the parents for this node
+                    parentIdxs = obj.getParents(d);
+                    if(isempty(parentIdxs))
+                        tmp = obj.empInfo{dd}.queryDistribution(X(mm,dd));
+                    else
+                        allIdxs = [dd parentIdxs];
+                        tmp = computeMixedconditionalProbability_(X(mm,:),allIdxs, dd);
+                    end
+                    totalProb = totalProb * tmp;
+                end
+                
+                if(isnan(totalProb))
+                    1;      % for DEBUGGING :D
+                end
+                if(totalProb<=obj.LOG_CUTOFF)
+                    totalProb = obj.LOG_CUTOFF;
+                end
+                ll_val = ll_val + log(totalProb);
             end
         end
         

@@ -21,7 +21,7 @@
 % continuous node w/ the copula construction.  Here, we use the full joint
 % distribution formula given by Song, Li, Yuan.  See Joint Regression 
 % Analysis of Correlated Data Using Gaussian Copulas -- Biometrics 2009,
-% pp. 3
+% Eq 9
 
 clear;
 clc;
@@ -95,11 +95,11 @@ clgObj = clg(X_hybrid, discreteNodes, dag);
 
 for y1=1:4
     
-    f_y1_y2_est = zeros(1,length(xiContinuous));
-    f_y1_y2 = zeros(1,length(xiContinuous));
-    f_y1_y2_KDE = zeros(1,length(xiContinuous));
-    f_y1_y2_clg = zeros(1,length(xiContinuous));
-    f_y1_y2_mte = zeros(1,length(xiContinuous));
+    f_y2_given_y1_est = zeros(1,length(xiContinuous));
+    f_y2_given_y1 = zeros(1,length(xiContinuous));
+    f_y2_given_y1_KDE = zeros(1,length(xiContinuous));
+    f_y2_given_y1_clg = zeros(1,length(xiContinuous));
+    f_y2_given_y1_mte = zeros(1,length(xiContinuous));
     
     % estimate KDE, MTE, and CLG
     X_continuous_subset = [];
@@ -125,29 +125,23 @@ for y1=1:4
         u2_actual = [a_dist.cdf(y1) continuousDistInfo.queryDistribution(xi)];
         u1_actual = [a_dist.cdf(y1-1) continuousDistInfo.queryDistribution(xi)];
         
-        f_y1_y2(xi_idx) = continuousDistInfo.queryDensity(xi)*(empcopula_val(C_actual_discreteIntegrate,u2_actual) - ...
-                                                                  empcopula_val(C_actual_discreteIntegrate,u1_actual) );
-        f_y1_y2_est(xi_idx) = disty2Est.queryDensity(xi)*(empcopula_val(C_est_discreteIntegrate,u2_est) - ...
-                                                         empcopula_val(C_est_discreteIntegrate,u1_est));
-        f_y1_y2_KDE(xi_idx) = conditionalKDE.queryDensity(xi);
+        f_y2_given_y1(xi_idx) = (continuousDistInfo.queryDensity(xi)*(empcopula_val(C_actual_discreteIntegrate,u2_actual) - ...
+                                                               empcopula_val(C_actual_discreteIntegrate,u1_actual) ))/ a_dist.pdf(y1);
+        f_y2_given_y1_est(xi_idx) = (disty2Est.queryDensity(xi)*(empcopula_val(C_est_discreteIntegrate,u2_est) - ...
+                                                          empcopula_val(C_est_discreteIntegrate,u1_est)))/a_dist.pdf(y1);
+        f_y2_given_y1_KDE(xi_idx) = conditionalKDE.queryDensity(xi);
         
-        f_y1_y2_clg(xi_idx) = normpdf(xi, clgObj.bnParams{2}{y1}.Mean, clgObj.bnParams{2}{y1}.Covariance);
-        f_y1_y2_mte(xi_idx) = mteObj.bnParams{2}{y1}.mte_info.queryDensity(xi);
+        f_y2_given_y1_clg(xi_idx) = normpdf(xi, clgObj.bnParams{2}{y1}.Mean, clgObj.bnParams{2}{y1}.Covariance);
+        f_y2_given_y1_mte(xi_idx) = mteObj.bnParams{2}{y1}.mte_info.queryDensity(xi);
                                     
     end
-    % scale to make density integrate to 1
-    f_y1_y2 = f_y1_y2/trapz(xiContinuous,f_y1_y2);
-    f_y1_y2_est = f_y1_y2_est/trapz(xiContinuous,f_y1_y2_est);
-    f_y1_y2_KDE = f_y1_y2_KDE/trapz(xiContinuous,f_y1_y2_KDE);
-    f_y1_y2_clg = f_y1_y2_clg/trapz(xiContinuous,f_y1_y2_clg);
-    f_y1_y2_mte = f_y1_y2_mte/trapz(xiContinuous,f_y1_y2_mte);
     
     f = figure(1);
-    plot(xiContinuous,f_y1_y2, ...
-         xiContinuous, f_y1_y2_est, ...
-         xiContinuous, f_y1_y2_KDE, ...
-         xiContinuous, f_y1_y2_clg, ...
-         xiContinuous, f_y1_y2_mte); grid on;
+    plot(xiContinuous,f_y2_given_y1, ...
+         xiContinuous, f_y2_given_y1_est, ...
+         xiContinuous, f_y2_given_y1_KDE, ...
+         xiContinuous, f_y2_given_y1_clg, ...
+         xiContinuous, f_y2_given_y1_mte); grid on;
     legend('Generative Model', 'Copula Estimate', 'KDE Estimate', 'CLG', 'MTE'); title(sprintf('Y_1 = %d',y1));
     pause;
     clf(f);
