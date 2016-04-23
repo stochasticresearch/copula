@@ -68,7 +68,7 @@ else
     plotFlag = 0;
 end
 
-K = 100; h = 0.05;      % beta kernel estimation parameters
+K = 25; h = 0.05;      % beta kernel estimation parameters
 bntPath = '../bnt'; addpath(genpath(bntPath));
 mVec = 250:250:2000; mVec = 1000;
 copulaTypeVec = {'Frank', 'Gumbel', 'Clayton', 'Gaussian'};
@@ -323,63 +323,46 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                         % Analysis of Correlated Data Using Gaussian 
                         % Copulas -- Biometrics 2009
                         % Authors: Song, Li, Yuan
+                        fX1 = a_dist.pdf(x1_discrete_conditional);
+                        fX1_hat = distAEst.queryDensity(x1_discrete_conditional);
                         for ii=1:length(xiContinuous)
                             xiContinuous_val = xiContinuous(ii);
                             uuGenerative1 = [a_dist.cdf(x1_discrete_conditional) continuousDistInfo.queryDistribution(xiContinuous_val)];
                             uuGenerative2 = [a_dist.cdf(x1_discrete_conditional-1) continuousDistInfo.queryDistribution(xiContinuous_val)];
-%                             uuGenerative = fixU(uuGenerative);
+
                             uuEst1 = [distAEst.queryDistribution(x1_discrete_conditional) ...
                                       distBEst.queryDistribution(xiContinuous_val)];
                             uuEst2 = [distAEst.queryDistribution(x1_discrete_conditional-1) ...
                                       distBEst.queryDistribution(xiContinuous_val)];
-%                             uuEst = fixU(uuEst);
-                            uuHcbn1 = [hcbnObj.empInfo{1}.queryDistribution(x1_discrete_conditional) ...
-                                      hcbnObj.empInfo{2}.queryDistribution(xiContinuous_val)];
-                            uuHcbn2 = [hcbnObj.empInfo{1}.queryDistribution(x1_discrete_conditional-1) ...
-                                      hcbnObj.empInfo{2}.queryDistribution(xiContinuous_val)];
-%                             uuHcbn = fixU(uuHcbn);
-%                             c_X1X2 = copulapdf(copulaType, uuGenerative, alpha);
-                            c_X1X2 = empcopula_val(C_actual_discrete_integrate, uuGenerative1)-empcopula_val(C_actual_discrete_integrate, uuGenerative2);
-%                             c_hat_X1X2 = empcopula_val(c_est, uuEst);
-                            c_hat_X1X2 = empcopula_val(C_est_discrete_integrate, uuEst1) - empcopula_val(C_est_discrete_integrate, uuEst2);
-                            c_hcbn = empcopula_val(hcbnObj.copulaFamilies{2}.C_discrete_integrate, fliplr(uuHcbn1)) - ...
-                                     empcopula_val(hcbnObj.copulaFamilies{2}.C_discrete_integrate, fliplr(uuHcbn2));        
+                            C_partial_X1X2 = empcopula_val(C_actual_discrete_integrate, uuGenerative1)-empcopula_val(C_actual_discrete_integrate, uuGenerative2);
+                            C_partial_hat_X1X2 = empcopula_val(C_est_discrete_integrate, uuEst1) - empcopula_val(C_est_discrete_integrate, uuEst2);
+                            C_partial_hcbn = empcopula_val(hcbnObj.copulaFamilies{2}.C_discrete_integrate, fliplr(uuEst1)) - empcopula_val(hcbnObj.copulaFamilies{2}.C_discrete_integrate, fliplr(uuEst2));
                             
                             fX2 = continuousDistInfo.queryDensity(xiContinuous_val);
                             fX2_hat = distBEst.queryDensity(xiContinuous_val);                                                                            % was estimated w/ [u2 u1]
                             f_x2_hcbn = hcbnObj.empInfo{2}.queryDensity(xiContinuous_val);
                             
-                            fx2_givenx1_generative(ii) = c_X1X2*fX2;
-                            fx2_givenx1_copulaestf2est(ii) = c_hat_X1X2*fX2_hat;
-                            fx2_givenx1_copulaestf2Actual(ii) = c_hat_X1X2*fX2;
-                            fx2_givenx1_copulaActualf2est(ii) = c_X1X2*fX2_hat;
-                            fx2_givenx1_copulahcbnf2hcbn(ii) = c_hcbn*f_x2_hcbn;
-                            fx2_givenx1_copulahcbnf2Actual(ii) = c_hcbn*fX2;
+                            fx2_givenx1_generative(ii) = C_partial_X1X2*fX2/fX1;
+                            fx2_givenx1_copulaestf2est(ii) = C_partial_hat_X1X2*fX2_hat/fX1_hat;
+                            fx2_givenx1_copulaestf2Actual(ii) = C_partial_hat_X1X2*fX2/fX1;
+                            fx2_givenx1_copulaActualf2est(ii) = C_partial_X1X2*fX2_hat/fX1_hat;
+                            fx2_givenx1_copulahcbnf2hcbn(ii) = hcbnObj.computeMixedConditionalProbability_(...
+                                [x1_discrete_conditional xiContinuous_val], [bb aa], bb);
+                            fx2_givenx1_copulahcbnf2Actual(ii) = C_partial_hcbn*fX2/fX1;
+                            
                             fx2_givenx1_clg(ii) = normpdf(xiContinuous_val, clgObj.bnParams{2}{x1_discrete_conditional}.Mean, clgObj.bnParams{2}{x1_discrete_conditional}.Covariance);
                             fx2_givenx1_mte(ii) = mteObj.bnParams{2}{x1_discrete_conditional}.mte_info.queryDensity(xiContinuous_val);
                             fx2_givenx1_conditionalKDE(ii) = conditionalKDE.queryDensity(xiContinuous_val);
                             
-                            copulaActual(ii) = c_X1X2;
-                            copulaEst(ii) = c_hat_X1X2;
-                            copulaHcbn(ii) = c_hcbn;
+                            copulaActual(ii) = C_partial_X1X2;
+                            copulaEst(ii) = C_partial_hat_X1X2;
+                            copulaHcbn(ii) = C_partial_hcbn;
                             f2Actual(ii) = fX2;
                             f2Est(ii) = fX2_hat;
                             f2Hcbn(ii) = f_x2_hcbn;
                             u2Val(ii) = uuGenerative1(2);
                         end
                         
-                        % normalize all the conditional probabilities
-                        % TODO: should we have to do this?
-                        fx2_givenx1_generative = fx2_givenx1_generative/trapz(xiContinuous, fx2_givenx1_generative);
-                        fx2_givenx1_copulaestf2est = fx2_givenx1_copulaestf2est/trapz(xiContinuous,fx2_givenx1_copulaestf2est);
-                        fx2_givenx1_copulaestf2Actual = fx2_givenx1_copulaestf2Actual/trapz(xiContinuous,fx2_givenx1_copulaestf2Actual);
-                        fx2_givenx1_copulaActualf2est = fx2_givenx1_copulaActualf2est/trapz(xiContinuous,fx2_givenx1_copulaActualf2est);
-                        fx2_givenx1_copulahcbnf2hcbn = fx2_givenx1_copulahcbnf2hcbn/trapz(xiContinuous,fx2_givenx1_copulahcbnf2hcbn);
-                        fx2_givenx1_copulahcbnf2Actual = fx2_givenx1_copulahcbnf2Actual/trapz(xiContinuous,fx2_givenx1_copulahcbnf2Actual);
-                        fx2_givenx1_clg = fx2_givenx1_clg/trapz(xiContinuous,fx2_givenx1_clg);
-                        fx2_givenx1_mte = fx2_givenx1_mte/trapz(xiContinuous,fx2_givenx1_mte);
-                        fx2_givenx1_conditionalKDE = fx2_givenx1_conditionalKDE/trapz(xiContinuous,fx2_givenx1_conditionalKDE);
-
                         % compute kl_divergences
                         div_cEstf2Est = kldivergence(fx2_givenx1_generative, fx2_givenx1_copulaestf2est, xiContinuous);
                         div_cEstf2Actual = kldivergence(fx2_givenx1_generative, fx2_givenx1_copulaestf2Actual, xiContinuous);
@@ -405,7 +388,7 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                                  xiContinuous, fx2_givenx1_copulaestf2est, ...
                                  xiContinuous, fx2_givenx1_copulaestf2Actual, ...
                                  xiContinuous, fx2_givenx1_copulaActualf2est, ...
-                                 xiContinuous, fx2_givenx1_copulahcbnf2hcbn, 'o-',...
+                                 xiContinuous, fx2_givenx1_copulahcbnf2hcbn, 'o-', ...
                                  xiContinuous, fx2_givenx1_copulahcbnf2Actual); 
                             grid on; title(sprintf('X_1=%d',x1_discrete_conditional));
                             h_legend1 = legend('$c*f(x_2)$', ...
@@ -413,7 +396,7 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                                 strcat('$\hat{c}_{RANK}*f(x_2)$', sprintf(' KLdiv=%0.02f', div_cEstf2Actual)), ...
                                 strcat('$c*\hat{f}(x_2)$', sprintf(' KLdiv=%0.02f', div_cActualf2Est)), ...
                                 strcat('$\hat{c}_{HCBN-ECDF}*\hat{f}(x_2)_{HCBN}$', sprintf(' KLdiv=%0.02f', div_chcbnf2hcbn)), ...
-                                strcat('$\hat{c}_{HCBN-ECDF}*f(x_2)$', sprintf(' KLdiv=%0.02f', div_chcbnF2Actual)) );
+                                strcat('$\hat{c}_{HCBN-ECDF}*f(x_2)$', sprintf(' KLdiv=%0.02f', div_chcbnF2Actual)));
                             set(h_legend1,'FontSize',12);
                             set(h_legend1,'Interpreter','latex')
 
@@ -435,7 +418,12 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                                  u2Val, copulaEst, ...
                                  u2Val, copulaHcbn);
                             grid on;
-                            title(sprintf('%s Marginal Copula u_1=%0.02f', copulaType, uuGenerative1(1)));
+                            if(strcmpi(copulaType,'Gaussian'))
+                                alphaDisp = alpha(1,2);
+                            else
+                                alphaDisp = alpha;
+                            end
+                            title(sprintf('%s(%0.02f) Marginal Copula u_1=%0.02f', copulaType, alphaDisp, uuGenerative1(1)));
                             h_legend3 = legend('$c$', '$\hat{c}_{RANK}$', '$\hat{c}_{HCBN-ECDF}$');
                             xlabel('u_2');
                             set(h_legend3,'FontSize',12);
@@ -547,7 +535,7 @@ end
 
 function [klDivMat] = runD3(a_probs, b_probs)
 global mVec copulaTypeVec alphaVec RhoVecs_3D continuousDistTypeVec 
-global numKLDivCalculated numMC bntPath logFile K h
+global numKLDivCalculated numMC bntPath logFile K h plotFlag
 
 a_dist = makedist('Multinomial','Probabilities', a_probs);
 b_dist = makedist('Multinomial','Probabilities', b_probs);
@@ -592,10 +580,10 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                 for mcSimNum=1:numMC
                     progressAmt = progressIdx/numTotalLoops*100;
                     if(strcmp(copulaType,'Gaussian'))
-                        progressStr = sprintf('copulaType=%s x2DistType=%s rho=%f M=%d MC Sim# = %d || Progress=%0.04f\n', ...
+                        progressStr = sprintf('copulaType=%s x3DistType=%s rho=%f M=%d MC Sim# = %d || Progress=%0.04f\n', ...
                                         copulaType, continuousDistType, Rho(1,2), M, mcSimNum, progressAmt);
                     else
-                        progressStr = sprintf('copulaType=%s x2DistType=%s alpha=%d M=%d MC Sim# = %d || Progress=%0.04f\n', ...
+                        progressStr = sprintf('copulaType=%s x3DistType=%s alpha=%d M=%d MC Sim# = %d || Progress=%0.04f\n', ...
                                         copulaType, continuousDistType, alpha, M, mcSimNum, progressAmt);
                     end
                     dispstat(progressStr,'timestamp');
@@ -603,13 +591,13 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                     
                     % generate the copula random variates
                     if(strcmp(copulaType, 'Frank'))
-                        c_X1X2X3 = frankcopularnd(M, D, alpha);
+                        u_X1X2X3 = frankcopularnd(M, D, alpha);
                     elseif(strcmp(copulaType, 'Gumbel'))
-                        c_X1X2X3 = gumbelcopularnd(M, D, alpha);
+                        u_X1X2X3 = gumbelcopularnd(M, D, alpha);
                     elseif(strcmp(copulaType, 'Clayton'))
-                        c_X1X2X3 = claytoncopularnd(M, D, alpha);
+                        u_X1X2X3 = claytoncopularnd(M, D, alpha);
                     elseif(strcmp(copulaType, 'Gaussian'))
-                        c_X1X2X3 = copularnd('Gaussian', Rho, M);
+                        u_X1X2X3 = copularnd('Gaussian', Rho, M);
                     else
                         error('Copula Type not recognized!\n');
                     end
@@ -627,17 +615,17 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                     elseif(strcmp(continuousDistType, 'ThickTailed'))
                         xContinuous = trnd(1, M, 1);
                     else
-                        error('Unknown X2 Dist Type!');
+                        error('Unknown X3 Dist Type!');
                     end
                     xContinuous = xContinuous(randperm(M),:);     % permute for evenness of samples
                     
                     [fContinous,xiContinuous] = emppdf(xContinuous,0);
                     FContinuous = empcdf(xContinuous,0);
                     continuousDistInfo = rvEmpiricalInfo(xiContinuous,fContinous,FContinuous);
-                    X_hybrid(:,1) = a_dist.icdf(c_X1X2X3(:,1));
-                    X_hybrid(:,2) = b_dist.icdf(c_X1X2X3(:,2));
+                    X_hybrid(:,1) = a_dist.icdf(u_X1X2X3(:,1));
+                    X_hybrid(:,2) = b_dist.icdf(u_X1X2X3(:,2));
                     for ii=1:M
-                        X_hybrid(ii,3) = continuousDistInfo.invDistribution(c_X1X2X3(ii,3));
+                        X_hybrid(ii,3) = continuousDistInfo.invDistribution(u_X1X2X3(ii,3));
                     end
                     
                     isdiscrete = 1;
@@ -663,8 +651,35 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                     X_hybrid_continued(:,2) = continueRv(X_hybrid(:,2));
                     
                     U_hybrid_continued = pseudoobs(X_hybrid_continued);
+                    
+                    % setup all the copula calculations for querying after
+                    u = linspace(0,1,K); [U1_3,U2_3,U3_3] = ndgrid(u); [U1_2,U2_2] = ndgrid(u);
                     c_est_X1X2X3 = empcopulapdf(U_hybrid_continued, h, K, 'betak');
+                    C_est_X1X2X3 = cumtrapz(u,cumtrapz(u,cumtrapz(u,c_est_X1X2X3,1),2),3);
+                    C_est_X1X2X3_discrete_integrate = cumtrapz(u,cumtrapz(u,c_est_X1X2X3,1),2);
                     c_est_X1X2 = empcopulapdf(U_hybrid_continued(:,1:2), h, K, 'betak');
+                    C_est_X1X2 = cumtrapz(u,cumtrapz(u,c_est_X1X2,1),2);
+                    C_est_X1X2_discrete_integrate = C_est_X1X2;
+
+                    if(strcmp(copulaType, 'Frank'))
+                        c_actual_X1X2X3 = reshape(frankcopulapdf([U1_3(:) U2_3(:) U3_3(:)], alpha),K,K,K);
+                        c_actual_X1X2 = reshape(frankcopulapdf([U1_2(:) U2_2(:)], alpha),K,K);
+                    elseif(strcmp(copulaType, 'Gumbel'))
+                        c_actual_X1X2X3 = reshape(gumbelcopulapdf([U1_3(:) U2_3(:) U3_3(:)], alpha),K,K,K);
+                        c_actual_X1X2 = reshape(gumbelcopulapdf([U1_2(:) U2_2(:)], alpha),K,K);
+                    elseif(strcmp(copulaType, 'Clayton'))
+                        c_actual_X1X2X3 = reshape(claytoncopulapdf([U1_3(:) U2_3(:) U3_3(:)], alpha),K,K,K);
+                        c_actual_X1X2 = reshape(claytoncopulapdf([U1_2(:) U2_2(:)], alpha),K,K);
+                    elseif(strcmp(copulaType, 'Gaussian'))
+                        c_actual_X1X2X3 = reshape(copulapdf('Gaussian', [U1_3(:) U2_3(:) U3_3(:)], Rho),K,K,K);
+                        c_actual_X1X2 = reshape(copulapdf('Gaussian', [U1_2(:) U2_2(:)], Rho(1:2,1:2)),K,K);
+                    else
+                        error('Copula Type not recognized!\n');
+                    end
+                    C_actual_X1X2X3_discrete_integrate = cumtrapz(u,cumtrapz(u, c_actual_X1X2X3, 1),2);
+                    C_actual_X1X2_discrete_integrate = cumtrapz(u,cumtrapz(u, c_actual_X1X2, 1),2);
+                    %%%%%%%%%%%%%%%%%%%%%%%
+                    
                     
                     x1_discrete_conditional_vec = 1:1:length(a_probs);
                     x2_discrete_conditional_vec = 1:1:length(b_probs);
@@ -696,65 +711,83 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                             fx3_givenx1x2_conditionalKDE = zeros(1,length(xiContinuous));
                             
                             % compute the conditional density w/ the formula
-                            % f(x3|x1,x2) = c(F(x1),F(x2),F(x3))/c(F(x1),F(x2))*f(x3)
-                            % I think for the archimedean copulas we can
-                            % just use the same copula form for c_parents
-                            % and c_all because there is only one
-                            % dependency parameter, so that describes the
-                            % pairwise relationship as well as the overall
-                            % relationship.  For the Gaussian copula, we
-                            % pull out the appropriate subset of the full
-                            % Rho matrix describing that dependency
-                            % structure
+                            % given by Eq.9 in Joint Regression 
+                            % Analysis of Correlated Data Using Gaussian 
+                            % Copulas -- Biometrics 2009
+                            % Authors: Song, Li, Yuan
                             for ii=1:length(xiContinuous)
                                 xiContinuous_val = xiContinuous(ii);
-                                uuGenerativeX1X2X3 = [a_dist.cdf(x1_discrete_conditional) ...
-                                                      b_dist.cdf(x2_discrete_conditional) ...
-                                                      continuousDistInfo.queryDistribution(xiContinuous_val)];
-                                uuGenerativeX1X2X3 = fixU(uuGenerativeX1X2X3);
-                                uuGenerativeX1X2 = uuGenerativeX1X2X3(1:2);
-                                uuEstX1X2X3 = [distAEst.queryDistribution(x1_discrete_conditional) ...
-                                               distBEst.queryDistribution(x2_discrete_conditional) ...
-                                               distCEst.queryDistribution(xiContinuous_val)];
-                                uuEstX1X2X3 = fixU(uuEstX1X2X3);
-                                uuEstX1X2 = uuEstX1X2X3(1:2);
-                                uuHcbnX1X2X3 = [hcbnObj.empInfo{1}.distribution(x1_discrete_conditional) ...
-                                                hcbnObj.empInfo{2}.distribution(x2_discrete_conditional) ...
-                                                hcbnObj.empInfo{3}.queryDistribution(xiContinuous_val)];
-                                uuHcbnX1X2X3 = fixU(uuHcbnX1X2X3);
-                                uuHcbnX1X2 = uuHcbnX1X2X3(1:2);
+                                uuGenerativeX1X2X3_1 = [a_dist.cdf(x1_discrete_conditional) ...
+                                                        b_dist.cdf(x2_discrete_conditional) ...
+                                                        continuousDistInfo.queryDistribution(xiContinuous_val)];
+                                uuGenerativeX1X2X3_2 = [a_dist.cdf(x1_discrete_conditional-1) ...
+                                                        b_dist.cdf(x2_discrete_conditional) ...
+                                                        continuousDistInfo.queryDistribution(xiContinuous_val)];
+                                uuGenerativeX1X2X3_3 = [a_dist.cdf(x1_discrete_conditional) ...
+                                                        b_dist.cdf(x2_discrete_conditional-1) ...
+                                                        continuousDistInfo.queryDistribution(xiContinuous_val)];
+                                uuGenerativeX1X2X3_4 = [a_dist.cdf(x1_discrete_conditional-1) ...
+                                                        b_dist.cdf(x2_discrete_conditional-1) ...
+                                                        continuousDistInfo.queryDistribution(xiContinuous_val)];
+                                uuGenerativeX1X2_1 = uuGenerativeX1X2X3_1(1:2);
+                                uuGenerativeX1X2_2 = uuGenerativeX1X2X3_2(1:2);
+                                uuGenerativeX1X2_3 = uuGenerativeX1X2X3_3(1:2);
+                                uuGenerativeX1X2_4 = uuGenerativeX1X2X3_4(1:2);
                                 
-                                if(strcmp(copulaType, 'Frank'))
-                                    c_X1X2X3 = frankcopulapdf(uuGenerativeX1X2X3, alpha);
-                                    c_X1X2 = frankcopulapdf(uuGenerativeX1X2, alpha);
-                                elseif(strcmp(copulaType, 'Gumbel'))
-                                    c_X1X2X3 = gumbelcopulapdf(uuGenerativeX1X2X3, alpha);
-                                    c_X1X2 = gumbelcopulapdf(uuGenerativeX1X2, alpha);
-                                elseif(strcmp(copulaType, 'Clayton'))
-                                    c_X1X2X3 = claytoncopulapdf(uuGenerativeX1X2X3, alpha);
-                                    c_X1X2 = claytoncopulapdf(uuGenerativeX1X2, alpha);
-                                elseif(strcmp(copulaType, 'Gaussian'))
-                                    c_X1X2X3 = copulapdf('Gaussian', uuGenerativeX1X2X3, Rho);
-                                    c_X1X2 = copulapdf('Gaussian', uuGenerativeX1X2, Rho(1:2,1:2));
-                                else
-                                    error('Copula Type not recognized!\n');
-                                end
-                                c_hat_X1X2X3 = empcopula_val(c_est_X1X2X3, uuEstX1X2X3);
-                                c_hat_X1X2 = empcopula_val(c_est_X1X2, uuEstX1X2);
-                                c_hcbn_X1X2X3 = empcopula_val(hcbnObj.copulaFamilies{3}.c, [uuHcbnX1X2X3(3) uuHcbnX1X2X3(1:2)]);   % reverse ordering of uuHcbn to be consistent
-                                                                                                                            % w/ how hcbn code estimates copula
-                                c_hcbn_X1X2 = empcopula_val(hcbnObj.copulaFamilies{3}.c_parents, uuHcbnX1X2);       % I don't think any ordering needs to be reversed here
+                                uuEstX1X2X3_1 = [distAEst.queryDistribution(x1_discrete_conditional) ...
+                                                 distBEst.queryDistribution(x2_discrete_conditional) ...
+                                                 distCEst.queryDistribution(xiContinuous_val)];
+                                uuEstX1X2X3_2 = [distAEst.queryDistribution(x1_discrete_conditional-1) ...
+                                                 distBEst.queryDistribution(x2_discrete_conditional) ...
+                                                 distCEst.queryDistribution(xiContinuous_val)];
+                                uuEstX1X2X3_3 = [distAEst.queryDistribution(x1_discrete_conditional) ...
+                                                 distBEst.queryDistribution(x2_discrete_conditional-1) ...
+                                                 distCEst.queryDistribution(xiContinuous_val)];
+                                uuEstX1X2X3_4 = [distAEst.queryDistribution(x1_discrete_conditional-1) ...
+                                                 distBEst.queryDistribution(x2_discrete_conditional-1) ...
+                                                 distCEst.queryDistribution(xiContinuous_val)];
+                                uuEstX1X2_1 = uuEstX1X2X3_1(1:2);
+                                uuEstX1X2_2 = uuEstX1X2X3_2(1:2);
+                                uuEstX1X2_3 = uuEstX1X2X3_3(1:2);
+                                uuEstX1X2_4 = uuEstX1X2X3_4(1:2);
+                                
+% % %                                 uuHcbnX1X2X3 = [hcbnObj.empInfo{1}.distribution(x1_discrete_conditional) ...
+% % %                                                 hcbnObj.empInfo{2}.distribution(x2_discrete_conditional) ...
+% % %                                                 hcbnObj.empInfo{3}.queryDistribution(xiContinuous_val)];
+% % %                                 uuHcbnX1X2X3 = fixU(uuHcbnX1X2X3);
+% % %                                 uuHcbnX1X2 = uuHcbnX1X2X3(1:2);
+                                
+                                C_actual_partial_X1X2X3 = empcopula_val(C_actual_X1X2X3_discrete_integrate, uuGenerativeX1X2X3_1) - ...
+                                                   empcopula_val(C_actual_X1X2X3_discrete_integrate, uuGenerativeX1X2X3_2) - ...
+                                                   empcopula_val(C_actual_X1X2X3_discrete_integrate, uuGenerativeX1X2X3_3) + ...
+                                                   empcopula_val(C_actual_X1X2X3_discrete_integrate, uuGenerativeX1X2X3_4);
+                                C_est_partial_hat_X1X2X3 = empcopula_val(C_est_X1X2X3_discrete_integrate, uuEstX1X2X3_1) - ...
+                                                       empcopula_val(C_est_X1X2X3_discrete_integrate, uuEstX1X2X3_2) - ...
+                                                       empcopula_val(C_est_X1X2X3_discrete_integrate, uuEstX1X2X3_3) + ...
+                                                       empcopula_val(C_est_X1X2X3_discrete_integrate, uuEstX1X2X3_4);
+                                C_actual_partial_X1X2 = empcopula_val(C_actual_X1X2_discrete_integrate, uuGenerativeX1X2_1) - ...
+                                                 empcopula_val(C_actual_X1X2_discrete_integrate, uuGenerativeX1X2_2) - ...
+                                                 empcopula_val(C_actual_X1X2_discrete_integrate, uuGenerativeX1X2_3) + ...
+                                                 empcopula_val(C_actual_X1X2_discrete_integrate, uuGenerativeX1X2_4);
+                                C_est_partial_hat_X1X2 = empcopula_val(C_est_X1X2_discrete_integrate, uuEstX1X2_1) - ...
+                                                     empcopula_val(C_est_X1X2_discrete_integrate, uuEstX1X2_2) - ...
+                                                     empcopula_val(C_est_X1X2_discrete_integrate, uuEstX1X2_3) + ...
+                                                     empcopula_val(C_est_X1X2_discrete_integrate, uuEstX1X2_4);
+                                           
+% % %                                 c_hcbn_X1X2X3 = empcopula_val(hcbnObj.copulaFamilies{3}.c, [uuHcbnX1X2X3(3) uuHcbnX1X2X3(1:2)]);   % reverse ordering of uuHcbn to be consistent                                                                                      % w/ how hcbn code estimates copula
+% % %                                 c_hcbn_X1X2 = empcopula_val(hcbnObj.copulaFamilies{3}.c_parents, uuHcbnX1X2);       % I don't think any ordering needs to be reversed here
                                 
                                 fX3 = continuousDistInfo.queryDensity(xiContinuous_val);
                                 fX3_hat = distCEst.queryDensity(xiContinuous_val);
-                                fX3_hcbn = hcbnObj.empInfo{3}.queryDensity(xiContinuous_val);
+% % %                                 fX3_hcbn = hcbnObj.empInfo{3}.queryDensity(xiContinuous_val);
 
                                 % assign all copula based valued
-                                fx3_givenx1x2_copula(ii) = c_X1X2X3/c_X1X2*fX3;
-                                fx3_givenx1x2_copulaestf3est(ii) = c_hat_X1X2X3/c_hat_X1X2*fX3_hat;
-                                fx3_givenx1x2_copulaestf3Actual(ii) = c_hat_X1X2X3/c_hat_X1X2*fX3;
-                                fx3_givenx1x2_copulaActualf3est(ii) = c_X1X2X3/c_X1X2*fX3_hat;
-                                fx3_givenx1x2_hcbn(ii) = c_hcbn_X1X2X3/c_hcbn_X1X2*fX3_hcbn;
+                                fx3_givenx1x2_copula(ii) = C_actual_partial_X1X2X3*fX3/C_actual_partial_X1X2;
+                                fx3_givenx1x2_copulaestf3est(ii) = C_est_partial_hat_X1X2X3*fX3_hat/C_est_partial_hat_X1X2;
+                                fx3_givenx1x2_copulaestf3Actual(ii) = C_est_partial_hat_X1X2X3*fX3/C_est_partial_hat_X1X2;
+                                fx3_givenx1x2_copulaActualf3est(ii) = C_actual_partial_X1X2X3*fX3_hat/C_actual_partial_X1X2;
+                                fx3_givenx1x2_hcbn(ii) = hcbnObj.computeMixedConditionalProbability_( ...
+                                    [x1_discrete_conditional x2_discrete_conditional xiContinuous_val], [cc aa bb], cc);
                             
                                 % assign KDE
                                 fx3_givenx1x2_conditionalKDE(ii) = conditionalKDE.queryDensity(xiContinuous_val);
@@ -808,28 +841,39 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                             klDivMCMat(7,x1_discrete_conditional,x2_discrete_conditional,mcSimNum) = div_clg;
                             
                             % plot the actual vs the copula version and compare the differences
-                            fig1 = figure(1);
-                            plot(xiContinuous, fx3_givenx1x2_copula, 'b*-', ...
-                                 xiContinuous, fx3_givenx1x2_copulaestf3est, ...
-                                 xiContinuous, fx3_givenx1x2_copulaestf3Actual, ...
-                                 xiContinuous, fx3_givenx1x2_copulaActualf3est, ...
-                                 xiContinuous, fx3_givenx1x2_hcbn, 'o-',...
-                                 xiContinuous, fx3_givenx1x2_conditionalKDE, ...
-                                 xiContinuous, fx3_givenx1x2_mte, ...
-                                 xiContinuous, fx3_givenx1x2_clg); 
-                            grid on; title(sprintf('X_1=%d X_2=%d',x1_discrete_conditional, x2_discrete_conditional));
-                            h_legend = legend('$c*f(x_3)$', ...
-                                strcat('$\hat{c}_{RANK}*\hat{f}(x_3)$', sprintf(' KLdiv=%0.02f', div_cEstf3Est)), ...
-                                strcat('$\hat{c}_{RANK}*f(x_3)$', sprintf(' KLdiv=%0.02f', div_cEstf3Actual)), ...
-                                strcat('$c*\hat{f}(x_3)$', sprintf(' KLdiv=%0.02f', div_cActualf3Est)), ...
-                                strcat('$\hat{c}_{HCBN-ECDF}$', sprintf(' KLdiv=%0.02f', div_hcbn)), ...
-                                strcat('KDE', sprintf(' KLdiv=%0.02f', div_kde)), ...
-                                strcat('MTE', sprintf(' KLdiv=%0.02f', div_mte)), ...
-                                strcat('CLG', sprintf(' KLdiv=%0.02f', div_clg)) );
-                            set(h_legend,'FontSize',10);
-                            set(h_legend,'Interpreter','latex')
-                            pause;
-                            clf(fig1);
+                            if(plotFlag)
+                                fig1 = figure(1);
+                                subplot(1,2,1);
+                                plot(xiContinuous, fx3_givenx1x2_copula, 'b*-', ...
+                                     xiContinuous, fx3_givenx1x2_copulaestf3est, ...
+                                     xiContinuous, fx3_givenx1x2_copulaestf3Actual, ...
+                                     xiContinuous, fx3_givenx1x2_copulaActualf3est, ...
+                                     xiContinuous, fx3_givenx1x2_hcbn, 'o-'); 
+                                grid on; title(sprintf('X_1=%d X_2=%d',x1_discrete_conditional, x2_discrete_conditional));
+                                h_legend = legend('$c*f(x_3)$', ...
+                                    strcat('$\hat{c}_{RANK}*\hat{f}(x_3)$', sprintf(' KLdiv=%0.02f', div_cEstf3Est)), ...
+                                    strcat('$\hat{c}_{RANK}*f(x_3)$', sprintf(' KLdiv=%0.02f', div_cEstf3Actual)), ...
+                                    strcat('$c*\hat{f}(x_3)$', sprintf(' KLdiv=%0.02f', div_cActualf3Est)), ...
+                                    strcat('$\hat{c}_{HCBN-ECDF}$', sprintf(' KLdiv=%0.02f', div_hcbn)) );
+                                set(h_legend,'FontSize',10);
+                                set(h_legend,'Interpreter','latex')
+                                
+                                subplot(1,2,2);
+                                plot(xiContinuous, fx3_givenx1x2_copula, 'b*-', ...
+                                     xiContinuous, fx3_givenx1x2_conditionalKDE, ...
+                                     xiContinuous, fx3_givenx1x2_mte, ...
+                                     xiContinuous, fx3_givenx1x2_clg); 
+                                grid on; title(sprintf('X_1=%d X_2=%d',x1_discrete_conditional, x2_discrete_conditional));
+                                h_legend = legend('$c*f(x_3)$', ...
+                                    strcat('KDE', sprintf(' KLdiv=%0.02f', div_kde)), ...
+                                    strcat('MTE', sprintf(' KLdiv=%0.02f', div_mte)), ...
+                                    strcat('CLG', sprintf(' KLdiv=%0.02f', div_clg)) );
+                                set(h_legend,'FontSize',10);
+                                set(h_legend,'Interpreter','latex')
+                                
+                                pause;
+                                clf(fig1);
+                            end
                         end
                     end
                     progressIdx = progressIdx + 1;

@@ -263,7 +263,7 @@ classdef hcbn < handle
                     % those out of c.  This is the equivalent of takign the
                     % partial derivative of the copula function w.r.t. only
                     % the continuous variables
-                    [~,discreteDimensions,~] = intersect(allIdxs,obj.discNodeIdxs);
+                    [~,discreteDimensions,~] = intersect(allIdxs,obj.discNodeIdxs); discreteDimensions = discreteDimensions';
                     C_discrete_integrate = c;
                     for discreteDimension=discreteDimensions
                         C_discrete_integrate = cumtrapz(u,C_discrete_integrate,discreteDimension);
@@ -287,7 +287,8 @@ classdef hcbn < handle
                         for dim=1:length(parentNames)
                             C_parents = cumtrapz(u,C_parents,dim);
                         end
-                        [~,discreteDimensionsParents,~] = intersect(allIdxs,obj.discNodeIdxs);
+                        allIdxs = parentIdxs;
+                        [~,discreteDimensionsParents,~] = intersect(allIdxs,obj.discNodeIdxs); discreteDimensionsParents = discreteDimensionsParents';
                         C_parents_discrete_integrate = c_parents;
                         for discreteDimension=discreteDimensionsParents
                             C_parents_discrete_integrate = cumtrapz(u,C_parents_discrete_integrate,discreteDimension);
@@ -381,7 +382,7 @@ classdef hcbn < handle
                         diffStateIdx = diffStateIdx + 1;
                     end
                     if(parentsFlag)
-                        tmp = (-1)^(sum(rectangleDiffState))*empcoupla_val(obj.copulaFamilies{nodeNum}.C_parents_discrete_integrate, u);
+                        tmp = (-1)^(sum(rectangleDiffState))*empcopula_val(obj.copulaFamilies{nodeNum}.C_parents_discrete_integrate, u);
                     else
                         tmp = (-1)^(sum(rectangleDiffState))*empcopula_val(obj.copulaFamilies{nodeNum}.C_discrete_integrate, u);
                     end
