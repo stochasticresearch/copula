@@ -1,23 +1,24 @@
-%**************************************************************************
-%* 
-%* Copyright (C) 2016  Kiran Karra <kiran.karra@gmail.com>
-%*
-%* This program is free software: you can redistribute it and/or modify
-%* it under the terms of the GNU General Public License as published by
-%* the Free Software Foundation, either version 3 of the License, or
-%* (at your option) any later version.
-%*
-%* This program is distributed in the hope that it will be useful,
-%* but WITHOUT ANY WARRANTY; without even the implied warranty of
-%* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-%* GNU General Public License for more details.
-%*
-%* You should have received a copy of the GNU General Public License
-%* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-%* 
-%**************************************************************************
-
 classdef clg < handle
+    %CLG Definition of a Conditional Linear Gaussian Bayesian Network
+    %**********************************************************************
+    %* 
+    %* Copyright (C) 2016  Kiran Karra <kiran.karra@gmail.com>
+    %*
+    %* This program is free software: you can redistribute it and/or modify
+    %* it under the terms of the GNU General Public License as published by
+    %* the Free Software Foundation, either version 3 of the License, or
+    %* (at your option) any later version.
+    %*
+    %* This program is distributed in the hope that it will be useful,
+    %* but WITHOUT ANY WARRANTY; without even the implied warranty of
+    %* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    %* GNU General Public License for more details.
+    %*
+    %* You should have received a copy of the GNU General Public License
+    %* along with this program.  If not, see <http://www.gnu.org/licenses/>
+    %* 
+    %**********************************************************************
+    
     properties
         dag;        % the Directed Acyclic Graph structure.  The format of
                     % the DAG is an adjancency matrix.  Element (i,j)
@@ -246,7 +247,7 @@ classdef clg < handle
 					nodeBnParam = obj.bnParams{node};
 					if(isa(nodeBnParam, 'rvEmpiricalInfo'))
 						% discrete root node
-						familyProb = familyProb * nodeBnParam.queryDensity(X(mm,node));
+						familyProb = familyProb * nodeBnParam.pdf(X(mm,node));
 					elseif(length(nodeBnParam)==1)
 						% continuous root node
 						familyProb = familyProb * normpdf(X(mm,node), nodeBnParam.Mean, nodeBnParam.Covariance);

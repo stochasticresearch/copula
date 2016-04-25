@@ -57,7 +57,7 @@ else
     F = empcdf(x,0);
     myObj = rvEmpiricalInfo(xi,f,F);
     for ii=1:M
-        X(ii,2) = myObj.invDistribution(U(ii,2));
+        X(ii,2) = myObj.icdf(U(ii,2));
     end
 %     X(:,2) = unifinv(U(:,2),-2,2);
 end
@@ -69,7 +69,7 @@ if(nargout>1)
     llvec = zeros(M,1);
     for ii=1:M
         xi = X(ii,:);
-%         u = [a_dist.cdf(xi(1)) myObj.queryDistribution(xi(2))];
+%         u = [a_dist.cdf(xi(1)) myObj.cdf(xi(2))];
         u = [a_dist.cdf(xi(1)) unifcdf(xi(2),-2,2)];
         uuvec = zeros(1,length(u));
         for jj=1:length(u)
@@ -85,11 +85,11 @@ if(nargout>1)
         
         % here we are just computing f(x1,x2) = f(x1)*f(x2)*c(F(x1),F(x2)) and then taking
         % the LOG
-%         llval = log( a_dist.pdf(xi(1))*myObj.queryDensity(xi(2))* frankcopulapdf(uuvec, alpha) );
+%         llval = log( a_dist.pdf(xi(1))*myObj.pdf(xi(2))* frankcopulapdf(uuvec, alpha) );
         llval = log( a_dist.pdf(xi(1))*unifpdf(xi(2),-2,2)* frankcopulapdf(uuvec, alpha) );
 %         fprintf('%s || %s >> copulapdf=%0.02f >> f(x1)=%0.02f f(x2)=%0.02f ll=%0.02f\n', ...
 %             sprintf('%f,', xi), sprintf('%f,', uuvec), frankcopulapdf(uuvec, alpha), ... 
-%             a_dist.pdf(xi(1)), myObj.queryDensity(xi(2)), llval );
+%             a_dist.pdf(xi(1)), myObj.pdf(xi(2)), llval );
         llvec(ii) = llval;
     end
 end

@@ -32,7 +32,7 @@ for numPtToTest=numPtsToTest
     u = unifrnd(0,1,numPtToTest,1);
     f_xform = zeros(1,numPtToTest);
     for ii=1:numPtToTest
-        f_xform(ii) = continuousDistInfo.invDistribution(u(ii));
+        f_xform(ii) = continuousDistInfo.icdf(u(ii));
     end
     [femp,xemp] = emppdf(f_xform, 0);
     fig1 = figure(1);
@@ -129,7 +129,7 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                     continuousDistInfo = rvEmpiricalInfo(xi2,f2,F2);
                     X_hybrid(:,1) = a_dist.icdf(U(:,1));
                     for ii=1:M
-                        X_hybrid(ii,2) = continuousDistInfo.invDistribution(U(ii,2));
+                        X_hybrid(ii,2) = continuousDistInfo.icdf(U(ii,2));
                     end
 
                     [f1est,x1est] = emppdf(X_hybrid(:,1),1);
@@ -182,27 +182,27 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                         % f(x2|x1) = c(F(x1),F(x2))*f(x2)
                         for ii=1:length(xi2)
                             xi2_val = xi2(ii);
-                            uuGenerative = [a_dist.cdf(x1_discrete_conditional) continuousDistInfo.queryDistribution(xi2_val)];
+                            uuGenerative = [a_dist.cdf(x1_discrete_conditional) continuousDistInfo.cdf(xi2_val)];
                             uuGenerative = fixU(uuGenerative);
 
-                            fx2_givenx1_copula(ii) = copulapdf(copulaType, uuGenerative, alpha)*continuousDistInfo.queryDensity(xi2_val);
-                            uuEst = [discreteEstDistInfo.queryDistribution(x1_discrete_conditional) ...
-                                     continuousEstDistInfo.queryDistribution(xi2_val)];
+                            fx2_givenx1_copula(ii) = copulapdf(copulaType, uuGenerative, alpha)*continuousDistInfo.pdf(xi2_val);
+                            uuEst = [discreteEstDistInfo.cdf(x1_discrete_conditional) ...
+                                     continuousEstDistInfo.cdf(xi2_val)];
                             uuEst = fixU(uuEst);
-                            fx2_givenx1_copulaestf2est(ii) = empcopula_val(c_est, uuEst)*continuousEstDistInfo.queryDensity(xi2_val);
-                            fx2_givenx1_copulaestf2Actual(ii) = empcopula_val(c_est, uuEst)*continuousDistInfo.queryDensity(xi2_val);
-                            fx2_givenx1_copulaActualf2est(ii) = copulapdf(copulaType, uuGenerative, alpha)*continuousEstDistInfo.queryDensity(xi2_val);
+                            fx2_givenx1_copulaestf2est(ii) = empcopulaval(c_est, uuEst)*continuousEstDistInfo.pdf(xi2_val);
+                            fx2_givenx1_copulaestf2Actual(ii) = empcopulaval(c_est, uuEst)*continuousDistInfo.pdf(xi2_val);
+                            fx2_givenx1_copulaActualf2est(ii) = copulapdf(copulaType, uuGenerative, alpha)*continuousEstDistInfo.pdf(xi2_val);
 
                             uuHcbn = [hcbnObj.empInfo{1}.distribution(x1_discrete_conditional) ...
-                                      hcbnObj.empInfo{2}.queryDistribution(xi2_val)];
+                                      hcbnObj.empInfo{2}.cdf(xi2_val)];
                             uuHcbn = fixU(uuHcbn);
-                            c_hcbn = empcopula_val(hcbnObj.copulaFamilies{2}.c, fliplr(uuHcbn));        % I think this should be a fliplr b/c copula
+                            c_hcbn = empcopulaval(hcbnObj.copulaFamilies{2}.c, fliplr(uuHcbn));        % I think this should be a fliplr b/c copula
                                                                                                         % was estimated w/ [u2 u1]
-                            f_x2_hcbn = hcbnObj.empInfo{2}.queryDensity(xi2_val);
+                            f_x2_hcbn = hcbnObj.empInfo{2}.pdf(xi2_val);
                             fx2_givenx1_hcbn(ii) = c_hcbn*f_x2_hcbn;       
                             fx2_givenx1_clg(ii) = normpdf(xi2_val, clgObj.bnParams{2}{x1_discrete_conditional}.Mean, clgObj.bnParams{2}{x1_discrete_conditional}.Covariance);
-                            fx2_givenx1_mte(ii) = mteObj.bnParams{2}{x1_discrete_conditional}.mte_info.queryDensity(xi2_val);
-                            fx2_givenx1_conditionalKDE(ii) = conditionalKDE.queryDensity(xi2_val);
+                            fx2_givenx1_mte(ii) = mteObj.bnParams{2}{x1_discrete_conditional}.mte_info.pdf(xi2_val);
+                            fx2_givenx1_conditionalKDE(ii) = conditionalKDE.pdf(xi2_val);
                         end
 
                         % compute kl_divergences

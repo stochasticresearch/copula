@@ -15,7 +15,7 @@
 %* You should have received a copy of the GNU General Public License
 %* along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function [ C_u ] = empcopula_val( C, U )
+function [ C_u ] = empcopulaval( C, U )
 %EMPCOPULA_VAL Returns the value of C (the copula function) and 
 % c (the copula density) at the specified U (vector).
 % Inputs:

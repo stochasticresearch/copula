@@ -30,15 +30,16 @@ function [ kl_val ] = kldivergence( p, q, x)
 p = p(:);
 q = q(:);
 
-tol = 1e-5;
-p(p<=tol)=tol;       % TODO: make this an argument?  provides log(0) protection
-q(q<=tol)=tol;       % TODO: make this an argument?  provides /0 protection
+% tol = 1e-5;
+% p(p<=tol)=tol;       % TODO: make this an argument?  provides log(0) protection
+% q(q<=tol)=tol;       % TODO: make this an argument?  provides /0 protection
 
-integrand = p.*log(p./q);
+y = p.*log(p./q);
+y(p==0) = 0;        % this is the usual convention when implementing KL-Div
 if(nargin>2)
-    kl_val = trapz(x,integrand);
+    kl_val = trapz(x,y);
 else
-    kl_val = sum(integrand);
+    kl_val = sum(y);
 end
 
 end

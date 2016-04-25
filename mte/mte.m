@@ -1,23 +1,24 @@
-%**************************************************************************
-%* 
-%* Copyright (C) 2016  Kiran Karra <kiran.karra@gmail.com>
-%*
-%* This program is free software: you can redistribute it and/or modify
-%* it under the terms of the GNU General Public License as published by
-%* the Free Software Foundation, either version 3 of the License, or
-%* (at your option) any later version.
-%*
-%* This program is distributed in the hope that it will be useful,
-%* but WITHOUT ANY WARRANTY; without even the implied warranty of
-%* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-%* GNU General Public License for more details.
-%*
-%* You should have received a copy of the GNU General Public License
-%* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-%* 
-%**************************************************************************
-
 classdef mte < handle
+    %MTE Definition of a Mixture of Truncated Exponentials Bayesian Network
+    %**********************************************************************
+    %* 
+    %* Copyright (C) 2016  Kiran Karra <kiran.karra@gmail.com>
+    %*
+    %* This program is free software: you can redistribute it and/or modify
+    %* it under the terms of the GNU General Public License as published by
+    %* the Free Software Foundation, either version 3 of the License, or
+    %* (at your option) any later version.
+    %*
+    %* This program is distributed in the hope that it will be useful,
+    %* but WITHOUT ANY WARRANTY; without even the implied warranty of
+    %* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    %* GNU General Public License for more details.
+    %*
+    %* You should have received a copy of the GNU General Public License
+    %* along with this program.  If not, see <http://www.gnu.org/licenses/>
+    %* 
+    %**********************************************************************
+
     properties
         dag;        % the Directed Acyclic Graph structure.  The format of
                     % the DAG is an adjancency matrix.  Element (i,j)
@@ -242,7 +243,7 @@ classdef mte < handle
                     parentNodes = obj.getParents(node);
                     if(isempty(parentNodes))
                         nodeBnParam = obj.bnParams{node};
-                        familyProb = familyProb * nodeBnParam.queryDensity(X(mm,node));
+                        familyProb = familyProb * nodeBnParam.pdf(X(mm,node));
                     else
                         parentNodes = obj.getParents(node);
                         X_parent = X(mm,parentNodes);
@@ -251,7 +252,7 @@ classdef mte < handle
                         for combo=1:numCombos
                             if(isequal(X_parent,obj.bnParams{node}{combo}.combo))
                                 mte_info = obj.bnParams{node}{combo}.mte_info;
-                                familyProb = familyProb * mte_info.queryDensity(X(mm,node));
+                                familyProb = familyProb * mte_info.pdf(X(mm,node));
                                 break;
                             end
                         end

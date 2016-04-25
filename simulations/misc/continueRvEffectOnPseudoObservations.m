@@ -86,7 +86,7 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                     continuousDistInfo = rvEmpiricalInfo(xiContinuous,fContinous,FContinuous);
                     X_hybrid(:,1) = discreteDist.icdf(U(:,1));
                     for ii=1:M
-                        X_hybrid(ii,2) = continuousDistInfo.invDistribution(U(ii,2));
+                        X_hybrid(ii,2) = continuousDistInfo.icdf(U(ii,2));
                     end
 
                     X_hybrid_continued = X_hybrid;

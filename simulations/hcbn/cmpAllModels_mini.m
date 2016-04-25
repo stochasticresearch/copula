@@ -54,7 +54,7 @@ FContinuous = empcdf(xContinuous,0);
 continuousDistInfo = rvEmpiricalInfo(xiContinuous,fContinous,FContinuous);
 X_hybrid(:,1) = a_dist.icdf(U(:,1));
 for ii=1:M
-    X_hybrid(ii,2) = continuousDistInfo.invDistribution(U(ii,2));
+    X_hybrid(ii,2) = continuousDistInfo.icdf(U(ii,2));
 end
 
 % estimate the copula density
@@ -123,20 +123,20 @@ for y1=1:4
         % notice, we flip the arguments for u2_est and u1_est to be the
         % continuous first, then discrete, this is b/c this is how hcbn.m
         % estiamtes the copula (see how c_est was generated above).  
-        u2_est = [disty2Est.queryDistribution(xi) disty1Est.queryDistribution(y1)];
-        u1_est = [disty2Est.queryDistribution(xi) disty1Est.queryDistribution(y1-1)];
+        u2_est = [disty2Est.cdf(xi) disty1Est.cdf(y1)];
+        u1_est = [disty2Est.cdf(xi) disty1Est.cdf(y1-1)];
         
-        u2_actual = [a_dist.cdf(y1) continuousDistInfo.queryDistribution(xi)];
-        u1_actual = [a_dist.cdf(y1-1) continuousDistInfo.queryDistribution(xi)];
+        u2_actual = [a_dist.cdf(y1) continuousDistInfo.cdf(xi)];
+        u1_actual = [a_dist.cdf(y1-1) continuousDistInfo.cdf(xi)];
         
-        f_y2_given_y1(xi_idx) = (continuousDistInfo.queryDensity(xi)*(empcopula_val(C_actual_discreteIntegrate,u2_actual) - ...
-                                                               empcopula_val(C_actual_discreteIntegrate,u1_actual) ))/ a_dist.pdf(y1);
-        f_y2_given_y1_copula_est(xi_idx) = (disty2Est.queryDensity(xi)*(empcopula_val(C_est_discreteIntegrate,u2_est) - ...
-                                                          empcopula_val(C_est_discreteIntegrate,u1_est)))/disty1Est.queryDensity(y1);
-        f_y2_given_y1_KDE(xi_idx) = conditionalKDE.queryDensity(xi);
+        f_y2_given_y1(xi_idx) = (continuousDistInfo.pdf(xi)*(empcopulaval(C_actual_discreteIntegrate,u2_actual) - ...
+                                                               empcopulaval(C_actual_discreteIntegrate,u1_actual) ))/ a_dist.pdf(y1);
+        f_y2_given_y1_copula_est(xi_idx) = (disty2Est.pdf(xi)*(empcopulaval(C_est_discreteIntegrate,u2_est) - ...
+                                                          empcopulaval(C_est_discreteIntegrate,u1_est)))/disty1Est.pdf(y1);
+        f_y2_given_y1_KDE(xi_idx) = conditionalKDE.pdf(xi);
         
         f_y2_given_y1_clg(xi_idx) = normpdf(xi, clgObj.bnParams{2}{y1}.Mean, clgObj.bnParams{2}{y1}.Covariance);
-        f_y2_given_y1_mte(xi_idx) = mteObj.bnParams{2}{y1}.mte_info.queryDensity(xi);
+        f_y2_given_y1_mte(xi_idx) = mteObj.bnParams{2}{y1}.mte_info.pdf(xi);
         f_y2_given_y1_hcbn(xi_idx) = hcbnObj.computeMixedConditionalProbability_([y1 xi], [bb aa], bb);
     end
     

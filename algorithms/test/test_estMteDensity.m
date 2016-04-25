@@ -36,7 +36,7 @@ refLikelihood = -1*normlike([0,1],x);
 
 mteLLVal = 0;
 for ii=1:numPts
-    mteLLVal = mteLLVal + log(mte_estimate.queryDensity(x(ii)));
+    mteLLVal = mteLLVal + log(mte_estimate.pdf(x(ii)));
 end
 title(sprintf('Ref LL=%0.02f, MTE LL=%0.02f', refLikelihood, mteLLVal));
 
@@ -57,7 +57,7 @@ legend('KDE', 'MTE')
 
 mteLLVal = 0;
 for ii=1:numPts
-    mteLLVal = mteLLVal + log(mte_estimate.queryDensity(x(ii)));
+    mteLLVal = mteLLVal + log(mte_estimate.pdf(x(ii)));
 end
 title(sprintf('MTE LL=%0.02f', mteLLVal));
 
@@ -77,6 +77,6 @@ legend('KDE', 'MTE')
 
 mteLLVal = 0;
 for ii=1:numPts
-    mteLLVal = mteLLVal + log(mte_estimate.queryDensity(x(ii)));
+    mteLLVal = mteLLVal + log(mte_estimate.pdf(x(ii)));
 end
 title(sprintf('MTE LL=%0.02f', mteLLVal));

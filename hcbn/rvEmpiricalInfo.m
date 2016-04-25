@@ -1,23 +1,23 @@
-%**************************************************************************
-%* 
-%* Copyright (C) 2016  Kiran Karra <kiran.karra@gmail.com>
-%*
-%* This program is free software: you can redistribute it and/or modify
-%* it under the terms of the GNU General Public License as published by
-%* the Free Software Foundation, either version 3 of the License, or
-%* (at your option) any later version.
-%*
-%* This program is distributed in the hope that it will be useful,
-%* but WITHOUT ANY WARRANTY; without even the implied warranty of
-%* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-%* GNU General Public License for more details.
-%*
-%* You should have received a copy of the GNU General Public License
-%* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 classdef rvEmpiricalInfo
-    %UNTITLED2 Summary of this class goes here
-    %   Detailed explanation goes here
+    %RVEMPIRICALINFO Defines an empirical distribution function
+    %**************************************************************************
+    %* 
+    %* Copyright (C) 2016  Kiran Karra <kiran.karra@gmail.com>
+    %*
+    %* This program is free software: you can redistribute it and/or modify
+    %* it under the terms of the GNU General Public License as published by
+    %* the Free Software Foundation, either version 3 of the License, or
+    %* (at your option) any later version.
+    %*
+    %* This program is distributed in the hope that it will be useful,
+    %* but WITHOUT ANY WARRANTY; without even the implied warranty of
+    %* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    %* GNU General Public License for more details.
+    %*
+    %* You should have received a copy of the GNU General Public License
+    %* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+    %* 
+    %**************************************************************************
     
     properties
         domain;
@@ -64,17 +64,22 @@ classdef rvEmpiricalInfo
             end
         end
         
-        function [val] = queryDensity(obj, q)
+        function [val] = pdf(obj, q)
             idx = obj.findClosestDomainVal(q);
             val = obj.density(idx);
         end
         
-        function [val] = queryDistribution(obj, q)
+        function [val] = cdf(obj, q)
             idx = obj.findClosestDomainVal(q);
             val = rvEmpiricalInfo.adjustVal(obj.distribution(idx));
         end
         
-        function [idx, distributionVal] = findClosestDistributionVal(obj, q)
+        function [val] = icdf(obj, u)
+            idx = obj.findClosestDistributionVal_(u);
+            val = obj.domain(idx);
+        end
+        
+        function [idx, distributionVal] = findClosestDistributionVal_(obj, q)
             if(q > obj.distribution(end))
                 distributionVal = obj.distribution(end);
                 idx = length(obj.distribution);
@@ -86,11 +91,6 @@ classdef rvEmpiricalInfo
                 [~, idx] = min(tmp); %index of closest value
                 distributionVal = obj.distribution(idx); %closest value
             end
-        end
-        
-        function [val] = invDistribution(obj, u)
-            idx = obj.findClosestDistributionVal(u);
-            val = obj.domain(idx);
         end
         
     end

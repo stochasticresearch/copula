@@ -15,7 +15,7 @@
 %* You should have received a copy of the GNU General Public License
 %* along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-% tests the empcopula_val function
+% tests the empcopulaval function
 
 clear;
 clc;
@@ -31,13 +31,13 @@ X_real = [gaminv(U_real(:,1),2,1) tinv(U_real(:,2),5)];
 K = 200;
 [C,U,c] = empcopula(X_real,K); U1 = U{1}; U2 = U{2};
 cc = c{end};
-% reconstruct C and c from empcopula_val function, and compare the plots
-% and errors between the two to verify accuracy of empcopula_val function
+% reconstruct C and c from empcopulaval function, and compare the plots
+% and errors between the two to verify accuracy of empcopulaval function
 for ii=1:K
     for jj=1:K
         U_1 = U1(ii,jj); U_2 = U2(ii,jj);
         U_query = [U_1 U_2]';
-        [C_u, c_u] = empcopula_val(C,cc,U_query);
+        [C_u, c_u] = empcopulaval(C,cc,U_query);
         if( abs(C(ii,jj)-C_u) > error_tol )  
             fprintf('***********************************************\n');
             fprintf('Mismatch: U_1=%f U_2=%f, C(U_1,U_2)=%f C_u=%f\n', U_1,U_2,C(ii,jj),C_u);

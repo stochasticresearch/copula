@@ -74,8 +74,8 @@ for ii=1:nsim
     U_ecdf = pseudoobs(x, 'ecdf', numECDFPts);
     U_rank = pseudoobs(x);
     
-    c_ecdf(ii) = empcopula_val(empcopulapdf(U_ecdf, h, K, 'betak'), u_v);
-    c_rank(ii) = empcopula_val(empcopulapdf(U_rank, h, K, 'betak'), u_v);
+    c_ecdf(ii) = empcopulaval(empcopulapdf(U_ecdf, h, K, 'betak'), u_v);
+    c_rank(ii) = empcopulaval(empcopulapdf(U_rank, h, K, 'betak'), u_v);
 end
 
 figure;

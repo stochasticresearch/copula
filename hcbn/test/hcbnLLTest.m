@@ -46,7 +46,7 @@ else
 %     F = empcdf(x,0);
 %     myObj = rvEmpiricalInfo(xi,f,F);
 %     for ii=1:M
-%         X(ii,2) = myObj.invDistribution(U(ii,2));
+%         X(ii,2) = myObj.icdf(U(ii,2));
 %     end
     X(:,2) = unifinv(U(:,2),-2,2);
 end

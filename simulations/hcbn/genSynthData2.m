@@ -63,7 +63,7 @@ else
     myObj = rvEmpiricalInfo(xi,f,F);
     X3 = zeros(M,1);
     for ii=1:M
-        X3(ii) = myObj.invDistribution(U(ii,3));
+        X3(ii) = myObj.icdf(U(ii,3));
     end
 end
 
@@ -75,7 +75,7 @@ if(nargout>1)
     llvec = zeros(M,1);
     for ii=1:M
         xi = X(ii,:);
-        u = [a_dist.cdf(xi(1)) b_dist.cdf(xi(2)) myObj.queryDistribution(xi(3))];
+        u = [a_dist.cdf(xi(1)) b_dist.cdf(xi(2)) myObj.cdf(xi(3))];
         
         uuvec = zeros(1,length(u));
         for jj=1:length(u)
@@ -91,7 +91,7 @@ if(nargout>1)
         
         % here we are just computing f(x1,x2,x3) = f(x1)*f(x2)*f(x3)*c(F(x1),F(x2),F(x3)) and 
         % then taking the LOG
-        llval = log( a_dist.pdf(xi(1))*b_dist.pdf(xi(2))*myObj.queryDensity(xi(3))* copulapdf('Gaussian', uuvec, Rho_C1) );
+        llval = log( a_dist.pdf(xi(1))*b_dist.pdf(xi(2))*myObj.pdf(xi(3))* copulapdf('Gaussian', uuvec, Rho_C1) );
         fprintf('%s || %s copulapdf=%f\n', sprintf('%f,', xi), sprintf('%f,', uuvec), copulapdf('Gaussian', u, Rho_C1));
         llvec(ii) = llval;
     end

@@ -168,7 +168,7 @@ for copulaType=copulaTypes
                         end
                         
                         % query the copula value
-                        prob_using_c_hat_obs(comboIdx) = empcopula_val(c_hat_dobs, U_pseudoObs);
+                        prob_using_c_hat_obs(comboIdx) = empcopulaval(c_hat_dobs, U_pseudoObs);
                     end
                     
                     hvecIdx = hvecIdx + 1;

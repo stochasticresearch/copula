@@ -283,8 +283,8 @@ empInfoObj2 = rvEmpiricalInfo(domain2, [], FX_in2);
 for x1=1:5
     for x2=1:5
         f_val = probMatrix(x1,x2)/(0.33*0.33);  % f(x1,x2)/[f(x1)*f(x2)]
-        u1 = empInfoObj1.queryDistribution(x1);
-        u2 = empInfoObj2.queryDistribution(x2);
+        u1 = empInfoObj1.cdf(x1);
+        u2 = empInfoObj2.cdf(x2);
         if(abs(u1-1)<=.01)
             u1 = 0.99;
         elseif(abs(u1-.01)<=0.01)
@@ -297,7 +297,7 @@ for x1=1:5
         end
         u = [u1 u2];
         
-        c_est_val = empcopula_val(c_est, u); 
+        c_est_val = empcopulaval(c_est, u); 
         c_actual_val = copulapdf('Gaussian', u, Rho);
         
         f_val_mat(x1,x2) = f_val;
@@ -338,7 +338,7 @@ for x1=-3:.1:3
     jj = 1;
     for x2=-3:.1:3
         f_val = mvnpdf([x1,x2], [0 0], Rho)/(normpdf(x1)*normpdf(x2)); u=[normcdf(x1) normcdf(x2)];
-        c_est_val = empcopula_val(c_est, u); 
+        c_est_val = empcopulaval(c_est, u); 
         c_actual_val = copulapdf('Gaussian', u, Rho);
         
         f_val_mat(ii,jj) = f_val;

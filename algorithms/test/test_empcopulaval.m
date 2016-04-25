@@ -61,7 +61,7 @@ for h=hVec
             c_actual_query = zeros(size(c_est)*multiplyFactor);
             for ii=1:size(UU,1)
                 uu = UU(ii,:);
-                c_est_query(ii) = empcopula_val(c_est, uu);         % because matlab stores column wise, this works as linear indexing
+                c_est_query(ii) = empcopulaval(c_est, uu);         % because matlab stores column wise, this works as linear indexing
                 c_actual_query(ii) = frankcopulapdf(uu, alpha);     % because matlab stores column wise, this works as linear indexing
             end
 

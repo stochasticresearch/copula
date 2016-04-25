@@ -1,25 +1,24 @@
-%**************************************************************************
-%* 
-%* Copyright (C) 2016  Kiran Karra <kiran.karra@gmail.com>
-%*
-%* This program is free software: you can redistribute it and/or modify
-%* it under the terms of the GNU General Public License as published by
-%* the Free Software Foundation, either version 3 of the License, or
-%* (at your option) any later version.
-%*
-%* This program is distributed in the hope that it will be useful,
-%* but WITHOUT ANY WARRANTY; without even the implied warranty of
-%* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-%* GNU General Public License for more details.
-%*
-%* You should have received a copy of the GNU General Public License
-%* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-%* 
-%**************************************************************************
-
 classdef hcbn < handle
     %HCBN Definition of a Hybrid Copula Bayesian Network
-    
+    %**********************************************************************
+    %* 
+    %* Copyright (C) 2016  Kiran Karra <kiran.karra@gmail.com>
+    %*
+    %* This program is free software: you can redistribute it and/or modify
+    %* it under the terms of the GNU General Public License as published by
+    %* the Free Software Foundation, either version 3 of the License, or
+    %* (at your option) any later version.
+    %*
+    %* This program is distributed in the hope that it will be useful,
+    %* but WITHOUT ANY WARRANTY; without even the implied warranty of
+    %* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    %* GNU General Public License for more details.
+    %*
+    %* You should have received a copy of the GNU General Public License
+    %* along with this program.  If not, see <http://www.gnu.org/licenses/>
+    %* 
+    %**********************************************************************
+
     properties
         dag;        % the Directed Acyclic Graph structure.  The format of
                     % the DAG is an adjancency matrix.  Element (i,j)
@@ -333,7 +332,7 @@ classdef hcbn < handle
             allIdxs = [nodeIdx copFam.parentNodeIdxs];
             for ii=1:M
                 for dd=1:D_family
-                    X(ii,dd) = obj.empInfo{allIdxs(dd)}.invDistribution(U(ii,dd));
+                    X(ii,dd) = obj.empInfo{allIdxs(dd)}.icdf(U(ii,dd));
                 end
             end
         end
@@ -351,7 +350,7 @@ classdef hcbn < handle
             %                parents
             
             if(length(idxs)==1)
-                mixedProbability = obj.empInfo{idxs}.queryDensity(X(idxs));
+                mixedProbability = obj.empInfo{idxs}.pdf(X(idxs));
             else
                 [~,discreteIdxs,~] = intersect(idxs,obj.discNodeIdxs); discreteIdxs = discreteIdxs';
                 continuousIdxs = setdiff(1:length(idxs),discreteIdxs);
@@ -364,12 +363,12 @@ classdef hcbn < handle
                 for continuousIdx=continuousIdxs
                     continuousNodeNum = idxs(continuousIdx);
                     % query that node's distribution and insert into u
-                    u(continuousIdx) = obj.empInfo{continuousNodeNum}.queryDistribution(X(continuousNodeNum));
+                    u(continuousIdx) = obj.empInfo{continuousNodeNum}.cdf(X(continuousNodeNum));
                 end
 
                 % compute the coupla value for the discrete
                 % portions through rectangle differencing
-                vals = [0:2^length(discreteIdxs) - 1];
+                vals = 0:2^length(discreteIdxs) - 1;
                 rectangleDiffStates = dec2bin(vals)-'0';
                 mixedProbability = 0;
                 for ii=1:size(rectangleDiffStates,1)
@@ -378,13 +377,13 @@ classdef hcbn < handle
                     for diffState=rectangleDiffState
                         discreteIdx = discreteIdxs(diffStateIdx);
                         discreteNodeNum = idxs(discreteIdx);
-                        u(discreteIdx) = obj.empInfo{discreteNodeNum}.queryDistribution(X(discreteNodeNum)-diffState);
+                        u(discreteIdx) = obj.empInfo{discreteNodeNum}.cdf(X(discreteNodeNum)-diffState);
                         diffStateIdx = diffStateIdx + 1;
                     end
                     if(parentsFlag)
-                        tmp = (-1)^(sum(rectangleDiffState))*empcopula_val(obj.copulaFamilies{nodeNum}.C_parents_discrete_integrate, u);
+                        tmp = (-1)^(sum(rectangleDiffState))*empcopulaval(obj.copulaFamilies{nodeNum}.C_parents_discrete_integrate, u);
                     else
-                        tmp = (-1)^(sum(rectangleDiffState))*empcopula_val(obj.copulaFamilies{nodeNum}.C_discrete_integrate, u);
+                        tmp = (-1)^(sum(rectangleDiffState))*empcopulaval(obj.copulaFamilies{nodeNum}.C_discrete_integrate, u);
                     end
 
                     mixedProbability = mixedProbability + tmp;
@@ -394,7 +393,7 @@ classdef hcbn < handle
                 % continuous variables
                 for continuousIdx=continuousIdxs
                     continuousNodeNum = idxs(continuousIdx);
-                    mixedProbability = mixedProbability * obj.empInfo{continuousNodeNum}.queryDensity(X(continuousNodeNum));
+                    mixedProbability = mixedProbability * obj.empInfo{continuousNodeNum}.pdf(X(continuousNodeNum));
                 end
             end
         end
@@ -405,7 +404,7 @@ classdef hcbn < handle
             conditionalProb = jointProbAllNodes/jointProbParentNodes;
         end
         
-        function [ ll_val ] = dataLL(obj, X)
+        function [ ll_val ] = dataLogLikelihood(obj, X)
             M = size(X,1);
             if(size(X,2)~=obj.D)
                 error('Input data for LL calculation must be the same dimensions as the BN!');
@@ -416,12 +415,12 @@ classdef hcbn < handle
                 totalProb = 1;
                 for dd=1:obj.D
                     % get the parents for this node
-                    parentIdxs = obj.getParents(d);
+                    parentIdxs = obj.getParents(dd);
                     if(isempty(parentIdxs))
-                        tmp = obj.empInfo{dd}.queryDistribution(X(mm,dd));
+                        tmp = obj.empInfo{dd}.cdf(X(mm,dd));
                     else
                         allIdxs = [dd parentIdxs];
-                        tmp = computeMixedconditionalProbability_(X(mm,:),allIdxs, dd);
+                        tmp = obj.computeMixedConditionalProbability_(X(mm,:),allIdxs, dd);
                     end
                     totalProb = totalProb * tmp;
                 end
@@ -434,164 +433,6 @@ classdef hcbn < handle
                 end
                 ll_val = ll_val + log(totalProb);
             end
-        end
-        
-        function [ ll_val, Rc_val_mat, Rc_num_mat, Rc_den_mat ] = dataLogLikelihood(obj, X)
-            %DATALOGLIKELIHOOD - calculates the log-likelihood of the HCBN
-            %                    model to the provided data
-            % 
-            % Inputs
-            %  X - the data for which to calculate the log-likelihood for
-			localFunctionDebugMode = 0;
-			if(nargout>1)
-				localFunctionDebugMode = 1;
-				Rc_val_mat = zeros( obj.D, size(X,1) );
-				Rc_num_mat = zeros( obj.D, size(X,1) );
-				Rc_den_mat = zeros( obj.D, size(X,1) );
-			end
-			
-			ll_val = 0;
-			
-			for ii=1:obj.D
-				if(localFunctionDebugMode)
-					[tmp, Rc_val_vec, Rc_num_vec, Rc_den_vec] = obj.copulall(ii,X);
-					Rc_val_mat(ii,:) = Rc_val_vec;
-					Rc_num_mat(ii,:) = Rc_num_vec;
-					Rc_den_mat(ii,:) = Rc_den_vec;
-				else
-					tmp = obj.copulall(ii,X);
-				end
-				ll_val = ll_val + tmp;                
-			end
-        end
-        
-        function [ ll_val, Rc_val_vec, Rc_num_vec, Rc_den_vec ] = copulall(obj, nodeIdx, X )
-            %COPULALL Computes the log-likelihood of a copula density matching the
-            %         given data
-            %
-            % Inputs:
-            %  nodeIdx - the node for which to calculate the copula
-            %            likelihood
-            %  X - the data against which to calculate the likelihood. This
-            %      should be the full data (i.e. all the columns for all
-            %      the random variables).  The correct columns will be
-            %      extracted by the copulall function
-            %
-            % Outputs:
-            %  ll_val - the log likelihood, defined as follows:
-            %           ll_val = sum(1,M, log(c(u_1[m], ..., u_n[m])/c(1,u_2[m], ..., u_n[m])) +
-            %                    sum(1,M, log(f(x_1[m]))
-            
-            % get the parents associated w/ this node
-            parentIdxs = obj.getParents(nodeIdx);
-            % grab the appropriate values 
-            X_in = zeros(size(X,1), 1+length(parentIdxs));
-            X_in(:,1) = X(:,nodeIdx);
-
-            kk = 2;
-            for jj=parentIdxs
-                X_in(:,kk) = X(:,jj);
-                kk = kk + 1;
-            end
-            allIdxs = [nodeIdx parentIdxs];
-            
-            % compute the copularatio for each data point
-            M = size(X_in,1);
-            ll_val = 0;
-            u = zeros(1, size(X_in,2));
-            %%%%%%%%%%%%%%%%%%%% DEBUGGING %%%%%%%%%%%%%%%%%%%%%%%
-            if(nargout>1)
-                Rc_val_vec = zeros(1,M);
-                Rc_num_vec = zeros(1,M);
-                Rc_den_vec = zeros(1,M);
-            end
-            %%%%%%%%%%%%%%%%%%%% DEBUGGING %%%%%%%%%%%%%%%%%%%%%%%
-            
-            for m=1:M
-                % compute empirical distribution log likelihood (for just
-                % the child node)
-                f_xi = obj.empInfo{nodeIdx}.queryDensity(X_in(m,1));
-                if(f_xi<=obj.LOG_CUTOFF)     % do this for numerical reasons
-                    f_xi = obj.LOG_CUTOFF;
-                end
-                ll_val = ll_val + log(f_xi);
-                
-                % generate u, avoid values of u being 0 or 1
-                uIdx = 1;
-                for jj=allIdxs
-                    uu = obj.empInfo{jj}.queryDistribution(X_in(m,uIdx));
-                    if(abs(uu-1)<=.001)
-                        uu = 0.999;
-                    elseif(abs(uu-.001)<=0.001)
-                        uu = 0.001;
-                    end
-                    u(uIdx) = uu;
-                    uIdx = uIdx + 1;
-                end
-                
-                % compute copula ratio value
-                [Rc, num_val, den_val] = obj.copulaRatioVal(nodeIdx, u);
-                if(Rc<=obj.LOG_CUTOFF)
-                    Rc = obj.LOG_CUTOFF;
-                end 
-                %%%%%%%%%%%%%%%%%%%% DEBUGGING %%%%%%%%%%%%%%%%%%%%%%%
-                if(nargout>1)
-                    Rc_val_vec(m) = Rc;
-                    Rc_num_vec(m) = num_val;
-                    Rc_den_vec(m) = den_val;
-                end
-                ll_val_prev = ll_val;
-                %%%%%%%%%%%%%%%%%%%% DEBUGGING %%%%%%%%%%%%%%%%%%%%%%%
-                
-                ll_val = ll_val + log(Rc);
-                if(isnan(ll_val) || isinf(ll_val))
-                    warning('Wrote DEBUG INFORMATION!');
-                    1;      % PUT DEBUG ON AT THIS LINE FOR INTERACTIVE DEBUGGING
-                    fid = fopen(sprintf('/home/kiran/ownCloud/PhD/sim_results/copulall_%d.txt', obj.SIM_NUM), 'a');
-                    fprintf(fid, 'sample=%d Rc_val=%f Rc_num=%f Rc_den=%f nodeIdx=%d ll_val_prev=%f u=%s \n', ...
-                        m, Rc, num_val, den_val, nodeIdx, ll_val_prev, sprintf('%f,', u) );
-                    fclose(fid);
-                    % save all the workspace variables for debugging
-                    save(sprintf('/home/kiran/ownCloud/PhD/sim_results/%s_%d.mat', ...
-                        obj.TYPE_NAME, obj.SIM_NUM));
-                end
-            end
-        end
-        
-        function [Rc_val, c_val_numerator, c_val_denominator] = copulaRatioVal(obj, nodeIdx, u)
-            %COPULARATIOVAL - calculates the copula ratio for a node at a
-            %                 location in the unit hypercube
-            % Inputs:
-            %  nodeIdx - the node for which the copula ratio is to be
-            %            calculated.  This is the node index.
-            %  u - a vector of a point in the unit-hypercube where
-            %      the copula ratio will be calculated
-            
-            % find the associated copula family
-            copFam = obj.copulaFamilies{nodeIdx};
-            
-            if(isempty(copFam))
-                % if copFam is empty, this means this node has no parents
-                % and thus by defintion the copula ratio here is defined to
-                % be 1
-                c_val_numerator = 1;
-                c_val_denominator = 1;
-            else
-                % get the copula density for this family
-                c = copFam.c;
-                c_parents = copFam.c_parents;
-
-                % query it for the specified point with empcopula_val
-                c_val_numerator = empcopula_val(c,u);
-                u_denom = u(2:end);
-                if(length(u_denom)==1)
-                    c_val_denominator = 1;
-                else
-                    c_val_denominator = empcopula_val(c_parents,u_denom);
-                end
-            end
-            
-            Rc_val = c_val_numerator/c_val_denominator;
         end
         
     end

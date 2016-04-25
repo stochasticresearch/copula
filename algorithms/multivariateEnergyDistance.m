@@ -1,3 +1,19 @@
+function [ e ] = multivariateEnergyDistance( X, sizes )
+%MULTIVARIATEENERGYDISTANCE Computes the energy between p d-dimensional
+%probability distributions, given samples from these distributions, based 
+%on the paper: TESTING FOR EQUAL DISTRIBUTIONS IN HIGH DIMENSION by 
+%Gabor J. Szkely and Maria L. Rizzo.  Uses permutation testing to derive a
+%p-value.  Ported from the energy package in R.
+% 
+% Inputs:
+%  X - pooled samples from the p distributions to compare
+%       dimension [(n_1+n_2+...+n_p) x D]
+%  sizes - a vector w/ the info [n_1 n_2 ... n_p], where n_i is the number
+%  of samples from the i^th d-dimensional distribution
+%
+% Outputs:
+%  e - the computed energy
+%
 %**************************************************************************
 %* 
 %* Copyright (C) 2016  Kiran Karra <kiran.karra@gmail.com>
@@ -17,50 +33,13 @@
 %* 
 %**************************************************************************
 
-function [ p, T ] = eqdistetest( X, sizes, nperm )
-%MVDISTGOF Test if samples from two multivariate distributions of the same
-%dimensionality come from the same distribution, based on the paper:
-%TESTING FOR EQUAL DISTRIBUTIONS IN HIGH DIMENSION by 
-%Gabor J. Szkely and Maria L. Rizzo.  Uses permutation testing to derive a
-%p-value
-% 
-% Inputs:
-%  X - pooled samples from the p distributions to compare
-%       dimension [(n_1+n_2+...+n_p) x D]
-%  sizes - a vector w/ the info [n_1 n_2 ... n_p]
-%  nperm - [optional] the number of permutations to test in the
-%          computation of the p-value, defaults to 500
-%
-% Outputs:
-%  p - the computed p-value
-%  T - the computed test statistic
-
-% default the number of permutations to compare to 500 (if arg is not
-% provided)
-if(nargin<3)
-    nperm = 500;
-end
-
-n = sum(sizes);
 nsamps = length(sizes);
 D = squareform(pdist(X));
-
-T = multisampleE(D, nsamps, sizes);
-
-ek = 0;
-for ii=1:nperm
-    perm = randperm(n);
-    X_permute = X(perm,:);
-    D = squareform(pdist(X_permute));
-    T_ii = multisampleE(D, nsamps, sizes);
-    ek = ek + (T < T_ii);
-%     fprintf('T_ii=%f T=%f\n', T_ii, T);
-end
-p = (ek+1) / (nperm+1);
+e = multivariateE(D, nsamps, sizes);
 
 end
 
-function [e] = multisampleE( D, nsamps, sizes)
+function [e] = multivariateE( D, nsamps, sizes)
 
 startIdxs = ones(1,nsamps);
 for ii=2:nsamps
@@ -72,13 +51,13 @@ for ii=1:nsamps
     m = sizes(ii);
     for jj=ii+1:nsamps
         n = sizes(jj);
-        e = e + twosampleE(D, m, n);
+        e = e + bivariateE(D, m, n);
     end
 end
 
 end
 
-function [e] = twosampleE( D, m, n )
+function [e] = bivariateE( D, m, n )
 % computes the test statistic defined by Equation 5 in the paper referenced
 % above
 

@@ -301,13 +301,13 @@ classdef hcbnTest < matlab.unittest.TestCase
             
             % Test Copula familes for nodes C, D, and E
             for ii=randperm(M, 100)       % randomely test 100 of them
-                u_c = [hcbnObj.empInfo{dd}.queryDistribution(X(ii,cc)) ...
-                        hcbnObj.empInfo{aa}.queryDistribution(X(ii,aa)) ...
-                        hcbnObj.empInfo{bb}.queryDistribution(X(ii,bb))];
-                u_d = [hcbnObj.empInfo{dd}.queryDistribution(X(ii,dd)) ...
-                        hcbnObj.empInfo{bb}.queryDistribution(X(ii,bb))];
-                u_e = [hcbnObj.empInfo{ee}.queryDistribution(X(ii,ee)) ...
-                        hcbnObj.empInfo{cc}.queryDistribution(X(ii,cc))];
+                u_c = [hcbnObj.empInfo{dd}.cdf(X(ii,cc)) ...
+                        hcbnObj.empInfo{aa}.cdf(X(ii,aa)) ...
+                        hcbnObj.empInfo{bb}.cdf(X(ii,bb))];
+                u_d = [hcbnObj.empInfo{dd}.cdf(X(ii,dd)) ...
+                        hcbnObj.empInfo{bb}.cdf(X(ii,bb))];
+                u_e = [hcbnObj.empInfo{ee}.cdf(X(ii,ee)) ...
+                        hcbnObj.empInfo{cc}.cdf(X(ii,cc))];
                 
                 nodeC_Rc_actual = hcbnObj.copulaRatioVal(cc, u_c);
                 nodeD_Rc_actual = hcbnObj.copulaRatioVal(dd, u_d);
@@ -396,25 +396,25 @@ classdef hcbnTest < matlab.unittest.TestCase
             
             % Test Copula familes for nodes C, D, and E
             for ii=randperm(M, 100)       % randomely test 100 of them
-                u_c = [hcbnObj.empInfo{dd}.queryDistribution(X(ii,cc)) ...
-                        hcbnObj.empInfo{aa}.queryDistribution(X(ii,aa)) ...
-                        hcbnObj.empInfo{bb}.queryDistribution(X(ii,bb))];
-                u_d = [hcbnObj.empInfo{dd}.queryDistribution(X(ii,dd)) ...
-                        hcbnObj.empInfo{bb}.queryDistribution(X(ii,bb))];
-                u_e = [hcbnObj.empInfo{ee}.queryDistribution(X(ii,ee)) ...
-                        hcbnObj.empInfo{cc}.queryDistribution(X(ii,cc))];
+                u_c = [hcbnObj.empInfo{dd}.cdf(X(ii,cc)) ...
+                        hcbnObj.empInfo{aa}.cdf(X(ii,aa)) ...
+                        hcbnObj.empInfo{bb}.cdf(X(ii,bb))];
+                u_d = [hcbnObj.empInfo{dd}.cdf(X(ii,dd)) ...
+                        hcbnObj.empInfo{bb}.cdf(X(ii,bb))];
+                u_e = [hcbnObj.empInfo{ee}.cdf(X(ii,ee)) ...
+                        hcbnObj.empInfo{cc}.cdf(X(ii,cc))];
                 
                 nodeC_Rc_actual = hcbnObj.copulaRatioVal(cc, u_c);
                 nodeD_Rc_actual = hcbnObj.copulaRatioVal(dd, u_d);
                 nodeE_Rc_actual = hcbnObj.copulaRatioVal(ee, u_e);
                 
                 % calculate expected copula ratio
-                nodeC_Rc_numerator = empcopula_val(hcbnObj.copulaFamilies{cc}.c, u_c);
-                nodeD_Rc_numerator = empcopula_val(hcbnObj.copulaFamilies{dd}.c, u_d);
-                nodeE_Rc_numerator = empcopula_val(hcbnObj.copulaFamilies{ee}.c, u_e);
+                nodeC_Rc_numerator = empcopulaval(hcbnObj.copulaFamilies{cc}.c, u_c);
+                nodeD_Rc_numerator = empcopulaval(hcbnObj.copulaFamilies{dd}.c, u_d);
+                nodeE_Rc_numerator = empcopulaval(hcbnObj.copulaFamilies{ee}.c, u_e);
 
                 % calculate denominator manually
-                nodeC_Rc_denominator = empcopula_val(hcbnObj.copulaFamilies{cc}.c_parents, u_c(2:end));
+                nodeC_Rc_denominator = empcopulaval(hcbnObj.copulaFamilies{cc}.c_parents, u_c(2:end));
                 nodeD_Rc_denominator = 1;
                 nodeE_Rc_denominator = 1;
 
@@ -441,10 +441,10 @@ classdef hcbnTest < matlab.unittest.TestCase
             
             for m=1:M
                 f_expect = normpdf(X(m));
-                f_actual = empInfoObj.queryDensity(X(m));
+                f_actual = empInfoObj.pdf(X(m));
                 
                 F_expect = normcdf(X(m));
-                F_actual = empInfoObj.queryDistribution(X(m));
+                F_actual = empInfoObj.cdf(X(m));
                 
                 testCase.verifyEqual(f_actual, f_expect, 'AbsTol', 0.1);
                 testCase.verifyEqual(F_actual, F_expect, 'AbsTol', 0.1);

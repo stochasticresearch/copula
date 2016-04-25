@@ -319,29 +319,29 @@ for K=[25]
             yy = [X(m,1) X(m,2)];
             numIdx = find(yy(1)==combos_X1X2(1,:) & yy(2)==combos_X1X2(2,:));
             Rc_expect_num = pdf_X1X2(numIdx);
-            Rc_expect_den = empInfoX1.queryDensity(X(m,1))*empInfoX2.queryDensity(X(m,2));
+            Rc_expect_den = empInfoX1.pdf(X(m,1))*empInfoX2.pdf(X(m,2));
             Rc_expect = Rc_expect_num/Rc_expect_den;
 
-            uu = [empInfoX1.queryDistribution(X(m,1)) empInfoX2.queryDistribution(X(m,2))];
+            uu = [empInfoX1.cdf(X(m,1)) empInfoX2.cdf(X(m,2))];
             %%% NOTE: all den's will be the same b/c only 1 parent
             % actual copula ratio for c_emp_smooth
-            Rc_c_emp_smooth_num = empcopula_val(c_emp_smooth, uu);
+            Rc_c_emp_smooth_num = empcopulaval(c_emp_smooth, uu);
             Rc_c_emp_smooth = Rc_c_emp_smooth_num/1;
 
             % actual copula ratio for c_dens_kde_p9
-            Rc_c_dens_kde_p9_num = empcopula_val(c_dens_kde_p9, uu);
+            Rc_c_dens_kde_p9_num = empcopulaval(c_dens_kde_p9, uu);
             Rc_c_dens_kde_p9 = Rc_c_dens_kde_p9_num/1;
 
             % actual copula ratio for c_dens_kde_p14
-            Rc_c_dens_kde_p14_num = empcopula_val(c_dens_kde_p14, uu);
+            Rc_c_dens_kde_p14_num = empcopulaval(c_dens_kde_p14, uu);
             Rc_c_dens_kde_p14 = Rc_c_dens_kde_p14_num/1;
             
             % actual copula ratio for c_dens_kde_p14_v2
-            Rc_c_dens_kde_p14v2_num = empcopula_val(c_dens_kde_p14_v2, uu);
+            Rc_c_dens_kde_p14v2_num = empcopulaval(c_dens_kde_p14_v2, uu);
             Rc_c_dens_kde_p14v2 = Rc_c_dens_kde_p14v2_num/1;
 
             % actual copula ratio for c_dens_betak
-            Rc_c_dens_betak_num = empcopula_val(c_dens_betak, uu);
+            Rc_c_dens_betak_num = empcopulaval(c_dens_betak, uu);
             Rc_c_dens_betak = Rc_c_dens_betak_num/1;
 
             Rc_vals(:,ii) = [Rc_expect Rc_c_emp_smooth Rc_c_dens_kde_p9 Rc_c_dens_kde_p14 Rc_c_dens_kde_p14v2 Rc_c_dens_betak]';
@@ -456,15 +456,15 @@ for K=[25]
             numIdx = find(yy(1)==combos_X1X2X3(1,:) & yy(2)==combos_X1X2X3(2,:) & yy(3)==combos_X1X2X3(3,:));
             Rc_expect_num = pdf_X1X2X3(numIdx);
             den1Idx = find(yy(2)==combos_X2X3(1,:) & yy(3)==combos_X2X3(2,:));
-            Rc_expect_den = empInfoX1.queryDensity(X(m,1))*pdf_X2X3(den1Idx);
+            Rc_expect_den = empInfoX1.pdf(X(m,1))*pdf_X2X3(den1Idx);
             Rc_expect = Rc_expect_num/Rc_expect_den;
 
-            uu_num = [empInfoX1.queryDistribution(X(m,1)) empInfoX2.queryDistribution(X(m,2)) empInfoX2.queryDistribution(X(m,3))];
-            uu_den = [empInfoX2.queryDistribution(X(m,2)) empInfoX2.queryDistribution(X(m,3))];
+            uu_num = [empInfoX1.cdf(X(m,1)) empInfoX2.cdf(X(m,2)) empInfoX2.cdf(X(m,3))];
+            uu_den = [empInfoX2.cdf(X(m,2)) empInfoX2.cdf(X(m,3))];
             
             % actual copula ratio for c_dens_betak
-            Rc_c_dens_betak_num = empcopula_val(c_dens_betak_num, uu_num);
-            Rc_c_dens_betak_den = empcopula_val(c_dens_betak_den, uu_den);
+            Rc_c_dens_betak_num = empcopulaval(c_dens_betak_num, uu_num);
+            Rc_c_dens_betak_den = empcopulaval(c_dens_betak_den, uu_den);
             Rc_c_dens_betak = Rc_c_dens_betak_num/Rc_c_dens_betak_den;
 
             Rc_vals(:,ii) = [Rc_expect Rc_c_dens_betak]';

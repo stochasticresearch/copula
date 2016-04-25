@@ -62,7 +62,7 @@ elseif(strcmpi(method,'ecdf'))
         FX = ksdensity(X(:,nn), domain, 'function', 'cdf')';
         empInfoObj = rvEmpiricalInfo(domain, [], FX);
         for mm=1:M
-            U(mm,nn) = empInfoObj.queryDistribution(X(mm,nn));
+            U(mm,nn) = empInfoObj.cdf(X(mm,nn));
         end
     end
 end

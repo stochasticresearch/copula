@@ -46,7 +46,7 @@ for ii=1:size(x_test,1)
         clg_likelihood = minProbVal;
     end
     
-    mte_likelihood = mte_info.queryDensity(x_test(ii));
+    mte_likelihood = mte_info.pdf(x_test(ii));
     if(mte_likelihood<minProbVal)
         mte_likelihood = minProbVal;
     end

@@ -122,19 +122,19 @@ for numTrain=numTrainVec
 
             continuousVal = xi(2);
 
-            trueDistConditionalLikelihood = trueDistInfo.queryDensity(continuousVal);
+            trueDistConditionalLikelihood = trueDistInfo.pdf(continuousVal);
             clgConditionalLikelihood = normpdf(continuousVal,clgContinuousDistInfo.Mean,clgContinuousDistInfo.Covariance);
-            mteConditionalLikelihood = mteContinuousDistInfo.queryDensity(continuousVal);
+            mteConditionalLikelihood = mteContinuousDistInfo.pdf(continuousVal);
             % compute hcbn conditional log likelihood
-            u = [discreteDistInfo.queryDistribution(comboVal) continuousDistInfo.queryDistribution(continuousVal)];
+            u = [discreteDistInfo.cdf(comboVal) continuousDistInfo.cdf(continuousVal)];
             u = fixU(u);
-%             copVal = empcopula_val(estimatedCopula, u);
-%             copVal = empcopula_val(actualCopula, u);
+%             copVal = empcopulaval(estimatedCopula, u);
+%             copVal = empcopulaval(actualCopula, u);
             copVal = copulapdf('Gumbel', u, alpha);
             if(copVal<LOG_MIN)
                 copVal=LOG_MIN;
             end
-            f_x2 = continuousDistInfo.queryDensity(continuousVal);
+            f_x2 = continuousDistInfo.pdf(continuousVal);
             if(f_x2<LOG_MIN)
                 f_x2=LOG_MIN;
             end
@@ -149,9 +149,9 @@ for numTrain=numTrainVec
             % compute the HCBN conditional density
             hcbnConditionalDensity = zeros(1,length(trueDistInfo.density));
             for zzz=1:length(hcbnConditionalDensity)
-                uu = [discreteDistInfo.queryDistribution(comboVal) continuousDistInfo.queryDistribution(trueDistInfo.domain(zzz))];
-                f_x2_val = continuousDistInfo.queryDensity(trueDistInfo.domain(zzz));
-%                 hcbnConditionalDensity(zzz) = empcopula_val(estimatedCopula.c, uu)*f_x2_val;
+                uu = [discreteDistInfo.cdf(comboVal) continuousDistInfo.cdf(trueDistInfo.domain(zzz))];
+                f_x2_val = continuousDistInfo.pdf(trueDistInfo.domain(zzz));
+%                 hcbnConditionalDensity(zzz) = empcopulaval(estimatedCopula.c, uu)*f_x2_val;
                 hcbnConditionalDensity(zzz) = copulapdf('Gumbel', uu,4)*f_x2_val;
             end
             
