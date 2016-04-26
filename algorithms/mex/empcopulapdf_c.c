@@ -19,17 +19,17 @@
 
 #include "mex.h"
 #include "matrix.h"
-#include <math.h>       // contains lgamma
+#include <math.h>       /* contains lgamma */
 #include "lapack.h"
 
+#define printfFnc(...) { mexPrintf(__VA_ARGS__); mexEvalString("drawnow;");}
+
 double r8_beta ( double x, double y ) {
-    // from: http://people.sc.fsu.edu/~jburkardt/c_src/prob/prob.c
+    /* from: http://people.sc.fsu.edu/~jburkardt/c_src/prob/prob.c */
     double value;
     if ( x <= 0.0 || y <= 0.0 ) {
-        fprintf ( stderr, "\n" );
-        fprintf ( stderr, "R8_BETA - Fatal error!\n" );
-        fprintf ( stderr, "  Both X and Y must be greater than 0.\n" );
-        exit ( 1 );
+        printfFnc("x=%f y=%f\n", x, y);
+        mexErrMsgIdAndTxt("Copula:r8_beta","X & Y must be > 0!");
     }
     value = exp ( 
         lgamma ( x ) 
@@ -39,8 +39,8 @@ double r8_beta ( double x, double y ) {
 }
 
 double beta_pdf ( double x, double a, double b ) {
-    // computes the beta distribution pdf value at x with parameters a,b
-    // from: http://people.sc.fsu.edu/~jburkardt/c_src/prob/prob.c
+    /* computes the beta distribution pdf value at x with parameters a,b
+       from: http://people.sc.fsu.edu/~jburkardt/c_src/prob/prob.c */
     double pdf;
     if ( x < 0.0 || 1.0 < x ) {
         pdf = 0.0;
@@ -51,21 +51,58 @@ double beta_pdf ( double x, double a, double b ) {
     return pdf;
 }
 
-// The actual computational routine
-void empcopulapdf(mwSize M, mwSize D, double *U, mwSize K, double h, double *outMatrix, mwSize outMatLen) {
-    mwSignedIndex gridPointsDims[2]; gridPointsDims[0] = 1; gridPointsDims[1] = D;
-    mwSignedIndex Kernel_vecDims[2]; Kernel_vecDims[0] = M; gridPointsDims[1] = 1;
-    mxArray *gridPoints = mxCreateNumericArray(2, gridPointsDims, mxINT32_CLASS, mxREAL);
-    mxArray *Kernel_vec = mxCreateNumericArray(2, Kernel_vecDims, mxDOUBLE_CLASS, mxREAL);
-    //for(int ii=0; ii<outMatLen; ii++) {
-    //    
-    //}
-    printf("HELLO :)\n");
-    mxDestroyArray(gridPoints);
-    mxDestroyArray(Kernel_vec);
+/* The computational routine */
+void empcopulapdf_c(mwSize M, mwSize D, double *U, mwSize K, double h, double *outMatrix, mwSize outMatLen) {
+    size_t gridPointsDims[2]; gridPointsDims[0] = 1; gridPointsDims[1] = D;
+    size_t Kernel_vecDims[2]; Kernel_vecDims[0] = M; gridPointsDims[1] = 1;
+    double *gridPoints = mxCalloc(D,sizeof(double));
+    double *Kernel_vec = mxMalloc(M*sizeof(double));
+    
+    mwSize value, xIdx, d;
+    double U_val, gridPoint, a, b, sumVal;
+    mwSize ii, mm, jj; /* loop variables */
+    
+    for(ii=0; ii<outMatLen; ii++) {
+        value = ii;
+        xIdx = 0;
+        while(value > 0) {
+            d = value % K;
+            gridPoints[xIdx++] = ((double)d)/((double)(K-1));
+            value = floor(value/K);
+        }
+        
+        /* handle the jj=0 case */
+        gridPoint = gridPoints[0];
+        a = ((double)gridPoint)/h + 1.0;
+        b = (1.0-(double)gridPoint)/h + 1.0;    
+        for(mm=0; mm<M; mm++) {
+            U_val = U[mm];
+            Kernel_vec[mm] = beta_pdf(U_val, a, b);
+        }
+        /* handle jj=1 -- D case */
+        for(jj=1; jj<D; jj++) {
+            gridPoint = gridPoints[jj];
+            a = ((double)gridPoint)/h + 1.0;
+            b = (1.0-(double)gridPoint)/h + 1.0;    
+            for(mm=0; mm<M; mm++) {
+                U_val = U[jj*M+mm];
+                Kernel_vec[mm] *= beta_pdf(U_val, a, b);
+            }
+        }
+        /* TODO: use LAPACK/BLAS routines for this sum */
+        sumVal = 0;
+        for(mm=0; mm<M; mm++) {
+            sumVal += Kernel_vec[mm];
+        }
+        
+        outMatrix[ii] = sumVal/M;
+    }
+    
+    mxFree(gridPoints);
+    mxFree(Kernel_vec);
 }
 
-// The gateway function
+/* The gateway function */
 void mexFunction( int nlhs, mxArray *plhs[],
                   int nrhs, const mxArray *prhs[]) {
     double *inMatrix;
@@ -106,7 +143,7 @@ void mexFunction( int nlhs, mxArray *plhs[],
     
     inMatrix = mxGetPr(prhs[0]);
     M = mxGetM(prhs[0]);
-    D = mxGetN(prhs[1]);
+    D = mxGetN(prhs[0]);
     
     /* create the output matrix */
     mwSize outMatLen = pow(K,D);
@@ -114,5 +151,5 @@ void mexFunction( int nlhs, mxArray *plhs[],
     outMatrix = mxGetPr(plhs[0]);
     
     /* call the computational routine */
-    empcopulapdf(M, D, inMatrix,K,h,outMatrix,outMatLen);
+    empcopulapdf_c(M, D, inMatrix,K,h,outMatrix,outMatLen);
 }

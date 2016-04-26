@@ -35,14 +35,48 @@ function [ c ] = empcopulapdf( U, h, K, method )
 %* along with this program.  If not, see <http://www.gnu.org/licenses/>.
 %* 
 %**************************************************************************
+D = size(U,2);
+sz = ones(1,D)*K;
 
 if(strcmpi(method, 'betak'))
+    % Beta-Kernel method w/ C implementation for speed improvement
+    c = empcopulapdf_c(U, K, h);
+    c = reshape(c,sz);
+elseif(strcmpi(method, 'betak-matlab'))
     M = size(U,1);
-    D = size(U,2);
-    sz = ones(1,D)*K;
     c = zeros(1,K^D);       % we create it as a vector, then reshape at the
                             % end to the proper dimensionality
-    linearIdx = 1;
+    ndgridInput = cell(1,D);
+    for dd=1:D
+        ndgridInput{dd} = linspace(0,1,K);
+    end
+    ndgridOutput = cell(1,numel(ndgridInput));
+    [ndgridOutput{:}] = ndgrid(ndgridInput{:});
+    gridPoints = reshape(cell2mat(ndgridOutput),K^D,D);
+    for ii=0:K^D-1
+        % make the beta pdf param's vector
+        Kernel_vec = ones(M,1);
+        % NOTE: According to different Matlab threads, optimizing the loop
+        % below to use cellfun would yield similar or worse performance,
+        % because apparently cellfun is slower than a for loop when not
+        % using it with built-in functions?
+        % See:
+        %  https://www.mathworks.com/matlabcentral/newsreader/view_thread/301894
+        %  https://www.mathworks.com/matlabcentral/newsreader/view_thread/253815
+        %  https://www.mathworks.com/matlabcentral/newsreader/view_thread/253596
+        %  https://www.mathworks.com/matlabcentral/newsreader/view_thread/251700
+        %  http://blogs.mathworks.com/loren/2009/05/05/nice-way-to-set-function-defaults/
+        for jj=1:D 
+            gridPoint = gridPoints(ii+1,jj);
+            Kernel_vec = Kernel_vec .* betapdf(U(:,jj), gridPoint/h + 1, (1-gridPoint)/h + 1);            
+        end
+        c(ii+1) = sum(Kernel_vec)/M;
+    end                            
+    c = reshape(c,sz);
+elseif(strcmpi(method, 'betak-matlab-old'))
+    M = size(U,1);
+    c = zeros(1,K^D);       % we create it as a vector, then reshape at the
+                            % end to the proper dimensionality
     
     for ii=0:K^D-1
         % make the beta pdf param's vector
@@ -68,8 +102,7 @@ if(strcmpi(method, 'betak'))
             Kernel_vec = Kernel_vec .* betapdf(U(:,jj), gridPoint/h + 1, (1-gridPoint)/h + 1);            
         end
 
-        c(linearIdx) = sum(Kernel_vec)/M;
-        linearIdx = linearIdx + 1;
+        c(ii+1) = sum(Kernel_vec)/M;
     end
                             
     c = reshape(c,sz);

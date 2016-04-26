@@ -20,34 +20,47 @@
 clear;
 clc;
 
-K = 25;
+rng(123);
 
+K = 25;
 copulaType = 'Clayton';
+M = 500;
+U = copularnd(copulaType,5,M);
+h = 0.05;
 
 u = linspace(0,1,K);
 [U1,U2] = ndgrid(u);
-c2 = copulapdf(copulaType, [U1(:) U2(:)],5);
-c2 = reshape(c2, K,K);
-h3 = subplot(1,2,1);
-surf(U1,U2,c2);
+
+c_actual = copulapdf(copulaType, [U1(:) U2(:)],5);
+c_actual = reshape(c_actual, K,K);
+h1 = subplot(1,3,1);
+surf(U1,U2,c_actual);
 xlabel('u1')
 ylabel('u2')
 title('Matlab Implementation')
 
-X = copularnd(copulaType,5,1000);
-h = 0.05;
-
-c1 = empcopulapdf(X, h, K, 'betak');
-h2 = subplot(1,2,2);
-surf(U1,U2,c1);
+tic
+[c_est1] = empcopulapdf(U, h, K, 'betak-matlab');
+T = toc;
+h2 = subplot(1,3,2);
+surf(U1,U2, c_est1);
 xlabel('u1')
 ylabel('u2')
-title('Estimated w/ Beta-Kernel')
+title(sprintf('Estimated w/ Beta-Kernel\nCompute Time=%f', T));
 
-mse = mean((c1(:)-c2(:)).^2);
+tic
+c_est2 = empcopulapdf(U, h, K, 'betak');
+T = toc;
+h3 = subplot(1,3,3);
+surf(U1,U2, c_est2);
+xlabel('u1')
+ylabel('u2')
+title(sprintf('Estimated w/ Beta-Kernel C\nCompute Time=%f', T));
+
+mse = mean((c_est1(:)-c_est2(:)).^2);
 fprintf('MSE = %f\n', mse);
 
-hlink = linkprop([h1,h2],{'CameraPosition','CameraUpVector'});
+hlink = linkprop([h1,h2,h3],{'CameraPosition','CameraUpVector'});
 rotate3d on
 %%
 clear;
@@ -56,7 +69,7 @@ clc;
 % Test the 3-D
 h = 0.05;
 K = 25;
-M = 1000;
+M = 500;
 D = 3;
 Rho = [1 .4 .2; .4 1 -.8; .2 -.8 1];
 Z = mvnrnd([0 0 0], Rho, M);
@@ -81,7 +94,7 @@ surf(UU1,UU2,squeeze(sum(c1,3))); xlabel('u_1'); ylabel('u_2')
 h2 = subplot(3,3,2);
 surf(UU1,UU2,squeeze(sum(c1,2))); xlabel('u_1'); ylabel('u_3')
 title('empcopulapdf')
-h3 = subplot(3,3,3);
+h1 = subplot(3,3,3);
 surf(UU1,UU2,squeeze(sum(c1,1))); xlabel('u_2'); ylabel('u_3')
 
 h4 = subplot(3,3,4);
@@ -267,8 +280,8 @@ c_actual = reshape(c_actual,K,K);
 
 h1 = subplot(1,3,1); hist3(X);                   title('Joint Distribution')
 h2 = subplot(1,3,2); surf(U1,U2,c_est);          title('Estimated Copula')
-h3 = subplot(1,3,3); surf(U1,U2,c_actual);       title('Actual Copula')
-linkprop([h1,h2,h3],{'CameraPosition','CameraUpVector'}); rotate3d on;
+h1 = subplot(1,3,3); surf(U1,U2,c_actual);       title('Actual Copula')
+linkprop([h1,h2,h1],{'CameraPosition','CameraUpVector'}); rotate3d on;
 
 % now, since we have the full PDF, we can compare how accurate hte
 % estimated copula is to the true, with the definition: 
@@ -353,6 +366,6 @@ end
 
 h1 = subplot(2,2,1); surf(U1,U2,f_val_mat); title('f calc'); xlabel('U_1'); ylabel('U_2')
 h2 = subplot(2,2,2); surf(U1,U2,c_actual_mat); title('c actual'); xlabel('U_1'); ylabel('U_2')
-h3 = subplot(2,2,3); surf(U1,U2,c_est_mat); title('c est'); xlabel('U_1'); ylabel('U_2')
+h1 = subplot(2,2,3); surf(U1,U2,c_est_mat); title('c est'); xlabel('U_1'); ylabel('U_2')
 h4 = subplot(2,2,4); surf(U1,U2,(c_est_mat-f_val_mat).^2); title('(c est - f calc)^2'); xlabel('U_1'); ylabel('U_2')
-linkprop([h1,h2,h3,h4],{'CameraPosition','CameraUpVector'}); rotate3d on;
+linkprop([h1,h2,h1,h4],{'CameraPosition','CameraUpVector'}); rotate3d on;
