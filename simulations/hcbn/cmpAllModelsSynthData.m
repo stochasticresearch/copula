@@ -61,7 +61,7 @@ function [resultsMat] = cmpAllModelsSynthData( D, numMCSims, cfg, logFilename, p
 global mVec copulaTypeVec alphaVec RhoVecs_2D RhoVecs_3D continuousDistTypeVec 
 global numLLCalculated numMC bntPath logFile K h
 global plotFlag numTest
-global HCBN_LL_MAT_IDX MTE_LL_MAT_IDX CLG_LL_MAT_IDX
+global HCBN_LL_MAT_IDX MTE_LL_MAT_IDX CLG_LL_MAT_IDX REF_LL_MAT_IDX
 
 if(nargin>4)
     plotFlag = plotOption;
@@ -69,7 +69,7 @@ else
     plotFlag = 0;
 end
 
-K = 25; h = 0.05;      % beta kernel estimation parameters
+K = 100; h = 0.05;      % beta kernel estimation parameters
 bntPath = '../bnt'; addpath(genpath(bntPath));
 mVec = 250:250:1000; mVec = 1000;
 copulaTypeVec = {'Frank', 'Gumbel', 'Clayton', 'Gaussian'};
@@ -87,9 +87,10 @@ numTest = 1000; % the # of samples to generate to calculate likelihood
 HCBN_LL_MAT_IDX = 1;
 MTE_LL_MAT_IDX = 2;
 CLG_LL_MAT_IDX = 3;
+REF_LL_MAT_IDX = 4;
 
 continuousDistTypeVec = {'Multimodal', 'Uniform', 'Gaussian', 'ThickTailed'}; 
-numLLCalculated = 7;
+numLLCalculated = 4;
 numMC = numMCSims;
 logFile = logFilename;
 
@@ -181,7 +182,7 @@ function [llMat] = runD2(a_probs)
 global mVec copulaTypeVec alphaVec RhoVecs_2D continuousDistTypeVec 
 global numLLCalculated numMC bntPath logFile K h
 global plotFlag numTest
-global HCBN_LL_MAT_IDX MTE_LL_MAT_IDX CLG_LL_MAT_IDX
+global HCBN_LL_MAT_IDX MTE_LL_MAT_IDX CLG_LL_MAT_IDX REF_LL_MAT_IDX
 
 a_dist = makedist('Multinomial','Probabilities',a_probs);
 
@@ -203,7 +204,7 @@ llMat = zeros(length(copulaTypeVec),...
 
 fid = fopen(logFile, 'a');
 dispstat('','init'); % One time only initialization
-dispstat(sprintf('Begining the simulation...'),'keepthis','timestamp');
+dispstat(sprintf('Begining the simulation...\n'),'keepthis','timestamp');
 numTotalLoops = length(copulaTypeVec)*length(continuousDistTypeVec)*length(alphaVec)*length(mVec)*numMC;
 progressIdx = 1;
 for copulaTypeVecIdx=1:length(copulaTypeVec)
@@ -220,19 +221,18 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                 M = mVec(mVecIdx);
                 
                 %%%%%%%%%%% MAIN SIMULATION CODE %%%%%%%%%%
+                progressAmt = progressIdx/numTotalLoops*100;
+                if(strcmp(copulaType,'Gaussian'))
+                    progressStr = sprintf('copulaType=%s x2DistType=%s rho=%f M=%d || Progress=%0.04f', ...
+                                    copulaType, continuousDistType, alpha(1,2), M, progressAmt);
+                else
+                    progressStr = sprintf('copulaType=%s x2DistType=%s alpha=%d M=%d || Progress=%0.04f', ...
+                                    copulaType, continuousDistType, alpha, M, progressAmt);
+                end
+                dispstat(progressStr,'keepthis','timestamp');
+                fprintf(fid, progressStr);
+                
                 for mcSimNum=1:numMC
-                    progressAmt = progressIdx/numTotalLoops*100;
-                    if(strcmp(copulaType,'Gaussian'))
-                        progressStr = sprintf('copulaType=%s x2DistType=%s rho=%f M=%d MC Sim# = %d || Progress=%0.04f', ...
-                                        copulaType, continuousDistType, alpha(1,2), M, mcSimNum, progressAmt);
-                    else
-                        progressStr = sprintf('copulaType=%s x2DistType=%s alpha=%d M=%d MC Sim# = %d || Progress=%0.04f', ...
-                                        copulaType, continuousDistType, alpha, M, mcSimNum, progressAmt);
-                    end
-                    dispstat(progressStr,'keepthis','timestamp');
-%                     fprintf(progressStr);
-                    fprintf(fid, progressStr);
-                    
                     U = copularnd(copulaType, alpha, M+numTest);
                     X_hybrid = zeros(M+numTest,2);
                     
@@ -432,23 +432,50 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                         end
                     end
                     
+                    % TODO: calculate the reference LL
+                    refLL = 0;
+                    for ii=1:numTest
+                        xx = X_hybrid_test(ii,:);
+                        uu_continuous = fixU(continuousDistInfo.cdf(xx(2)));
+                        uu1 = [a_dist.cdf(xx(1)) uu_continuous];
+                        uu2 = [a_dist.cdf(xx(1)-1) uu_continuous];
+                        totalProb = continuousDistInfo.pdf(xx(2)) * ...
+                            (empcopulaval(C_actual_discrete_integrate, uu1) - empcopulaval(C_actual_discrete_integrate, uu2));
+                        if(totalProb<1e-5)
+                            fprintf('In here :(\n');
+                            xx
+                            uu1
+                            uu2
+                            continuousDistInfo.pdf(xx(2))
+                            empcopulaval(C_actual_discrete_integrate, uu1)
+                            empcopulaval(C_actual_discrete_integrate, uu2)
+                            totalProb = 1e-5;
+                        end
+                        refLL = refLL + log(totalProb);
+                    end
+                    
                     % calculate LL values and assign to llDivMCMat
                     hcbnLL = hcbnObj.dataLogLikelihood(X_hybrid_test);
                     mteLL = mteObj.dataLogLikelihood(X_hybrid_test);
                     clgLL = clgObj.dataLogLikelihood(X_hybrid_test);
                     
-                    
-                    progressStr = sprintf('hcbnLL=%f mteLL=%f clgLL=%f\n', hcbnLL, mteLL, clgLL);
-                    dispstat(progressStr,'timestamp','keepthis','timestamp');
-                    
                     % assign LL values to matrix
                     llMCMat(HCBN_LL_MAT_IDX,mcSimNum) = hcbnLL;
                     llMCMat(MTE_LL_MAT_IDX,mcSimNum) = mteLL;
                     llMCMat(CLG_LL_MAT_IDX,mcSimNum) = clgLL;
+                    llMCMat(REF_LL_MAT_IDX,mcSimNum) = refLL;
                     
                     progressIdx = progressIdx + 1;
                 end
                 meanLLDivMCMat = mean(llMCMat,2);
+                                    
+                progressStr = sprintf('refLL=%f hcbnLL=%f mteLL=%f clgLL=%f\n', ...
+                    meanLLDivMCMat(REF_LL_MAT_IDX), ...
+                    meanLLDivMCMat(HCBN_LL_MAT_IDX), ...
+                    meanLLDivMCMat(MTE_LL_MAT_IDX), ...
+                    meanLLDivMCMat(CLG_LL_MAT_IDX));
+                dispstat(progressStr,'timestamp','keepthis','timestamp');
+
                 llMat(copulaTypeVecIdx, ...
                          continuousDistTypeVecIdx,...
                          alphaVecIdx,...

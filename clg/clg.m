@@ -148,7 +148,7 @@ classdef clg < handle
                                              1:obj.uniqueVals(discreteParents(3)), ...
                                              1:obj.uniqueVals(discreteParents(4)));
                         else
-                            error('Figure out a better syntax to generalize this :)');
+                            error('Figure out a better syntax to generalize this :/');
                         end
                         combos = combos';
                         
@@ -157,7 +157,7 @@ classdef clg < handle
                         nodeBnParams = cell(1,numCombos);
                         nodeBnParamsIdx = 1;
                         for comboNum=1:numCombos
-                            combo = combos(comboNum,:);
+                            parentCombination = combos(comboNum,:);
                             if(any(node==obj.discreteNodes))
                                 % for each unique value, create probability
                                 error('Currently unsupported :/ - need to add this functionality!');
@@ -165,10 +165,11 @@ classdef clg < handle
                                 % find all the data rows where this combo occurs
                                 X_subset = [];
                                 for ii=1:obj.N
-                                    if(isequal(obj.X(ii,discreteParents),combo))
+                                    if(isequal(obj.X(ii,discreteParents),parentCombination))
                                         X_subset = [X_subset; obj.X(ii,:)];
                                     end
                                 end
+                                parentCombinationProbability = size(X_subset,1)/size(obj.X,1);
                                 
                                 continuousNodesIdxs = [node continuousParents];
                                 if(~isempty(X_subset))
@@ -196,11 +197,9 @@ classdef clg < handle
                                     Mean = zeros(1,length(continuousNodesIdxs));
                                     Covariance = eye(length(continuousNodesIdxs));
                                 end
-%                                 [zz,xzz] = ksdensity(X_subset_continuous); 
-%                                 yy = normpdf(xzz,Mean, Covariance);
-%                                 plot(xzz,zz,xzz,yy); title('CLG'); grid on; pause;
                                 
-                                nodeBnParam = clgNodeBnParam(node, combo, Mean, Covariance);
+                                nodeBnParam = clgNodeBnParam(node, parentCombination, ...
+                                    parentCombinationProbability, Mean, Covariance);
                                 nodeBnParams{nodeBnParamsIdx} = nodeBnParam;
                                 nodeBnParamsIdx = nodeBnParamsIdx + 1;
                             end
@@ -258,16 +257,17 @@ classdef clg < handle
 						X_parent = X(mm,parentNodes);
 					
 						% search for the correct combination & calculate
-						% the probability for the datapoint
+						% the *conditional* probability for the datapoint
 						numCombos = length(obj.bnParams{node});
 						for combo=1:numCombos
-							if(isequal(X_parent,obj.bnParams{node}{combo}.combo))
+							if(isequal(X_parent,obj.bnParams{node}{combo}.parentCombination))
 								Mean = obj.bnParams{node}{combo}.Mean;
 								Covariance = obj.bnParams{node}{combo}.Covariance;
-                                if(length(Mean)==1)
-                                    familyProb = familyProb * normpdf(X(mm,node), Mean, Covariance);
+                                parentProbability = obj.bnParams{node}{combo}.parentCombinationProbability;
+                                if(length(parentNodes)==1)
+                                    familyProb = familyProb * (normpdf(X(mm,node), Mean, Covariance)/parentProbability);
                                 else
-                                    familyProb = familyProb * mvnpdf(X(mm,node), Mean, Covariance);
+                                    familyProb = familyProb * (mvnpdf(X(mm,node), Mean, Covariance)/parentProbability);
                                 end
 								break;
 							end

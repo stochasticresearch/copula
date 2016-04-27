@@ -18,14 +18,16 @@
 classdef mteNodeBnParam < handle
     properties
         node;
-        combo;
+        parentCombination;
+        parentCombinationProbability;
         mte_info;
     end
     
     methods
-        function obj = mteNodeBnParam(node, combo, mte_info)
+        function obj = mteNodeBnParam(node, combo, comboProb, mte_info)
             obj.node = node;
-            obj.combo = combo;
+            obj.parentCombination = combo;
+            obj.parentCombinationProbability = comboProb;
             obj.mte_info = mte_info;
         end
     end

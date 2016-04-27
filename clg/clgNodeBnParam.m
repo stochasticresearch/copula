@@ -18,15 +18,17 @@
 classdef clgNodeBnParam < handle
     properties
         node;
-        combo;
+        parentCombination;
+        parentCombinationProbability;
         Mean;
         Covariance;
     end
     
     methods
-        function obj = clgNodeBnParam(node, combo, Mean, Covariance)
+        function obj = clgNodeBnParam(node, combo, comboProb, Mean, Covariance)
             obj.node = node;
-            obj.combo = combo;
+            obj.parentCombination = combo;
+            obj.parentCombinationProbability = comboProb;
             obj.Mean = Mean;
             obj.Covariance = Covariance;
         end

@@ -91,7 +91,7 @@ classdef hcbn < handle
             obj.TYPE_NAME = '';
             obj.LOG_CUTOFF = 10^-5;
             
-            obj.PSEUDO_OBS_CALC_METHOD = 'ECDF';
+            obj.PSEUDO_OBS_CALC_METHOD = 'RANK';    % can be either RANK or ECDF
             
             % add BNT to the path
             addpath(genpath(bntPath));
@@ -111,7 +111,6 @@ classdef hcbn < handle
             obj.X = X;
             obj.X_xform = X;
 
-            
             obj.discreteNodes = discreteNodes;
             obj.discNodeIdxs = zeros(1,length(obj.discreteNodes));
             for ii=1:length(obj.discNodeIdxs)
@@ -363,7 +362,7 @@ classdef hcbn < handle
                 for continuousIdx=continuousIdxs
                     continuousNodeNum = idxs(continuousIdx);
                     % query that node's distribution and insert into u
-                    u(continuousIdx) = obj.empInfo{continuousNodeNum}.cdf(X(continuousNodeNum));
+                    u(continuousIdx) = fixU(obj.empInfo{continuousNodeNum}.cdf(X(continuousNodeNum)));
                 end
 
                 % compute the coupla value for the discrete

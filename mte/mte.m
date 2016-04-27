@@ -188,6 +188,8 @@ classdef mte < handle
                                     X_subset = [X_subset; obj.X(ii,:)];
                                 end
                             end
+                            parentCombinationProbability = size(X_subset,1)/size(obj.X,1);
+                            
                             continuousNodesIdxs = [node continuousParents];
                             if(~isempty(X_subset))
 %                                 fprintf('Training MTE w/ subset size = %d for combo %s\n', size(X_subset,1), sprintf('%d,',combo'));
@@ -209,12 +211,8 @@ classdef mte < handle
                                     error('MTE -- Currently unsupported!');
                                 end
                             end
-%                             [zz,xzz] = ksdensity(X_subset_continuous); 
-%                             plot(xzz,zz,mte_info.domain,mte_info.density); 
-%                             title('MTE'); grid on;
-%                             pause;
                             
-                            nodeBnParams{nodeBnParamsIdx} = mteNodeBnParam(node, combo, mte_info);
+                            nodeBnParams{nodeBnParamsIdx} = mteNodeBnParam(node, combo, parentCombinationProbability, mte_info);
                             nodeBnParamsIdx = nodeBnParamsIdx + 1;
                         end
                     end
@@ -250,9 +248,10 @@ classdef mte < handle
                         % find the correct combo
                         numCombos = length(obj.bnParams{node});
                         for combo=1:numCombos
-                            if(isequal(X_parent,obj.bnParams{node}{combo}.combo))
+                            if(isequal(X_parent,obj.bnParams{node}{combo}.parentCombination))
                                 mte_info = obj.bnParams{node}{combo}.mte_info;
-                                familyProb = familyProb * mte_info.pdf(X(mm,node));
+                                parentProb = obj.bnParams{node}{combo}.parentCombinationProbability;
+                                familyProb = familyProb * (mte_info.pdf(X(mm,node))/parentProb);
                                 break;
                             end
                         end
