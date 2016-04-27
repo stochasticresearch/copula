@@ -71,7 +71,7 @@ end
 
 K = 25; h = 0.05;      % beta kernel estimation parameters
 bntPath = '../bnt'; addpath(genpath(bntPath));
-mVec = 250:250:2000; mVec = 1000;
+mVec = 250:250:1000; mVec = 1000;
 copulaTypeVec = {'Frank', 'Gumbel', 'Clayton', 'Gaussian'};
 alphaVec = 1:3:10;
 RhoVecs_2D = cell(1,length(alphaVec)); 

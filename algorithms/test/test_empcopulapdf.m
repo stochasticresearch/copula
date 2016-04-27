@@ -22,9 +22,9 @@ clc;
 
 rng(123);
 
-K = 25;
+K = 100;
 copulaType = 'Clayton';
-M = 500;
+M = 1000;
 U = copularnd(copulaType,5,M);
 h = 0.05;
 
@@ -62,6 +62,32 @@ fprintf('MSE = %f\n', mse);
 
 hlink = linkprop([h1,h2,h3],{'CameraPosition','CameraUpVector'});
 rotate3d on
+
+%% Test 3-D speed
+
+clear;
+clc;
+
+h = 0.05;
+K = 25;
+M = 1000;
+
+
+Rho = [1 .4 .2; .4 1 -.8; .2 -.8 1];
+Z = mvnrnd([0 0 0], Rho, M);
+U = normcdf(Z,0,1);
+
+tic
+c1 = empcopulapdf(U, h, K, 'betak-matlab');
+T1 = toc;
+
+tic
+c2 = empcopulapdf(U, h, K, 'betak');
+T2 = toc;
+
+mse = mean( (c1(:)-c2(:)).^2 );
+fprintf('MSE=%f  T_matlab=%f T_c=%f\n', mse, T1, T2);
+
 %%
 clear;
 clc;

@@ -37,23 +37,22 @@ function [ c ] = empcopulapdf( U, h, K, method )
 %**************************************************************************
 D = size(U,2);
 sz = ones(1,D)*K;
-
+ndgridInput = cell(1,D);
+for dd=1:D
+    ndgridInput{dd} = linspace(0,1,K);
+end
+ndgridOutput = cell(1,numel(ndgridInput));
+[ndgridOutput{:}] = ndgrid(ndgridInput{:});
+gridPoints = reshape(cell2mat(ndgridOutput),K^D,D);    
 if(strcmpi(method, 'betak'))
     % Beta-Kernel method w/ C implementation for speed improvement
-    c = empcopulapdf_c(U, K, h);
+    c = empcopulapdf_c(U, K, h, gridPoints);
     c = reshape(c,sz);
 elseif(strcmpi(method, 'betak-matlab'))
     M = size(U,1);
     c = zeros(1,K^D);       % we create it as a vector, then reshape at the
                             % end to the proper dimensionality
-    ndgridInput = cell(1,D);
-    for dd=1:D
-        ndgridInput{dd} = linspace(0,1,K);
-    end
-    ndgridOutput = cell(1,numel(ndgridInput));
-    [ndgridOutput{:}] = ndgrid(ndgridInput{:});
-    gridPoints = reshape(cell2mat(ndgridOutput),K^D,D);
-    for ii=0:K^D-1
+    for ii=1:K^D
         % make the beta pdf param's vector
         Kernel_vec = ones(M,1);
         % NOTE: According to different Matlab threads, optimizing the loop
@@ -67,10 +66,10 @@ elseif(strcmpi(method, 'betak-matlab'))
         %  https://www.mathworks.com/matlabcentral/newsreader/view_thread/251700
         %  http://blogs.mathworks.com/loren/2009/05/05/nice-way-to-set-function-defaults/
         for jj=1:D 
-            gridPoint = gridPoints(ii+1,jj);
+            gridPoint = gridPoints(ii,jj);
             Kernel_vec = Kernel_vec .* betapdf(U(:,jj), gridPoint/h + 1, (1-gridPoint)/h + 1);            
         end
-        c(ii+1) = sum(Kernel_vec)/M;
+        c(ii) = sum(Kernel_vec)/M;
     end                            
     c = reshape(c,sz);
 elseif(strcmpi(method, 'betak-matlab-old'))

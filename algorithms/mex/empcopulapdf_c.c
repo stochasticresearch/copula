@@ -52,38 +52,27 @@ double beta_pdf ( double x, double a, double b ) {
 }
 
 /* The computational routine */
-void empcopulapdf_c(mwSize M, mwSize D, double *U, mwSize K, double h, double *outMatrix, mwSize outMatLen) {
-    size_t gridPointsDims[2]; gridPointsDims[0] = 1; gridPointsDims[1] = D;
-    size_t Kernel_vecDims[2]; Kernel_vecDims[0] = M; gridPointsDims[1] = 1;
-    double *gridPoints = mxCalloc(D,sizeof(double));
+void empcopulapdf_c2(mwSize M, mwSize D, double *U, mwSize K, double h, double *outMatrix, mwSize outMatLen, double *gridPoints) {
     double *Kernel_vec = mxMalloc(M*sizeof(double));
     
     mwSize value, xIdx, d;
     double U_val, gridPoint, a, b, sumVal;
     mwSize ii, mm, jj; /* loop variables */
     
-    for(ii=0; ii<outMatLen; ii++) {
-        value = ii;
-        xIdx = 0;
-        while(value > 0) {
-            d = value % K;
-            gridPoints[xIdx++] = ((double)d)/((double)(K-1));
-            value = floor(value/K);
-        }
-        
+    for(ii=0; ii<outMatLen; ii++) {        
         /* handle the jj=0 case */
-        gridPoint = gridPoints[0];
-        a = ((double)gridPoint)/h + 1.0;
-        b = (1.0-(double)gridPoint)/h + 1.0;    
+        gridPoint = gridPoints[ii];
+        a = (gridPoint)/h + 1.0;
+        b = (1.0-gridPoint)/h + 1.0;    
         for(mm=0; mm<M; mm++) {
             U_val = U[mm];
             Kernel_vec[mm] = beta_pdf(U_val, a, b);
         }
         /* handle jj=1 -- D case */
         for(jj=1; jj<D; jj++) {
-            gridPoint = gridPoints[jj];
-            a = ((double)gridPoint)/h + 1.0;
-            b = (1.0-(double)gridPoint)/h + 1.0;    
+            gridPoint = gridPoints[jj*outMatLen+ii];
+            a = gridPoint/h + 1.0;
+            b = (1.0-gridPoint)/h + 1.0;    
             for(mm=0; mm<M; mm++) {
                 U_val = U[jj*M+mm];
                 Kernel_vec[mm] *= beta_pdf(U_val, a, b);
@@ -94,11 +83,8 @@ void empcopulapdf_c(mwSize M, mwSize D, double *U, mwSize K, double h, double *o
         for(mm=0; mm<M; mm++) {
             sumVal += Kernel_vec[mm];
         }
-        
         outMatrix[ii] = sumVal/M;
     }
-    
-    mxFree(gridPoints);
     mxFree(Kernel_vec);
 }
 
@@ -111,9 +97,10 @@ void mexFunction( int nlhs, mxArray *plhs[],
     double h;       /* h - the kernel bandwidth */
     
     double *outMatrix;
+    double *gridPoints;
     
     /* check for proper number of arguments */
-    if(nrhs!=3) {
+    if(nrhs!=4) {
         mexErrMsgIdAndTxt("Copula:arrayProduct:nrhs","Three inputs required.");
     }
     if(nlhs!=1) {
@@ -138,6 +125,11 @@ void mexFunction( int nlhs, mxArray *plhs[],
         mexErrMsgIdAndTxt("Copula:arrayProduct:notScalar","Input h must be a scalar.");
     }
     
+    if( !mxIsDouble(prhs[3]) || 
+         mxIsComplex(prhs[3])) {
+        mexErrMsgIdAndTxt("Copula:arrayProduct:notDouble","Input gridpoints matrix must be type double.");
+    }
+    
     K = (int)mxGetScalar(prhs[1]);
     h = mxGetScalar(prhs[2]);
     
@@ -145,11 +137,13 @@ void mexFunction( int nlhs, mxArray *plhs[],
     M = mxGetM(prhs[0]);
     D = mxGetN(prhs[0]);
     
+    gridPoints = mxGetPr(prhs[3]);
+    
     /* create the output matrix */
     mwSize outMatLen = pow(K,D);
     plhs[0] = mxCreateDoubleMatrix(1,outMatLen,mxREAL);
     outMatrix = mxGetPr(plhs[0]);
     
     /* call the computational routine */
-    empcopulapdf_c(M, D, inMatrix,K,h,outMatrix,outMatLen);
+    empcopulapdf_c2(M,D,inMatrix,K,h,outMatrix,outMatLen,gridPoints);
 }
