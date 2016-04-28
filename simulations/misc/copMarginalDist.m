@@ -183,19 +183,16 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                         for ii=1:length(xi2)
                             xi2_val = xi2(ii);
                             uuGenerative = [a_dist.cdf(x1_discrete_conditional) continuousDistInfo.cdf(xi2_val)];
-                            uuGenerative = fixU(uuGenerative);
 
                             fx2_givenx1_copula(ii) = copulapdf(copulaType, uuGenerative, alpha)*continuousDistInfo.pdf(xi2_val);
                             uuEst = [discreteEstDistInfo.cdf(x1_discrete_conditional) ...
                                      continuousEstDistInfo.cdf(xi2_val)];
-                            uuEst = fixU(uuEst);
                             fx2_givenx1_copulaestf2est(ii) = empcopulaval(c_est, uuEst)*continuousEstDistInfo.pdf(xi2_val);
                             fx2_givenx1_copulaestf2Actual(ii) = empcopulaval(c_est, uuEst)*continuousDistInfo.pdf(xi2_val);
                             fx2_givenx1_copulaActualf2est(ii) = copulapdf(copulaType, uuGenerative, alpha)*continuousEstDistInfo.pdf(xi2_val);
 
                             uuHcbn = [hcbnObj.empInfo{1}.distribution(x1_discrete_conditional) ...
                                       hcbnObj.empInfo{2}.cdf(xi2_val)];
-                            uuHcbn = fixU(uuHcbn);
                             c_hcbn = empcopulaval(hcbnObj.copulaFamilies{2}.c, fliplr(uuHcbn));        % I think this should be a fliplr b/c copula
                                                                                                         % was estimated w/ [u2 u1]
                             f_x2_hcbn = hcbnObj.empInfo{2}.pdf(xi2_val);

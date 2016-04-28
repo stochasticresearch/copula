@@ -436,20 +436,21 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                     refLL = 0;
                     for ii=1:numTest
                         xx = X_hybrid_test(ii,:);
-                        uu_continuous = fixU(continuousDistInfo.cdf(xx(2)));
+                        uu_continuous = continuousDistInfo.cdf(xx(2));
                         uu1 = [a_dist.cdf(xx(1)) uu_continuous];
                         uu2 = [a_dist.cdf(xx(1)-1) uu_continuous];
                         totalProb = continuousDistInfo.pdf(xx(2)) * ...
                             (empcopulaval(C_actual_discrete_integrate, uu1) - empcopulaval(C_actual_discrete_integrate, uu2));
                         if(totalProb<1e-5)
-                            fprintf('In here :(\n');
-                            xx
-                            uu1
-                            uu2
-                            continuousDistInfo.pdf(xx(2))
-                            empcopulaval(C_actual_discrete_integrate, uu1)
-                            empcopulaval(C_actual_discrete_integrate, uu2)
-                            totalProb = 1e-5;
+%                             fprintf('In here :(\n');
+%                             xx
+%                             uu1
+%                             uu2
+%                             continuousDistInfo.pdf(xx(2))
+%                             empcopulaval(C_actual_discrete_integrate, uu1)
+%                             empcopulaval(C_actual_discrete_integrate, uu2)
+%                             empcopulaval(C_actual_discrete_integrate, uu1) - empcopulaval(C_actual_discrete_integrate, uu2)
+                            totalProb = 1e-5;   % PUT BREAK POINT HERE IF YOU WANT TO DEBUG
                         end
                         refLL = refLL + log(totalProb);
                     end
@@ -762,7 +763,7 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
     % % %                                 uuHcbnX1X2X3 = [hcbnObj.empInfo{1}.distribution(x1_discrete_conditional) ...
     % % %                                                 hcbnObj.empInfo{2}.distribution(x2_discrete_conditional) ...
     % % %                                                 hcbnObj.empInfo{3}.cdf(xiContinuous_val)];
-    % % %                                 uuHcbnX1X2X3 = fixU(uuHcbnX1X2X3);
+    % % %                                 uuHcbnX1X2X3 = uuHcbnX1X2X3;
     % % %                                 uuHcbnX1X2 = uuHcbnX1X2X3(1:2);
 
                                     C_actual_partial_X1X2X3 = empcopulaval(C_actual_X1X2X3_discrete_integrate, uuGenerativeX1X2X3_1) - ...

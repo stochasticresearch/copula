@@ -362,7 +362,7 @@ classdef hcbn < handle
                 for continuousIdx=continuousIdxs
                     continuousNodeNum = idxs(continuousIdx);
                     % query that node's distribution and insert into u
-                    u(continuousIdx) = fixU(obj.empInfo{continuousNodeNum}.cdf(X(continuousNodeNum)));
+                    u(continuousIdx) = obj.empInfo{continuousNodeNum}.cdf(X(continuousNodeNum));
                 end
 
                 % compute the coupla value for the discrete
@@ -416,7 +416,7 @@ classdef hcbn < handle
                     % get the parents for this node
                     parentIdxs = obj.getParents(dd);
                     if(isempty(parentIdxs))
-                        tmp = obj.empInfo{dd}.cdf(X(mm,dd));
+                        tmp = obj.empInfo{dd}.pdf(X(mm,dd));
                     else
                         allIdxs = [dd parentIdxs];
                         tmp = obj.computeMixedConditionalProbability_(X(mm,:),allIdxs, dd);

@@ -251,7 +251,7 @@ classdef mte < handle
                             if(isequal(X_parent,obj.bnParams{node}{combo}.parentCombination))
                                 mte_info = obj.bnParams{node}{combo}.mte_info;
                                 parentProb = obj.bnParams{node}{combo}.parentCombinationProbability;
-                                familyProb = familyProb * (mte_info.pdf(X(mm,node))/parentProb);
+                                familyProb = familyProb * mte_info.pdf(X(mm,node));
                                 break;
                             end
                         end

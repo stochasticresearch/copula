@@ -265,9 +265,9 @@ classdef clg < handle
 								Covariance = obj.bnParams{node}{combo}.Covariance;
                                 parentProbability = obj.bnParams{node}{combo}.parentCombinationProbability;
                                 if(length(parentNodes)==1)
-                                    familyProb = familyProb * (normpdf(X(mm,node), Mean, Covariance)/parentProbability);
+                                    familyProb = familyProb * normpdf(X(mm,node), Mean, Covariance);
                                 else
-                                    familyProb = familyProb * (mvnpdf(X(mm,node), Mean, Covariance)/parentProbability);
+                                    familyProb = familyProb * mvnpdf(X(mm,node), Mean, Covariance);
                                 end
 								break;
 							end
