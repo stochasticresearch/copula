@@ -69,9 +69,9 @@ else
     plotFlag = 0;
 end
 
-K = 100; h = 0.05;      % beta kernel estimation parameters
+K = 25; h = 0.05;      % beta kernel estimation parameters
 bntPath = '../bnt'; addpath(genpath(bntPath));
-mVec = 250:250:1000; mVec = 1000;
+mVec = 250:250:1000; mVec = 250;
 copulaTypeVec = {'Frank', 'Gumbel', 'Clayton', 'Gaussian'};
 alphaVec = 1:3:10;
 RhoVecs_2D = cell(1,length(alphaVec)); 
@@ -432,7 +432,7 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                         end
                     end
                     
-                    % TODO: calculate the reference LL
+                    % calculate the reference LL
                     refLL = 0;
                     for ii=1:numTest
                         xx = X_hybrid_test(ii,:);
@@ -544,7 +544,7 @@ end
 function [llMat] = runD3(a_probs, b_probs)
 global mVec copulaTypeVec alphaVec RhoVecs_3D continuousDistTypeVec 
 global numLLCalculated numMC bntPath logFile K h plotFlag numTest
-global HCBN_LL_MAT_IDX MTE_LL_MAT_IDX CLG_LL_MAT_IDX
+global HCBN_LL_MAT_IDX MTE_LL_MAT_IDX CLG_LL_MAT_IDX REF_LL_MAT_IDX
 
 a_dist = makedist('Multinomial','Probabilities', a_probs);
 b_dist = makedist('Multinomial','Probabilities', b_probs);
@@ -864,18 +864,49 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                         end
                     end
                     
+                    % calculate the reference LL
+                    refLL = 0;
+                    for ii=1:numTest
+                        xx = X_hybrid_test(ii,:);
+                        uuGenerativeX1X2X3_1 = [a_dist.cdf(xx(1)) ...
+                                                b_dist.cdf(xx(2)) ...
+                                                continuousDistInfo.cdf(xx(3))];
+                        uuGenerativeX1X2X3_2 = [a_dist.cdf(xx(1)-1) ...
+                                                b_dist.cdf(xx(2)) ...
+                                                continuousDistInfo.cdf(xx(3))];
+                        uuGenerativeX1X2X3_3 = [a_dist.cdf(xx(1)) ...
+                                                b_dist.cdf(xx(2)-1) ...
+                                                continuousDistInfo.cdf(xx(3))];
+                        uuGenerativeX1X2X3_4 = [a_dist.cdf(xx(1)-1) ...
+                                                b_dist.cdf(xx(2)-1) ...
+                                                continuousDistInfo.cdf(xx(3))];
+                        
+                        fX3 = continuousDistInfo.pdf(xx(3));
+                        C_actual_partial_X1X2X3 = empcopulaval(C_actual_X1X2X3_discrete_integrate, uuGenerativeX1X2X3_1) - ...
+                                                       empcopulaval(C_actual_X1X2X3_discrete_integrate, uuGenerativeX1X2X3_2) - ...
+                                                       empcopulaval(C_actual_X1X2X3_discrete_integrate, uuGenerativeX1X2X3_3) + ...
+                                                       empcopulaval(C_actual_X1X2X3_discrete_integrate, uuGenerativeX1X2X3_4);
+                        totalProb = C_actual_partial_X1X2X3*fX3;
+                        if(totalProb<1e-5)
+                            totalProb = 1e-5;   % PUT BREAK POINT HERE IF YOU WANT TO DEBUG
+                        end
+                        refLL = refLL + log(totalProb);
+                    end
+
+                    
                     % calculate LL values and assign to llDivMCMat
                     hcbnLL = hcbnObj.dataLogLikelihood(X_hybrid_test);
                     mteLL = mteObj.dataLogLikelihood(X_hybrid_test);
                     clgLL = clgObj.dataLogLikelihood(X_hybrid_test);
                     
-                    progressStr = sprintf('hcbnLL=%f mteLL=%f clgLL=%f\n', hcbnLL, mteLL, clgLL);
+                    progressStr = sprintf('refLL=%f hcbnLL=%f mteLL=%f clgLL=%f\n', refLL, hcbnLL, mteLL, clgLL);
                     dispstat(progressStr,'keepthis','timestamp');
                     
                     % assign LL values to matrix
                     llMCMat(HCBN_LL_MAT_IDX,mcSimNum) = hcbnLL;
                     llMCMat(MTE_LL_MAT_IDX,mcSimNum) = mteLL;
                     llMCMat(CLG_LL_MAT_IDX,mcSimNum) = clgLL;
+                    llMCMat(REF_LL_MAT_IDX,mcSimNum) = refLL;
                     
                     progressIdx = progressIdx + 1;
                 end
@@ -897,6 +928,11 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                          alphaVecIdx,...
                          mVecIdx,...
                          CLG_LL_MAT_IDX) = meanKLDivMCMat(CLG_LL_MAT_IDX);
+                llMat(copulaTypeVecIdx, ...
+                         continuousDistTypeVecIdx,...
+                         alphaVecIdx,...
+                         mVecIdx,...
+                         REF_LL_MAT_IDX) = meanKLDivMCMat(REF_LL_MAT_IDX);
             end
         end
     end
