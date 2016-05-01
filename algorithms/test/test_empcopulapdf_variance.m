@@ -28,11 +28,11 @@ load('mte_default_gaussian.mat');
 MTE_DEFAULT_GAUSSIAN = mte_default_gaussian;
 
 D = 3;
-numMCSims = 25;
+numMCSims = 5;
 alpha = 5;
 h = 0.05; 
 K = 25;
-M_vec = 100:100:500;
+M_vec = 100:100:500; M_vec = 100;
 
 a_dist = makedist('Multinomial', 'probabilities', [0.1 0.2 0.3 0.05 0.05 0.15 0.05 0.1]);
 b_dist = makedist('Multinomial', 'probabilities', [0.2 0.1 0.05 0.3 0.15 0.05 0.1 0.05]);
@@ -123,11 +123,12 @@ for M=M_vec
         distCEst = rvEmpiricalInfo(xCest,fCest,FCest);
         
         % continue A and B
-        X(:,1) = continueRv(X(:,1));
-        X(:,2) = continueRv(X(:,2));
+        X_continued = X;
+        X_continued(:,1) = continueRv(X(:,1));
+        X_continued(:,2) = continueRv(X(:,2));
         
         % generate pseudo observations
-        U_est = pseudoobs(X);
+        U_est = pseudoobs(X_continued);
         
         % compute empirical copula
         c_est_all = empcopulapdf(U_est, h, K, 'betak');
@@ -150,9 +151,10 @@ for M=M_vec
                         X_continuous_subset = [X_continuous_subset; X(jj,3)];
                     end
                 end
+%                 fprintf('A=%d B=%d length(X_continuous_subset)=%d\n', aVal, bVal, length(X_continuous_subset));
                 
                 % fit gaussian to the continuous subset
-                if(isempty(X_continuous_subset))
+                if(isempty(X_continuous_subset) || length(X_continuous_subset)<2 )
                     gaussFit_mu = 0;
                     gaussFit_sigma = 1;
                 else
@@ -160,10 +162,14 @@ for M=M_vec
                 end
                 
                 % fit MTE to the continuous subset
-                if(isempty(X_continuous_subset))
+                if(isempty(X_continuous_subset) || length(X_continuous_subset)<3 )
                     mteFit = MTE_DEFAULT_GAUSSIAN;
                 else
-                    mteFit = estMteDensity(X_continuous_subset);
+                    try
+                        mteFit = estMteDensity(X_continuous_subset);
+                    catch
+                        mteFit = MTE_DEFAULT_GAUSSIAN;
+                    end
                 end
                 
                 cValIdx = 1;
@@ -217,7 +223,7 @@ for M=M_vec
     mVecIdx = mVecIdx + 1;
 end
 
-f_C_given_AB_actual_mat_repmat = repmat(f_C_given_AB_actual_mat,[ones(1,D) length(mVec)]);
+f_C_given_AB_actual_mat_repmat = repmat(f_C_given_AB_actual_mat,[ones(1,D) length(M_vec)]);
 
 f_C_given_AB_estCopula_mat_mcAvg = squeeze(mean(f_C_given_AB_estCopula_mat,1));
 f_C_given_AB_estCLG_mat_mcAvg = squeeze(mean(f_C_given_AB_estCLG_mat,1));
@@ -233,3 +239,137 @@ mteEstBias = f_C_given_AB_actual_mat_repmat-f_C_given_AB_estMTE_mat_mcAvg;
 copulaEstVar = squeeze(mean(f_C_given_AB_estCopula_mat.^2,1))-f_C_given_AB_estCopula_mat_mcAvg.^2;
 clgEstVar = squeeze(mean(f_C_given_AB_estCLG_mat.^2,1))-f_C_given_AB_estCLG_mat_mcAvg.^2;
 mteEstVar = squeeze(mean(f_C_given_AB_estMTE_mat.^2,1))-f_C_given_AB_estMTE_mat_mcAvg.^2;
+
+% plot the results of bias and variance of the estimates for all the
+% combinations of a_val and b_val
+
+for aVal=1:length(a_dist.Probabilities)
+    for bVal=1:length(b_dist.Probabilities)
+        mIdx = 1;
+        M = M_vec(mIdx);
+        % extract the bias and variance for this configuration
+        copulaBias = copulaEstBias(aVal,bVal,:,mIdx); copulaBias = squeeze(copulaBias(1,1,:))';
+        clgBias = clgEstBias(aVal,bVal,:,mIdx); clgBias = squeeze(clgBias(1,1,:))';
+        mteBias = mteEstBias(aVal,bVal,:,mIdx); mteBias = squeeze(mteBias(1,1,:))';
+
+        copulaVar = copulaEstVar(aVal,bVal,:,mIdx); copulaVar = squeeze(copulaVar(1,1,:))';
+        clgVar = clgEstVar(aVal,bVal,:,mIdx); clgVar = squeeze(clgVar(1,1,:))';
+        mteVar = mteEstVar(aVal,bVal,:,mIdx); mteVar = squeeze(mteVar(1,1,:))';
+
+        subplot(2,5,mIdx);
+        plot(domainC, copulaBias, domainC, clgBias, domainC, mteBias);
+        grid on; ylabel('Bias');
+        legend('Copula', 'CLG', 'MTE');
+        title(sprintf('M = %d', M));
+
+        subplot(2,5,mIdx+5);
+        plot(domainC, copulaVar, domainC, clgVar, domainC, mteVar);
+        grid on; ylabel('Variance');
+        legend('Copula', 'CLG', 'MTE');
+        title(sprintf('M = %d', M));
+        
+        %%%%%%%%%%%%%%%%%
+        
+        mIdx = 2;
+        M = M_vec(mIdx);
+        % extract the bias and variance for this configuration
+        copulaBias = copulaEstBias(aVal,bVal,:,mIdx); copulaBias = squeeze(copulaBias(1,1,:))';
+        clgBias = clgEstBias(aVal,bVal,:,mIdx); clgBias = squeeze(clgBias(1,1,:))';
+        mteBias = mteEstBias(aVal,bVal,:,mIdx); mteBias = squeeze(mteBias(1,1,:))';
+
+        copulaVar = copulaEstVar(aVal,bVal,:,mIdx); copulaVar = squeeze(copulaVar(1,1,:))';
+        clgVar = clgEstVar(aVal,bVal,:,mIdx); clgVar = squeeze(clgVar(1,1,:))';
+        mteVar = mteEstVar(aVal,bVal,:,mIdx); mteVar = squeeze(mteVar(1,1,:))';
+
+        subplot(2,5,mIdx);
+        plot(domainC, copulaBias, domainC, clgBias, domainC, mteBias);
+        grid on; ylabel('Bias');
+        legend('Copula', 'CLG', 'MTE');
+        title(sprintf('M = %d', M));
+
+        subplot(2,5,mIdx+5);
+        plot(domainC, copulaVar, domainC, clgVar, domainC, mteVar);
+        grid on; ylabel('Variance');
+        legend('Copula', 'CLG', 'MTE');
+        title(sprintf('M = %d', M));
+        
+        %%%%%%%%%%%%%%%%%%%
+        
+        mIdx = 3;
+        M = M_vec(mIdx);
+        % extract the bias and variance for this configuration
+        copulaBias = copulaEstBias(aVal,bVal,:,mIdx); copulaBias = squeeze(copulaBias(1,1,:))';
+        clgBias = clgEstBias(aVal,bVal,:,mIdx); clgBias = squeeze(clgBias(1,1,:))';
+        mteBias = mteEstBias(aVal,bVal,:,mIdx); mteBias = squeeze(mteBias(1,1,:))';
+
+        copulaVar = copulaEstVar(aVal,bVal,:,mIdx); copulaVar = squeeze(copulaVar(1,1,:))';
+        clgVar = clgEstVar(aVal,bVal,:,mIdx); clgVar = squeeze(clgVar(1,1,:))';
+        mteVar = mteEstVar(aVal,bVal,:,mIdx); mteVar = squeeze(mteVar(1,1,:))';
+
+        subplot(2,5,mIdx);
+        plot(domainC, copulaBias, domainC, clgBias, domainC, mteBias);
+        grid on; ylabel('Bias');
+        legend('Copula', 'CLG', 'MTE');
+        title(sprintf('M = %d', M));
+
+        subplot(2,5,mIdx+5);
+        plot(domainC, copulaVar, domainC, clgVar, domainC, mteVar);
+        grid on; ylabel('Variance');
+        legend('Copula', 'CLG', 'MTE');
+        title(sprintf('M = %d', M));
+
+        %%%%%%%%%%%%%%%%%%%%
+        
+        mIdx = 4;
+        M = M_vec(mIdx);
+        % extract the bias and variance for this configuration
+        copulaBias = copulaEstBias(aVal,bVal,:,mIdx); copulaBias = squeeze(copulaBias(1,1,:))';
+        clgBias = clgEstBias(aVal,bVal,:,mIdx); clgBias = squeeze(clgBias(1,1,:))';
+        mteBias = mteEstBias(aVal,bVal,:,mIdx); mteBias = squeeze(mteBias(1,1,:))';
+
+        copulaVar = copulaEstVar(aVal,bVal,:,mIdx); copulaVar = squeeze(copulaVar(1,1,:))';
+        clgVar = clgEstVar(aVal,bVal,:,mIdx); clgVar = squeeze(clgVar(1,1,:))';
+        mteVar = mteEstVar(aVal,bVal,:,mIdx); mteVar = squeeze(mteVar(1,1,:))';
+
+        subplot(2,5,mIdx);
+        plot(domainC, copulaBias, domainC, clgBias, domainC, mteBias);
+        grid on; ylabel('Bias');
+        legend('Copula', 'CLG', 'MTE');
+        title(sprintf('M = %d', M));
+
+        subplot(2,5,mIdx+5);
+        plot(domainC, copulaVar, domainC, clgVar, domainC, mteVar);
+        grid on; ylabel('Variance');
+        legend('Copula', 'CLG', 'MTE');
+        title(sprintf('M = %d', M));
+        
+        %%%%%%%%%%%%%%%%%%%%
+        
+        mIdx = 5;
+        M = M_vec(mIdx);
+        % extract the bias and variance for this configuration
+        copulaBias = copulaEstBias(aVal,bVal,:,mIdx); copulaBias = squeeze(copulaBias(1,1,:))';
+        clgBias = clgEstBias(aVal,bVal,:,mIdx); clgBias = squeeze(clgBias(1,1,:))';
+        mteBias = mteEstBias(aVal,bVal,:,mIdx); mteBias = squeeze(mteBias(1,1,:))';
+
+        copulaVar = copulaEstVar(aVal,bVal,:,mIdx); copulaVar = squeeze(copulaVar(1,1,:))';
+        clgVar = clgEstVar(aVal,bVal,:,mIdx); clgVar = squeeze(clgVar(1,1,:))';
+        mteVar = mteEstVar(aVal,bVal,:,mIdx); mteVar = squeeze(mteVar(1,1,:))';
+
+        subplot(2,5,mIdx);
+        plot(domainC, copulaBias, domainC, clgBias, domainC, mteBias);
+        grid on; ylabel('Bias');
+        legend('Copula', 'CLG', 'MTE');
+        title(sprintf('M = %d', M));
+
+        subplot(2,5,mIdx+5);
+        plot(domainC, copulaVar, domainC, clgVar, domainC, mteVar);
+        grid on; ylabel('Variance');
+        legend('Copula', 'CLG', 'MTE');
+        title(sprintf('M = %d', M));
+        
+        mtit(sprintf('A=%d B=%d\n', aVal, bVal));
+        
+        pause;
+    end
+end
