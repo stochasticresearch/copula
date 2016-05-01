@@ -33,16 +33,31 @@ function [ C_u ] = empcopulaval( C, uu, varargin )
 %**************************************************************************
 
 EDGE_TOL = 0.01;
+interpOpt = 'interpolate';
+allPtsInterpOpt = 0;
 nVarargin = length(varargin);
 if(nVarargin>0)
-    EDGE_TOL = varargin{1};
+    if(isnumeric(varargin{1}))
+        EDGE_TOL = varargin{1};
+    else
+        interpOpt = varargin{1};
+            % Valid inputs are: 'interpolate'
+            %                   'donotinterpolate'
+    end
+end
+if(nVarargin>1)
+    if(isnumeric(varargin{2}))
+        allPtsInterpOpt = varargin{2};
+    else
+        error('2nd optional input must be 0 or 1!');
+    end
 end
 
 D = length(size(C));
 
 % if we are at the edge of hypercube, use interpolation so we don't return
-% 0 values, which are ruining log-likelihood values :(
-if(any(uu<=EDGE_TOL) || any(uu>=(1-EDGE_TOL)))
+% 0 values, which ruin log-likelihood values :(
+if(allPtsInterpOpt || (strcmpi(interpOpt,'interpolate') && (any(uu<=EDGE_TOL) || any(uu>=(1-EDGE_TOL)))) )
     K = size(C,1);
     
     ndgridInput = cell(1,D);

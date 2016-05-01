@@ -1,3 +1,23 @@
+function [ U ] = gumbelcopularnd( M, D, alpha )
+%GUMBELCOPULARND Generates M samples from a Gumbel copula of dimensionality
+%D, with parameter alpha
+% Inputs:
+%  M - the number of samples to generate
+%  N - the dimensionality of the data
+%  alpha - the dependency parameter of the Gumbel copula
+%
+% Outputs:
+%  U - an M x N matrix of generated samples
+%  X_i - an M x N matrix of intermediary random variables generated in the
+%        creation of U
+%
+% Acknowledgements:
+% This code modeled after the function definitions in the paper:
+% Estimators for Archimedean copulas in high dimensions, 
+% by Marius Hofert1, Martin Mächler, and Alexander J. McNeil AND
+% the R code in cop_objects.R in the "copula" package in R, found at:
+% https://cran.r-project.org/web/packages/copula/
+%
 %**************************************************************************
 %*                                                                        *
 %* Copyright (C) 2016  Kiran Karra <kiran.karra@gmail.com>                *
@@ -16,19 +36,6 @@
 %* along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
 %*                                                                        *
 %**************************************************************************
-
-function [ U ] = gumbelcopularnd( M, D, alpha )
-%GUMBELCOPULARND Generates M samples from a Gumbel copula of dimensionality
-%D, with parameter alpha
-% Inputs:
-%  M - the number of samples to generate
-%  N - the dimensionality of the data
-%  alpha - the dependency parameter of the Gumbel copula
-%
-% Outputs:
-%  U - an M x N matrix of generated samples
-%  X_i - an M x N matrix of intermediary random variables generated in the
-%        creation of U
 
 if(D<2)
     error('N must be atleast 2');

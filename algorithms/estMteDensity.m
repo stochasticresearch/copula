@@ -1,3 +1,15 @@
+function [mte_info] = estMteDensity(X)
+%ESTMTEDENSITYUNIVARIATE - estimates the density of a univariate dataset 
+% with a mixture of truncated exponentials
+% Inputs
+%  x - a MxD matrix of data-points from the source density (unknown)
+% Outputs:
+%  mte_params - a rvEmpiricalInfo object w/ the domain and the density
+%
+% Code inspired by the paper: "Estimating Mixtures of Truncated
+% Exponentials in Hybrid Bayesian Networks" - by Rumi, Salmeron, and Moral
+% Requires Matlab's Curve Fitting Toolbox
+%
 %**************************************************************************
 %* 
 %* Copyright (C) 2016  Kiran Karra <kiran.karra@gmail.com>
@@ -16,18 +28,6 @@
 %* along with this program.  If not, see <http://www.gnu.org/licenses/>.
 %* 
 %**************************************************************************
-
-function [mte_info] = estMteDensity(X)
-%ESTMTEDENSITYUNIVARIATE - estimates the density of a univariate dataset 
-% with a mixture of truncated exponentials
-% Inputs
-%  x - a MxD matrix of data-points from the source density (unknown)
-% Outputs:
-%  mte_params - a rvEmpiricalInfo object w/ the domain and the density
-%
-% Code inspired by the paper: "Estimating Mixtures of Truncated
-% Exponentials in Hybrid Bayesian Networks" - by Rumi, Salmeron, and Moral
-% Requires Matlab's Curve Fitting Toolbox
 
 D = size(X,2);
 mte_params_1 = estMteDensityUnivariate(X(:,1));
