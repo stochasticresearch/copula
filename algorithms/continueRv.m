@@ -1,3 +1,13 @@
+function [ X_out ] = continueRv( X_in )
+%CONTINUERV Continues a random variable according to Michel and Denuit
+%(2005), and Neslehova (2007).
+% Inputs:
+%  X_in - Input matrix of dimension M x D, where D is the dimensionality of
+%         the data, and M is the number of samples.
+%
+% Outputs:
+%  X_out - the continued samples of the random variables
+%
 %**************************************************************************
 %* 
 %* Copyright (C) 2016  Kiran Karra <kiran.karra@gmail.com>
@@ -14,16 +24,8 @@
 %*
 %* You should have received a copy of the GNU General Public License
 %* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-function [ X_out ] = continueRv( X_in )
-%CONTINUERV Continues a random variable according to Michel and Denuit
-%(2005), and Neslehova (2007).
-% Inputs:
-%  X_in - Input matrix of dimension M x D, where D is the dimensionality of
-%         the data, and M is the number of samples.
-%
-% Outputs:
-%  X_out - the continued samples of the random variables
+%* 
+%**************************************************************************
 
 X_out = X_in + (rand(size(X_in))-1);
 

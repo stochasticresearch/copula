@@ -58,8 +58,8 @@ function [resultsMat] = cmpAllModelsSynthData( D, numMCSims, cfg, logFilename, p
 
 % define the parametrization variables
 % parametrization variables
-global mVec copulaTypeVec alphaVec RhoVecs_2D RhoVecs_3D continuousDistTypeVec 
-global numLLCalculated numMC bntPath logFile K h
+global mVec copulaTypeVec alphaVec RhoVecs_2D RhoVecs_3D  
+global numLLCalculated numMC bntPath logFile K h continuousDistTypeVec
 global plotFlag numTest
 global HCBN_LL_MAT_IDX MTE_LL_MAT_IDX CLG_LL_MAT_IDX REF_LL_MAT_IDX
 
@@ -343,9 +343,9 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                                           distBEst.cdf(xiContinuous_val)];
                                 uuEst2 = [distAEst.cdf(x1_discrete_conditional-1) ...
                                           distBEst.cdf(xiContinuous_val)];
-                                C_partial_X1X2 = empcopulaval(C_actual_discrete_integrate, uuGenerative1)-empcopulaval(C_actual_discrete_integrate, uuGenerative2);
-                                C_partial_hat_X1X2 = empcopulaval(C_est_discrete_integrate, uuEst1) - empcopulaval(C_est_discrete_integrate, uuEst2);
-                                C_partial_hcbn = empcopulaval(hcbnObj.copulaFamilies{2}.C_discrete_integrate, fliplr(uuEst1)) - empcopulaval(hcbnObj.copulaFamilies{2}.C_discrete_integrate, fliplr(uuEst2));
+                                C_partial_X1X2 = empcopulaval(C_actual_discrete_integrate, uuGenerative1,1/K)-empcopulaval(C_actual_discrete_integrate, uuGenerative2,1/K);
+                                C_partial_hat_X1X2 = empcopulaval(C_est_discrete_integrate, uuEst1,1/K) - empcopulaval(C_est_discrete_integrate, uuEst2,1/K);
+                                C_partial_hcbn = empcopulaval(hcbnObj.copulaFamilies{2}.C_discrete_integrate, fliplr(uuEst1),1/K) - empcopulaval(hcbnObj.copulaFamilies{2}.C_discrete_integrate, fliplr(uuEst2),1/K);
 
                                 fX2 = continuousDistInfo.pdf(xiContinuous_val);
                                 fX2_hat = distBEst.pdf(xiContinuous_val);                                                                            % was estimated w/ [u2 u1]
@@ -440,16 +440,16 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                         uu1 = [a_dist.cdf(xx(1)) uu_continuous];
                         uu2 = [a_dist.cdf(xx(1)-1) uu_continuous];
                         totalProb = continuousDistInfo.pdf(xx(2)) * ...
-                            (empcopulaval(C_actual_discrete_integrate, uu1) - empcopulaval(C_actual_discrete_integrate, uu2));
+                            (empcopulaval(C_actual_discrete_integrate, uu1,1/K) - empcopulaval(C_actual_discrete_integrate, uu2,1/K));
                         if(totalProb<1e-5)
 %                             fprintf('In here :(\n');
 %                             xx
 %                             uu1
 %                             uu2
 %                             continuousDistInfo.pdf(xx(2))
-%                             empcopulaval(C_actual_discrete_integrate, uu1)
-%                             empcopulaval(C_actual_discrete_integrate, uu2)
-%                             empcopulaval(C_actual_discrete_integrate, uu1) - empcopulaval(C_actual_discrete_integrate, uu2)
+%                             empcopulaval(C_actual_discrete_integrate, uu1,1/K)
+%                             empcopulaval(C_actual_discrete_integrate, uu2,1/K)
+%                             empcopulaval(C_actual_discrete_integrate, uu1,1/K) - empcopulaval(C_actual_discrete_integrate, uu2,1/K)
                             totalProb = 1e-5;   % PUT BREAK POINT HERE IF YOU WANT TO DEBUG
                         end
                         refLL = refLL + log(totalProb);
@@ -766,22 +766,22 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
     % % %                                 uuHcbnX1X2X3 = uuHcbnX1X2X3;
     % % %                                 uuHcbnX1X2 = uuHcbnX1X2X3(1:2);
 
-                                    C_actual_partial_X1X2X3 = empcopulaval(C_actual_X1X2X3_discrete_integrate, uuGenerativeX1X2X3_1) - ...
-                                                       empcopulaval(C_actual_X1X2X3_discrete_integrate, uuGenerativeX1X2X3_2) - ...
-                                                       empcopulaval(C_actual_X1X2X3_discrete_integrate, uuGenerativeX1X2X3_3) + ...
-                                                       empcopulaval(C_actual_X1X2X3_discrete_integrate, uuGenerativeX1X2X3_4);
-                                    C_est_partial_hat_X1X2X3 = empcopulaval(C_est_X1X2X3_discrete_integrate, uuEstX1X2X3_1) - ...
-                                                           empcopulaval(C_est_X1X2X3_discrete_integrate, uuEstX1X2X3_2) - ...
-                                                           empcopulaval(C_est_X1X2X3_discrete_integrate, uuEstX1X2X3_3) + ...
-                                                           empcopulaval(C_est_X1X2X3_discrete_integrate, uuEstX1X2X3_4);
-                                    C_actual_partial_X1X2 = empcopulaval(C_actual_X1X2_discrete_integrate, uuGenerativeX1X2_1) - ...
-                                                     empcopulaval(C_actual_X1X2_discrete_integrate, uuGenerativeX1X2_2) - ...
-                                                     empcopulaval(C_actual_X1X2_discrete_integrate, uuGenerativeX1X2_3) + ...
-                                                     empcopulaval(C_actual_X1X2_discrete_integrate, uuGenerativeX1X2_4);
-                                    C_est_partial_hat_X1X2 = empcopulaval(C_est_X1X2_discrete_integrate, uuEstX1X2_1) - ...
-                                                         empcopulaval(C_est_X1X2_discrete_integrate, uuEstX1X2_2) - ...
-                                                         empcopulaval(C_est_X1X2_discrete_integrate, uuEstX1X2_3) + ...
-                                                         empcopulaval(C_est_X1X2_discrete_integrate, uuEstX1X2_4);
+                                    C_actual_partial_X1X2X3 = empcopulaval(C_actual_X1X2X3_discrete_integrate, uuGenerativeX1X2X3_1,1/K) - ...
+                                                       empcopulaval(C_actual_X1X2X3_discrete_integrate, uuGenerativeX1X2X3_2,1/K) - ...
+                                                       empcopulaval(C_actual_X1X2X3_discrete_integrate, uuGenerativeX1X2X3_3,1/K) + ...
+                                                       empcopulaval(C_actual_X1X2X3_discrete_integrate, uuGenerativeX1X2X3_4,1/K);
+                                    C_est_partial_hat_X1X2X3 = empcopulaval(C_est_X1X2X3_discrete_integrate, uuEstX1X2X3_1,1/K) - ...
+                                                           empcopulaval(C_est_X1X2X3_discrete_integrate, uuEstX1X2X3_2,1/K) - ...
+                                                           empcopulaval(C_est_X1X2X3_discrete_integrate, uuEstX1X2X3_3,1/K) + ...
+                                                           empcopulaval(C_est_X1X2X3_discrete_integrate, uuEstX1X2X3_4,1/K);
+                                    C_actual_partial_X1X2 = empcopulaval(C_actual_X1X2_discrete_integrate, uuGenerativeX1X2_1,1/K) - ...
+                                                     empcopulaval(C_actual_X1X2_discrete_integrate, uuGenerativeX1X2_2,1/K) - ...
+                                                     empcopulaval(C_actual_X1X2_discrete_integrate, uuGenerativeX1X2_3,1/K) + ...
+                                                     empcopulaval(C_actual_X1X2_discrete_integrate, uuGenerativeX1X2_4,1/K);
+                                    C_est_partial_hat_X1X2 = empcopulaval(C_est_X1X2_discrete_integrate, uuEstX1X2_1,1/K) - ...
+                                                         empcopulaval(C_est_X1X2_discrete_integrate, uuEstX1X2_2,1/K) - ...
+                                                         empcopulaval(C_est_X1X2_discrete_integrate, uuEstX1X2_3,1/K) + ...
+                                                         empcopulaval(C_est_X1X2_discrete_integrate, uuEstX1X2_4,1/K);
 
     % % %                                 c_hcbn_X1X2X3 = empcopulaval(hcbnObj.copulaFamilies{3}.c, [uuHcbnX1X2X3(3) uuHcbnX1X2X3(1:2)]);   % reverse ordering of uuHcbn to be consistent                                                                                      % w/ how hcbn code estimates copula
     % % %                                 c_hcbn_X1X2 = empcopulaval(hcbnObj.copulaFamilies{3}.c_parents, uuHcbnX1X2);       % I don't think any ordering needs to be reversed here
@@ -808,7 +808,7 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                                     nodeBnParams = clgObj.bnParams{3};
                                     for clgIdx=1:length(nodeBnParams)
                                         nodeBnParam = nodeBnParams{clgIdx};
-                                        if(isequal(nodeBnParam.combo,combo))
+                                        if(isequal(nodeBnParam.parentCombination,combo))
                                             % Get the Mean and Covariance
                                             % parameters and break out of loop
                                             Mean = nodeBnParam.Mean;
@@ -822,7 +822,7 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                                     nodeBnParams = mteObj.bnParams{3};
                                     for mteIdx=1:length(nodeBnParams)
                                         nodeBnParam = nodeBnParams{mteIdx};
-                                        if(isequal(nodeBnParam.combo,combo))
+                                        if(isequal(nodeBnParam.parentCombination,combo))
                                             mteInfo = nodeBnParam.mte_info;
                                             break;
                                         end
@@ -882,10 +882,10 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                                                 continuousDistInfo.cdf(xx(3))];
                         
                         fX3 = continuousDistInfo.pdf(xx(3));
-                        C_actual_partial_X1X2X3 = empcopulaval(C_actual_X1X2X3_discrete_integrate, uuGenerativeX1X2X3_1) - ...
-                                                       empcopulaval(C_actual_X1X2X3_discrete_integrate, uuGenerativeX1X2X3_2) - ...
-                                                       empcopulaval(C_actual_X1X2X3_discrete_integrate, uuGenerativeX1X2X3_3) + ...
-                                                       empcopulaval(C_actual_X1X2X3_discrete_integrate, uuGenerativeX1X2X3_4);
+                        C_actual_partial_X1X2X3 = empcopulaval(C_actual_X1X2X3_discrete_integrate, uuGenerativeX1X2X3_1,1/K) - ...
+                                                       empcopulaval(C_actual_X1X2X3_discrete_integrate, uuGenerativeX1X2X3_2,1/K) - ...
+                                                       empcopulaval(C_actual_X1X2X3_discrete_integrate, uuGenerativeX1X2X3_3,1/K) + ...
+                                                       empcopulaval(C_actual_X1X2X3_discrete_integrate, uuGenerativeX1X2X3_4,1/K);
                         totalProb = C_actual_partial_X1X2X3*fX3;
                         if(totalProb<1e-5)
                             totalProb = 1e-5;   % PUT BREAK POINT HERE IF YOU WANT TO DEBUG
