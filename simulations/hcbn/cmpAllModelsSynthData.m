@@ -1,4 +1,4 @@
-function [resultsMat] = cmpAllModelsSynthData( D, numMCSims, cfg, logFilename, plotOption )
+function [llMat, llVarMat] = cmpAllModelsSynthData( D, numMCSims, cfg, logFilename, plotOption )
 %CMPALLMODELSSYNTHDATA - compares all the models for hybrid networks
 % (CLG, HCBN, MTE, [CBN], [MULTINOMIAL]) with synthetic data generated with
 % various different dependencies
@@ -69,9 +69,9 @@ else
     plotFlag = 0;
 end
 
-K = 25; h = 0.05;      % beta kernel estimation parameters
+K = 50; h = 0.05;      % beta kernel estimation parameters
 bntPath = '../bnt'; addpath(genpath(bntPath));
-mVec = 250:250:1000; mVec = 250;
+mVec = 250:250:1000;
 copulaTypeVec = {'Frank', 'Gumbel', 'Clayton', 'Gaussian'};
 alphaVec = 1:3:10;
 RhoVecs_2D = cell(1,length(alphaVec)); 
@@ -89,7 +89,7 @@ MTE_LL_MAT_IDX = 2;
 CLG_LL_MAT_IDX = 3;
 REF_LL_MAT_IDX = 4;
 
-continuousDistTypeVec = {'Multimodal', 'Uniform', 'Gaussian', 'ThickTailed'}; 
+continuousDistTypeVec = {'Gaussian', 'Uniform', 'Multimodal', 'ThickTailed'}; 
 numLLCalculated = 4;
 numMC = numMCSims;
 logFile = logFilename;
@@ -99,19 +99,19 @@ switch D
     case 2
         switch cfg
             case 1
-                resultsMat = runD2CFG1();
+                [llMat, llVarMat] = runD2CFG1();
             case 2
-                resultsMat = runD2CFG2();
+                [llMat, llVarMat] = runD2CFG2();
             case 3
-                resultsMat = runD2CFG3();
+                [llMat, llVarMat] = runD2CFG3();
             case 4
-                resultsMat = runD2CFG4();
+                [llMat, llVarMat] = runD2CFG4();
             case 5
-                resultsMat = runD2CFG5();
+                [llMat, llVarMat] = runD2CFG5();
             case 6
-                resultsMat = runD2CFG6();
+                [llMat, llVarMat] = runD2CFG6();
             case 7
-                resultsMat = runD2CFG7();
+                [llMat, llVarMat] = runD2CFG7();
             otherwise
                 error('Max configurations=7 for D=2');
         end
@@ -136,49 +136,49 @@ end
 
 end
 
-function [klDivMat] = runD2CFG1()
+function [llMat, llVarMat] = runD2CFG1()
 % runD2CFG1 - the multinomial probabilities are evenly distributed
 probs = [0.25 0.25 0.25 0.25];
-klDivMat = runD2(probs);
+[llMat, llVarMat] = runD2(probs);
 end
 
-function [klDivMat] = runD2CFG2()
+function [llMat, llVarMat] = runD2CFG2()
 % runD2CFG2 - the multinomial probabilities are skewed left
 probs = [0.5 0.3 0.1 0.1];
-klDivMat = runD2(probs);
+[llMat, llVarMat] = runD2(probs);
 end
 
-function [klDivMat] = runD2CFG3()
+function [llMat, llVarMat] = runD2CFG3()
 % runD2CFG2 - the multinomial probabilities are skewed left
 probs = fliplr([0.5 0.3 0.1 0.1]);
-klDivMat = runD2(probs);
+[llMat, llVarMat] = runD2(probs);
 end
 
-function [klDivMat] = runD2CFG4()
+function [llMat, llVarMat] = runD2CFG4()
 % runD2CFG2 - the multinomial probabilities are skewed right
 probs = [0.5 0.5];
-klDivMat = runD2(probs);
+[llMat, llVarMat] = runD2(probs);
 end
 
-function [klDivMat] = runD2CFG5()
+function [llMat, llVarMat] = runD2CFG5()
 % runD2CFG2 - the multinomial probabilities are skewed left
 probs = [0.7 0.3];
-klDivMat = runD2(probs);
+[llMat, llVarMat] = runD2(probs);
 end
 
-function [klDivMat] = runD2CFG6()
+function [llMat, llVarMat] = runD2CFG6()
 % runD2CFG2 - the multinomial probabilities are skewed right
 probs = [0.3 0.7];
-klDivMat = runD2(probs);
+[llMat, llVarMat] = runD2(probs);
 end
 
-function [klDivMat] = runD2CFG7()
+function [llMat, llVarMat] = runD2CFG7()
 % runD2CFG2 - the multinomial probabilities are skewed right
-probs = 0.1*ones(1,10);
-klDivMat = runD2(probs);
+probs = 0.05*ones(1,20);
+[llMat, llVarMat] = runD2(probs);
 end
 
-function [llMat] = runD2(a_probs)
+function [llMat, llVarMat] = runD2(a_probs)
 global mVec copulaTypeVec alphaVec RhoVecs_2D continuousDistTypeVec 
 global numLLCalculated numMC bntPath logFile K h
 global plotFlag numTest
@@ -197,6 +197,11 @@ discreteNodeNames = {'A'};
 
 llMCMat = zeros(numLLCalculated,numMC);
 llMat = zeros(length(copulaTypeVec),...
+              length(continuousDistTypeVec),...
+              length(alphaVec),...
+              length(mVec),...
+              numLLCalculated);
+llVarMat = zeros(length(copulaTypeVec),...
               length(continuousDistTypeVec),...
               length(alphaVec),...
               length(mVec),...
@@ -232,18 +237,18 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                 dispstat(progressStr,'keepthis','timestamp');
                 fprintf(fid, progressStr);
                 
+                % make the actual copula density, and the partial
+                % derivative of the copula function w.r.t. the
+                % continuous variable (x_2)
+                u = linspace(0,1,K);
+                [U1,U2] = ndgrid(u);
+                c_actual = reshape( copulapdf(copulaType, [U1(:) U2(:)], alpha), K, K );
+                C_actual_discrete_integrate = cumtrapz(u, c_actual, 1);
+                
                 for mcSimNum=1:numMC
                     U = copularnd(copulaType, alpha, M+numTest);
                     X_hybrid = zeros(M+numTest,2);
                     
-                    % make the actual copula density, and the partial
-                    % derivative of the copula function w.r.t. the
-                    % continuous variable (x_2)
-                    u = linspace(0,1,K);
-                    [U1,U2] = ndgrid(u);
-                    c_actual = reshape( copulapdf(copulaType, [U1(:) U2(:)], alpha), K, K );
-                    C_actual_discrete_integrate = cumtrapz(u, c_actual, 1);
-
                     % make both X1 and X2 multimodal distributions
                     if(strcmp(continuousDistType, 'Multimodal'))
                         xContinuous = [normrnd(-2,0.3,1000,1); normrnd(2,0.8,1000,1)];
@@ -285,8 +290,8 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                     X_hybrid_continued = X_hybrid;
                     X_hybrid_continued(:,1) = continueRv(X_hybrid(:,1));
                     % generate pseudo-observations
-                    % U_hybrid_continued = pseudoobs(X_hybrid_continued, 'ecdf', 100); %% HCBN  implements this version, so we compare here w/ non-ecdf
-                    U_hybrid_continued = pseudoobs(X_hybrid_continued);
+                    U_hybrid_continued = pseudoobs(X_hybrid_continued, 'ecdf', 100);
+%                     U_hybrid_continued = pseudoobs(X_hybrid_continued);
                     c_est = empcopulapdf(U_hybrid_continued, h, K, 'betak');
                     C_est_discrete_integrate = cumtrapz(u, c_est, 1);
                     
@@ -382,11 +387,11 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                                  xiContinuous, fx2_givenx1_copulahcbnf2Actual); 
                             grid on; title(sprintf('X_1=%d',x1_discrete_conditional));
                             h_legend1 = legend('$c*f(x_2)$', ...
-                                '$\hat{c}_{RANK}*\hat{f}(x_2)$', ...
-                                '$\hat{c}_{RANK}*f(x_2)$', ...
+                                '$\hat{c}_{ECDF}*\hat{f}(x_2)$', ...
+                                '$\hat{c}_{ECDF}*f(x_2)$', ...
                                 '$c*\hat{f}(x_2)$', ...
-                                '$\hat{c}_{HCBN-ECDF}*\hat{f}(x_2)_{HCBN}$', ...
-                                '$\hat{c}_{HCBN-ECDF}*f(x_2)$');
+                                '$\hat{c}_{HCBN-RANK}*\hat{f}(x_2)_{HCBN}$', ...
+                                '$\hat{c}_{HCBN-RANK}*f(x_2)$');
                             set(h_legend1,'FontSize',12);
                             set(h_legend1,'Interpreter','latex')
 
@@ -411,7 +416,7 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                                 alphaDisp = alpha;
                             end
                             title(sprintf('%s(%0.02f) Marginal Copula u_1=%0.02f', copulaType, alphaDisp, uuGenerative1(1)));
-                            h_legend3 = legend('$c$', '$\hat{c}_{RANK}$', '$\hat{c}_{HCBN-ECDF}$');
+                            h_legend3 = legend('$c$', '$\hat{c}_{ECDF}$', '$\hat{c}_{HCBN-RANK}$');
                             xlabel('u_2');
                             set(h_legend3,'FontSize',12);
                             set(h_legend3,'Interpreter','latex')
@@ -469,14 +474,22 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                     progressIdx = progressIdx + 1;
                 end
                 meanLLDivMCMat = mean(llMCMat,2);
+                varLLDivMCMat = mean(llMCMat.^2,2)-meanLLDivMCMat.^2;
                                     
-                progressStr = sprintf('refLL=%f hcbnLL=%f mteLL=%f clgLL=%f\n', ...
+                progressStr = sprintf('MEAN{refLL}=%f MEAN{hcbnLL}=%f MEAN{mteLL}=%f MEAN{clgLL}=%f', ...
                     meanLLDivMCMat(REF_LL_MAT_IDX), ...
                     meanLLDivMCMat(HCBN_LL_MAT_IDX), ...
                     meanLLDivMCMat(MTE_LL_MAT_IDX), ...
                     meanLLDivMCMat(CLG_LL_MAT_IDX));
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
+                progressStr = sprintf('VAR{refLL}=%f VAR{hcbnLL}=%f VAR{mteLL}=%f VAR{clgLL}=%f\n', ...
+                    varLLDivMCMat(REF_LL_MAT_IDX), ...
+                    varLLDivMCMat(HCBN_LL_MAT_IDX), ...
+                    varLLDivMCMat(MTE_LL_MAT_IDX), ...
+                    varLLDivMCMat(CLG_LL_MAT_IDX));
+                dispstat(progressStr,'timestamp','keepthis','timestamp');
 
+                
                 llMat(copulaTypeVecIdx, ...
                          continuousDistTypeVecIdx,...
                          alphaVecIdx,...
@@ -492,6 +505,22 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                          alphaVecIdx,...
                          mVecIdx,...
                          CLG_LL_MAT_IDX) = meanLLDivMCMat(CLG_LL_MAT_IDX);
+                     
+                llVarMat(copulaTypeVecIdx, ...
+                         continuousDistTypeVecIdx,...
+                         alphaVecIdx,...
+                         mVecIdx,...
+                         HCBN_LL_MAT_IDX) = varLLDivMCMat(HCBN_LL_MAT_IDX);
+                llVarMat(copulaTypeVecIdx, ...
+                         continuousDistTypeVecIdx,...
+                         alphaVecIdx,...
+                         mVecIdx,...
+                         MTE_LL_MAT_IDX) = varLLDivMCMat(MTE_LL_MAT_IDX);
+                llVarMat(copulaTypeVecIdx, ...
+                         continuousDistTypeVecIdx,...
+                         alphaVecIdx,...
+                         mVecIdx,...
+                         CLG_LL_MAT_IDX) = varLLDivMCMat(CLG_LL_MAT_IDX);
                 %%%%%%%%%%% END OF MAIN SIMULATION CODE %%%%%%%%%%
             end
         end
