@@ -92,8 +92,8 @@ isdiscrete = 1;
 F_y1_est = empcdf(X_hybrid(:,1),isdiscrete);
 disty1Est = rvEmpiricalInfo(xi_y1,f_y1_est,F_y1_est);
 
-mteObj = mte(X_hybrid, discreteNodes, dag);
-clgObj = clg(X_hybrid, discreteNodes, dag);
+mteObj = mtebn(X_hybrid, discreteNodes, dag);
+clgObj = clgbn(X_hybrid, discreteNodes, dag);
 hcbnObj = hcbn(bntPath, X_hybrid, nodeNames, discreteNodeNames, K, h, dag); 
 
 for y1=1:4

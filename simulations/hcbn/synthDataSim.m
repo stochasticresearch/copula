@@ -75,8 +75,8 @@ for mcSimNumber=1:numMCSims
 %         hcbnObj = hcbn(bntPath, X_train, nodeNames, discreteNodeNames, dag);
 %         hcbnObj.setSimNum(mcSimNumber); hcbnObj.setTypeName('Gaussian');
 %         [hcbnLLVal_Gaussian,Rc_val_mat_Gaussian,Rc_num_mat_Gaussian,Rc_den_mat_Gaussian] = hcbnObj.dataLogLikelihood(X_test);
-%         clgObj = clg(X_train, discreteNodes, dag); clgLLVal_Gaussian = clgObj.dataLogLikelihood(X_test);
-%         mteObj = mte(X_train, discreteNodes, dag); mteLLVal_Gaussian = mteObj.dataLogLikelihood(X_test);
+%         clgObj = clgbn(X_train, discreteNodes, dag); clgLLVal_Gaussian = clgObj.dataLogLikelihood(X_test);
+%         mteObj = mtebn(X_train, discreteNodes, dag); mteLLVal_Gaussian = mteObj.dataLogLikelihood(X_test);
         
         continuousType = 'other';
         X = genSynthData2(discreteType, continuousType, M);
@@ -86,8 +86,8 @@ for mcSimNumber=1:numMCSims
         hcbnObj = hcbn(bntPath, X_train, nodeNames, discreteNodeNames, dag); 
         hcbnObj.setSimNum(mcSimNumber); hcbnObj.setTypeName('Other');
         [hcbnLLVal_Other,Rc_val_mat_Other,Rc_num_mat_Other,Rc_den_mat_Other] = hcbnObj.dataLogLikelihood(X_test);
-        clgObj = clg(X_train, discreteNodes, dag); clgLLVal_Other = clgObj.dataLogLikelihood(X_test);
-        mteObj = mte(X_train, discreteNodes, dag); mteLLVal_Other = mteObj.dataLogLikelihood(X_test);
+        clgObj = clgbn(X_train, discreteNodes, dag); clgLLVal_Other = clgObj.dataLogLikelihood(X_test);
+        mteObj = mtebn(X_train, discreteNodes, dag); mteLLVal_Other = mteObj.dataLogLikelihood(X_test);
         
 %         if(mean(Rc_val_mat_Gaussian(1,:))~=1 || mean(Rc_val_mat_Gaussian(2,:))~=1 || ...
 %            mean(Rc_num_mat_Gaussian(1,:))~=1 || mean(Rc_num_mat_Gaussian(2,:))~=1 || ...
@@ -206,8 +206,8 @@ for mcSimNumber=1:numMCSims
         X_test = X(max(trainVecSize)+1:end,:);
         X_train = X_train_full(1:numTrain,:);
 
-        clgObj = clg(X_train, discreteNodes, dag); clgLLVal_Gaussian = clgObj.dataLogLikelihood(X_test);
-        mteObj = mte(X_train, discreteNodes, dag); mteLLVal_Gaussian = mteObj.dataLogLikelihood(X_test);
+        clgObj = clgbn(X_train, discreteNodes, dag); clgLLVal_Gaussian = clgObj.dataLogLikelihood(X_test);
+        mteObj = mtebn(X_train, discreteNodes, dag); mteLLVal_Gaussian = mteObj.dataLogLikelihood(X_test);
         hcbnObj = hcbn(bntPath, X_train, nodeNames, discreteNodeNames, dag); hcbnLLVal_Gaussian = hcbnObj.dataLogLikelihood(X_test);
 
         continuousType = 'other';
@@ -216,8 +216,8 @@ for mcSimNumber=1:numMCSims
         X_test = X(max(trainVecSize)+1:end,:);
         X_train = X_train_full(1:numTrain,:);
 
-        clgObj = clg(X_train, discreteNodes, dag); clgLLVal_Other = clgObj.dataLogLikelihood(X_test);
-        mteObj = mte(X_train, discreteNodes, dag); mteLLVal_Other = mteObj.dataLogLikelihood(X_test);
+        clgObj = clgbn(X_train, discreteNodes, dag); clgLLVal_Other = clgObj.dataLogLikelihood(X_test);
+        mteObj = mtebn(X_train, discreteNodes, dag); mteLLVal_Other = mteObj.dataLogLikelihood(X_test);
         hcbnObj = hcbn(bntPath, X_train, nodeNames, discreteNodeNames, dag); hcbnLLVal_Other = hcbnObj.dataLogLikelihood(X_test);
 
         llValMat(1, idx, mcSimNumber) = clgLLVal_Gaussian;

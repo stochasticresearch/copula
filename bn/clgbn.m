@@ -1,4 +1,4 @@
-classdef clg < handle
+classdef clgbn < handle
     %CLG Definition of a Conditional Linear Gaussian Bayesian Network
     %
     %**********************************************************************
@@ -37,7 +37,7 @@ classdef clg < handle
     end
     
     methods
-        function obj = clg(X, discreteNodes, varargin)
+        function obj = clgbn(X, discreteNodes, varargin)
             % CLG - Constructs a CLG object
             %  Inputs:
             %   X - a N x D matrix of the the observable data which the

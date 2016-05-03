@@ -71,8 +71,8 @@ for numTrain=numTrainVec
         xtestIdxStart = max(numTrain)+1;
         X_test = X(xtestIdxStart:end,:);
         X_train = X_train_full(1:numTrain,:);
-        mteObj = mte(X_train, discreteNodes, dag); mteLLVal_Other = mteObj.dataLogLikelihood(X_test);
-        clgObj = clg(X_train, discreteNodes, dag); clgLLVal_Other = clgObj.dataLogLikelihood(X_test);
+        mteObj = mtebn(X_train, discreteNodes, dag); mteLLVal_Other = mteObj.dataLogLikelihood(X_test);
+        clgObj = clgbn(X_train, discreteNodes, dag); clgLLVal_Other = clgObj.dataLogLikelihood(X_test);
         hcbnObj = hcbn(bntPath, X_train, nodeNames, discreteNodeNames, dag); hcbnTrueLL = clgObj.dataLogLikelihood(X_test);       
         
 %         [uU1, uU2] = ndgrid(linspace(0,1,100));

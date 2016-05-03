@@ -140,8 +140,8 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                     continuousEstDistInfo = rvEmpiricalInfo(x2est,f2est,F2est);
 
                     hcbnObj = hcbn(bntPath, X_hybrid, nodeNames, discreteNodeNames, dag); 
-                    mteObj = mte(X_hybrid, discreteNodes, dag);
-                    clgObj = clg(X_hybrid, discreteNodes, dag);
+                    mteObj = mtebn(X_hybrid, discreteNodes, dag);
+                    clgObj = clgbn(X_hybrid, discreteNodes, dag);
 
                     X_hybrid_continued = X_hybrid;
                     X_hybrid_continued(:,1) = continueRv(X_hybrid(:,1));

@@ -1,4 +1,4 @@
-classdef mte < handle
+classdef mtebn < handle
     %MTE Definition of a Mixture of Truncated Exponentials Bayesian Network
     %
     %**********************************************************************
@@ -38,7 +38,7 @@ classdef mte < handle
     end
     
     methods
-        function obj = mte(X, discreteNodes, varargin)
+        function obj = mtebn(X, discreteNodes, varargin)
             % DAG - Constructs a HCBN object
             %  Inputs:
             %   X - a N x D matrix of the the observable data which the

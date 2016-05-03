@@ -98,8 +98,8 @@ for mcSim=1:totalNumMC
         trueLLTest = sum(trueLLVec(M+1:end));
 
         hcbnObj = hcbn(bntPath, X_train, nodeNames, discreteNodeNames, dag); hcbnLL = hcbnObj.dataLogLikelihood(X_test);
-        clgObj = clg(X_train, discreteNodes, dag); clgLL = clgObj.dataLogLikelihood(X_test);
-        mteObj = mte(X_train, discreteNodes, dag); mteLL = mteObj.dataLogLikelihood(X_test);
+        clgObj = clgbn(X_train, discreteNodes, dag); clgLL = clgObj.dataLogLikelihood(X_test);
+        mteObj = mtebn(X_train, discreteNodes, dag); mteLL = mteObj.dataLogLikelihood(X_test);
 
         fprintf('M=%d trueLL=%0.02f hcbnLL=%0.02f clgLL=%0.02f mteLL=%0.02f\n', ...
             M, trueLLTest, hcbnLL, clgLL, mteLL);
