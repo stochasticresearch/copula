@@ -48,7 +48,7 @@ X_train = X(1:M/2,:);
 X_test = X(M/2+1:end,:);
 
 multinomialbnObj = multinomialbn(X_train, discreteNodes, dag);
-llVal = multinomialbnObj.dataLogLikelihood(X_test);
+llVal = multinomialbnObj.dataLogLikelihood(X_test)
 
 % for each combination of values for nodes A and B, compute what the
 % "actual" distribution looks like, and what the discretized distribution

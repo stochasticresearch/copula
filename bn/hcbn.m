@@ -435,5 +435,64 @@ classdef hcbn < handle
             end
         end
         
+        function [] = learnStruct_hc(obj, seeddag)
+            %LEARNSTRUCT_HC learn the structure of the HCBN network using
+            %               the hill climbing algorithm as described in 
+            %               Koller and Friedman (2009).  The code for this 
+            %               is based off the structure learning toolbox 
+            %               within BNT.  See BNT/SLP/learn_struct_hc.m.
+            %               This will use the X dataset that was passed to 
+            %               the constructor to learn the structure.
+            %
+            % Inputs:
+            %  seeddag - a DAG which can be used as a reference DAG as a
+            %            starting point for the search process.  This is
+            %            optional, and can be an empty array if no seed is
+            %            desired.
+            
+            % ensure that the seeddag is acyclic
+            if(~obj.acyclic(seeddag))
+                obj.setDag(zeros(obj.D,obj.D));
+            else
+                obj.setDag(seeddag);
+            end
+            
+            % get the baseline score
+            bestScore = obj.dataLogLikelihood(obj.X);
+            done = 0;
+            while ~done
+                % make dag's which are addition, reversal, and subtraction
+                % of edges
+                [candidateDags,~,~] = mk_nbrs_of_dag(obj.dag);
+                
+                % score all the dags
+                scores = -Inf*ones(1,length(candidateDags));
+                for ii=1:length(candidateDags)
+                    obj.setDag(candidateDags{ii});
+                    scores(ii) = obj.hcbnLogLikelihood(obj.X);
+                end
+                
+                % find the maximum scoring DAG, and see if it is better
+                % than the current best
+                maxScore = max(scores);
+                % see if multiple candidate dag's had the same maximum
+                % score, and if so, choose randomely among those dag's
+                new = find(scores == maxScore );
+                % update best candidate dag as new dag and continue search
+                if ~isempty(new) && (maxScore > bestScore)
+                    p = sample_discrete(normalise(ones(1, length(new))));
+                    bestScore = maxScore;
+                    obj.setDag(candidateDags{new(p)});
+                else
+                    done = 1;
+                end 
+            end
+            
+            % TODO: topo-sort the DAG, and sort the names cell array to
+            % match the topologically sorted DAG
+            
+            % TODO: print out DAG structure
+        end
+        
     end
 end
