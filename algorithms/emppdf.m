@@ -33,4 +33,9 @@ else
     [f,xi] = ksdensity(x);
 end
 
+f = f(:);
+xi = xi(:);
+f = f';
+xi = xi';
+
 end

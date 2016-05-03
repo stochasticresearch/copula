@@ -21,11 +21,15 @@ function [ F, xi ] = empcdf( x, isdiscrete )
 
 if(isdiscrete)
     [F,x] = ecdf(x);
-%     F = F(2:end);
-%     xi = x(2:end);
-    xi = x; xi(1) = 0;
+    diffOutput = diff(x);
+    xi = x; xi(1) = xi(2)-diffOutput(2);
 else
     [F, xi] = ksdensity(x,'function','cdf');
 end
+
+F = F(:);
+xi = xi(:);
+F = F';
+xi = xi';
 
 end
