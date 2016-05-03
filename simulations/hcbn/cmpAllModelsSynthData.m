@@ -246,6 +246,7 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                 C_actual_discrete_integrate = cumtrapz(u, c_actual, 1);
                 
                 for mcSimNum=1:numMC
+                    dispstat(sprintf('MC Sim=%d', mcSimNum), 'timestamp');
                     U = copularnd(copulaType, alpha, M+numTest);
                     X_hybrid = zeros(M+numTest,2);
                     

@@ -1,5 +1,6 @@
 classdef mte < handle
     %MTE Definition of a Mixture of Truncated Exponentials Bayesian Network
+    %
     %**********************************************************************
     %* 
     %* Copyright (C) 2016  Kiran Karra <kiran.karra@gmail.com>

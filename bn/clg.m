@@ -1,5 +1,6 @@
 classdef clg < handle
     %CLG Definition of a Conditional Linear Gaussian Bayesian Network
+    %
     %**********************************************************************
     %* 
     %* Copyright (C) 2016  Kiran Karra <kiran.karra@gmail.com>
@@ -37,7 +38,7 @@ classdef clg < handle
     
     methods
         function obj = clg(X, discreteNodes, varargin)
-            % DAG - Constructs a HCBN object
+            % CLG - Constructs a CLG object
             %  Inputs:
             %   X - a N x D matrix of the the observable data which the
             %       HCBN will model

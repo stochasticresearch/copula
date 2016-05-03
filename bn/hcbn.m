@@ -1,5 +1,6 @@
 classdef hcbn < handle
     %HCBN Definition of a Hybrid Copula Bayesian Network
+    %
     %**********************************************************************
     %* 
     %* Copyright (C) 2016  Kiran Karra <kiran.karra@gmail.com>
