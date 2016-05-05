@@ -1,3 +1,9 @@
+function [u] = fixU(u, tol)
+%FIXU - fixes the U query vector for querying copula densities
+% u - a [M x D] matrix of the values in the unit hypercube to be fixed
+% tol - (optional), how close the u values are allowed to get to the edge
+%       of the hypercube, default is 0.01
+%
 %**************************************************************************
 %* 
 %* Copyright (C) 2016  Kiran Karra <kiran.karra@gmail.com>
@@ -16,10 +22,6 @@
 %* along with this program.  If not, see <http://www.gnu.org/licenses/>.
 %* 
 %**************************************************************************
-
-function [u] = fixU(u, tol)
-% fixes the U query vector for querying copulas
-% u should be a [1 x D] vector
 
 if(nargin<=1)
     tol = 0.01;

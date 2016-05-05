@@ -1,22 +1,25 @@
-%**************************************************************************
-%* 
-%* Copyright (C) 2016  Kiran Karra <kiran.karra@gmail.com>
-%*
-%* This program is free software: you can redistribute it and/or modify
-%* it under the terms of the GNU General Public License as published by
-%* the Free Software Foundation, either version 3 of the License, or
-%* (at your option) any later version.
-%*
-%* This program is distributed in the hope that it will be useful,
-%* but WITHOUT ANY WARRANTY; without even the implied warranty of
-%* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-%* GNU General Public License for more details.
-%*
-%* You should have received a copy of the GNU General Public License
-%* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-classdef copulafamily
-    %COPULAFAMILY - has all information related to a copula family
+classdef hcbnfamily
+    %HCBNFAMILY - has all information related to a copula family in the
+    %             context of the HCBN construction
+    %
+    %**********************************************************************
+    %* 
+    %* Copyright (C) 2016  Kiran Karra <kiran.karra@gmail.com>
+    %*
+    %* This program is free software: you can redistribute it and/or modify
+    %* it under the terms of the GNU General Public License as published by
+    %* the Free Software Foundation, either version 3 of the License, or
+    %* (at your option) any later version.
+    %*
+    %* This program is distributed in the hope that it will be useful,
+    %* but WITHOUT ANY WARRANTY; without even the implied warranty of
+    %* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    %* GNU General Public License for more details.
+    %*
+    %* You should have received a copy of the GNU General Public License
+    %* along with this program.  If not, see <http://www.gnu.org/licenses/>
+    %* 
+    %**********************************************************************
     
     properties
         nodeName;
@@ -38,7 +41,7 @@ classdef copulafamily
     end
     
     methods
-        function obj = copulafamily(nn, ni, pnn, pni, CC, cc, CC_discrete_integrate, CC_parents, cc_parents, CC_parents_discrete_integrate)
+        function obj = hcbnfamily(nn, ni, pnn, pni, CC, cc, CC_discrete_integrate, CC_parents, cc_parents, CC_parents_discrete_integrate)
             obj.nodeName = nn;
             obj.nodeIdx = ni;
             obj.parentNodeNames = pnn;
