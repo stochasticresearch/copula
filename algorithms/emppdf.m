@@ -1,3 +1,12 @@
+function [ f, xi ] = emppdf( x, isdiscrete )
+%EMPPDF - Computes the empirical pdf
+% Inputs:
+%  x - the data from which the empirical cdf should be estimated
+%  isdiscrete - 1 if x is discrete data, 0 if x is continuous data
+% Outputs:
+%  f - the empirical PDF
+%  xi - the domain over which F is defined
+%
 %**************************************************************************
 %* 
 %* Copyright (C) 2016  Kiran Karra <kiran.karra@gmail.com>
@@ -17,16 +26,15 @@
 %* 
 %**************************************************************************
 
-function [ f, xi ] = emppdf( x, isdiscrete )
-
 M = size(x,1);
 
 if(isdiscrete)
     [~,xi] = empcdf( x, isdiscrete );
+    diffOutput = diff(xi); binWidth = diffOutput(end);
     f = zeros(1,length(xi));
     idx = 1;
     for jj=1:length(xi)
-        f(idx) = sum(x==xi(jj))/M;
+        f(idx) = sum(x==xi(jj))/(M*binWidth);
         idx = idx + 1;
     end
 else

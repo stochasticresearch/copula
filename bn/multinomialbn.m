@@ -57,7 +57,7 @@ classdef multinomialbn < handle
             %
             obj.DEBUG_MODE = 0;
             obj.LOG_CUTOFF = 10^-5;
-            obj.NUM_DISCRETE_INTERVALS = 25;
+            obj.NUM_DISCRETE_INTERVALS = 10;
             
             obj.N = size(X,1);
             obj.D = size(X,2);
@@ -87,6 +87,11 @@ classdef multinomialbn < handle
                     error('Specified DAG is not acyclic!\n');
                 end
                 obj.setDag(candidateDag);
+            end
+            if(nVarargs>1)
+                if(isnumeric(varargin{2}))
+                    obj.NUM_DISCRETE_INTERVALS = varargin{2};
+                end
             end
         end
         

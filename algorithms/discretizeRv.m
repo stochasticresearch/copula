@@ -38,5 +38,5 @@ function [ y, edges ] = discretizeRv( x, N, varargin )
 %*                                                                        *
 %**************************************************************************
 
-[~,edges,y] = histcounts(x, N, 'Normalization', 'probability');
+[~,edges,y] = histcounts(x, N, 'Normalization', 'pdf');
 y = edges(y);

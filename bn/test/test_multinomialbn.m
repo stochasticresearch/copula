@@ -80,7 +80,9 @@ for aVal=1:length(a_dist.Probabilities)
         hold on;
         stem(estimated_info.domain, estimated_info.density);
         grid on;
-        title(sprintf('A=%d B=%d', aVal, bVal));
+        title(sprintf('A=%d B=%d continuousINT=%f discreteINT=%f', ...
+            aVal, bVal,trapz(actual_domain,actual_epdf), ...
+            trapz(estimated_info.domain, estimated_info.density) ));
 %         estimated_info.distribution
 %         trapz(actual_domain,actual_epdf)
         pause;

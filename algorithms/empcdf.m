@@ -1,3 +1,12 @@
+function [ F, xi ] = empcdf( x, isdiscrete )
+%EMPCDF - Computes the empirical cdf
+% Inputs:
+%  x - the data from which the empirical cdf should be estimated
+%  isdiscrete - 1 if x is discrete data, 0 if x is continuous data
+% Outputs:
+%  F - the empirical CDF
+%  xi - the domain over which F is defined
+%
 %**************************************************************************
 %* 
 %* Copyright (C) 2016  Kiran Karra <kiran.karra@gmail.com>
@@ -16,8 +25,6 @@
 %* along with this program.  If not, see <http://www.gnu.org/licenses/>.
 %* 
 %**************************************************************************
-
-function [ F, xi ] = empcdf( x, isdiscrete )
 
 if(isdiscrete)
     [F,x] = ecdf(x);
