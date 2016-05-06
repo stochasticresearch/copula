@@ -131,7 +131,7 @@ classdef multinomialbn < handle
                 else
                     % compute all the combinations for the parent nodes
                     if(length(parentNodes)==1)
-                        combos = 1:obj.uniqueVals(node);
+                        combos = 1:obj.uniqueVals(parentNodes(1));
                     else
                         combos = 1:obj.uniqueVals(parentNodes(1));
                         for pNode=parentNodes(2:end)

@@ -191,7 +191,11 @@ classdef cbn < handle
                         C_parents = [];
                         C_parents_params = [];
                     else
-                        [C_parents, C_parents_params] = copulamodelselect(U_parents);
+                        % in order to maintain copula compatibility, we use
+                        % the same copula for the parents.  We use
+                        % copulafit to find the parameters
+                        C_parents = C_all;
+                        C_parents_params = copulafit(C_all, U_parents);
                     end
                     copFam = cbnfamily(node, nodeIdx, parentNames, parentIdxs, ...
                         C_all, C_all_params, C_parents, C_parents_params);
@@ -239,48 +243,50 @@ classdef cbn < handle
             %  rcVal - the copula ratio value
             
             copFam = obj.copulaFamilies{nodeIdx};
-            x_all = x([nodeIdx copFam.parentIdxs]);
-            u_all = zeros(1,length(x_all));
-            % convert to pseudo-observations via ECDF
-            for ii=1:length(x_all)
-                u_all(ii) = obj.empInfo{ii}.cdf(x_all(ii));
+            if(isempty(copFam))
+                rcVal = 1;
+            else
+                x_all = x([nodeIdx copFam.parentNodeIdxs]);
+                u_all = zeros(1,length(x_all));
+                % convert to pseudo-observations via ECDF
+                for ii=1:length(x_all)
+                    u_all(ii) = obj.empInfo{ii}.cdf(x_all(ii));
+                end
+                u_all = fixU(u_all);        % because we query the copula-pdf, it is important
+                                            % to make sure we don't query the
+                                            % edges of the hypercube
+                u_parents = u_all(2:end);
+                if(strcmpi(copFam.C, 'Gaussian'))
+                    rcNumVal = copulapdf('Gaussian', u_all, copFam.C_param);
+                    if(length(u_parents)>1)
+                        rcDenVal = copulapdf('Gaussian', u_parents, copFam.C_parents_param);
+                    else
+                        rcDenVal = 1;
+                    end
+                elseif(strcmpi(copFam.C, 'Frank'))
+                    rcNumVal = frankcopulapdf(u_all, copFam.C_param);
+                    if(length(u_parents)>1)
+                        rcDenVal = frankcopulapdf(u_parents, copFam.C_parents_param);
+                    else
+                        rcDenVal = 1;
+                    end
+                elseif(strcmpi(copFam.C, 'Gumbel'))
+                    rcNumVal = gumbelcopulapdf(u_all, copFam.C_param);
+                    if(length(u_parents)>1)
+                        rcDenVal = gumbelcopulapdf(u_parents, copFam.C_parents_param);
+                    else
+                        rcDenVal = 1;
+                    end
+                elseif(strcmpi(copFam.C, 'Clayton'))
+                    rcNumVal = claytoncopulapdf(u_all, copFam.C_param);
+                    if(length(u_parents)>1)
+                        rcDenVal = claytoncopulapdf(u_parents, copFam.C_parents_param);
+                    else
+                        rcDenVal = 1;
+                    end
+                end
+                rcVal = rcNumVal/rcDenVal;
             end
-            u_all = fixU(u_all);        % because we query the copula-pdf, it is important
-                                        % to make sure we don't query the
-                                        % edges of the hypercube
-            u_parents = u_all(2:end);
-            
-            
-            if(strcmpi(copFam.C_all, 'Gaussian'))
-                rcNumVal = copulapdf('Gaussian', u_all, comFam.C_all_params);
-                if(length(u_parents)>1)
-                    rcDenVal = copulapdf('Gaussian', u_parents, copFam.C_parents_params);
-                else
-                    rcDenVal = 1;
-                end
-            elseif(strcmpi(copFam.C_all, 'Frank'))
-                rcNumVal = frankcopulapdf(u_all, copFam.C_all_params);
-                if(length(u_parents)>1)
-                    rcDenVal = frankcopulapdf(u_parents, copFam.C_parents_params);
-                else
-                    rcDenVal = 1;
-                end
-            elseif(strcmpi(copFam.C_all, 'Gumbel'))
-                rcNumVal = gumbelcopulapdf(u_all, copFam.C_all_params);
-                if(length(u_parents)>1)
-                    rcDenVal = gumbelcopulapdf(u_parents, copFam.C_parents_params);
-                else
-                    rcDenVal = 1;
-                end
-            elseif(strcmpi(copFam.C_all, 'Clayton'))
-                rcNumVal = claytoncopulapdf(u_all, copFam.C_all_params);
-                if(length(u_parents)>1)
-                    rcDenVal = claytoncopulapdf(u_parents, copFam.C_parents_params);
-                else
-                    rcDenVal = 1;
-                end
-            end
-            rcVal = rcNumVal/rcDenVal;
         end
         
         function [] = learnStruct_hc(obj, seeddag)
