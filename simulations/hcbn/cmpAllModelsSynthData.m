@@ -72,7 +72,7 @@ else
     plotFlag = 0;
 end
 
-K = 50; h = 0.05;      % beta kernel estimation parameters
+K = 25; h = 0.05;      % beta kernel estimation parameters
 NUM_DISCRETE_INTERVALS = 10;
 bntPath = '../bnt'; addpath(genpath(bntPath));
 mVec = 250:250:1000;
@@ -112,10 +112,10 @@ CDE_combinations{7} = {'Uniform', 'Uniform', 'ThickTailed'};
 CDE_combinations{8} = {'Multimodal', 'Gaussian', 'Uniform'};
 
 C1C2C3_combinations = cell(1,4);
-C1C2C3_combinations{1} = {'Gaussian', 'Gaussian', 'Gaussian'};
-C1C2C3_combinations{2} = {'Frank', 'Gaussian', 'Frank'};
-C1C2C3_combinations{3} = {'Clayton', 'Gaussian', 'Clayton'};
-C1C2C3_combinations{4} = {'Frank', 'Gaussian', 'Clayton'};
+C1C2C3_combinations{1} = {'Frank', 'Gaussian', 'Frank'};
+C1C2C3_combinations{2} = {'Clayton', 'Gaussian', 'Clayton'};
+C1C2C3_combinations{3} = {'Frank', 'Gaussian', 'Clayton'};
+C1C2C3_combinations{3} = {'Clayton', 'Gaussian', 'Frank'};
 
 dependency_combinations = cell(1,4);
 dependency_combinations{1} = {'Strong', 'Strong', 'Strong'};
@@ -969,6 +969,10 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                     multinomialLL = multinomialbnObj.dataLogLikelihood(X_hybrid_test);
                     cbnLL = cbnObj.dataLogLikelihood(X_hybrid_test);
                     
+                    if(any(isnan([hcbnLL mteLL clgLL multinomialLL cbnLL])))
+                        1;      % interactive debugging
+                    end
+                    
                     % assign LL values to matrix
                     llMCMat(HCBN_LL_MAT_IDX,mcSimNum) = hcbnLL;
                     llMCMat(MTE_LL_MAT_IDX,mcSimNum) = mteLL;
@@ -1092,12 +1096,16 @@ dispstat('','init'); % One time only initialization
 dispstat(sprintf('Begining the simulation...'),'keepthis','timestamp');
 numTotalLoops = length(CDE_combinations)*length(C1C2C3_combinations)*length(dependency_combinations)*length(mVec)*numMC;
 progressIdx = 1;
+
+u = linspace(0,1,K);
+[U1_2, U2_2] = ndgrid(u);
+[U1_3, U2_3, U3_3] = ndgrid(u);
 for cdeCombinationsVecIdx=1:length(CDE_combinations)
     for c1c2c3CombinationsVecIdx=1:length(C1C2C3_combinations)
         for dependencyCombinationsVecIdx=1:length(dependency_combinations)
             for mVecIdx=1:length(mVec)
                 
-                marginalDistributionCombinations = CDE_combinations{c1c2c3CombinationsVecIdx};
+                marginalDistributionCombinations = CDE_combinations{cdeCombinationsVecIdx};
                 dependencyCombinations = dependency_combinations{dependencyCombinationsVecIdx};
                 
                 % setup the empirical marginal distribution definitions
@@ -1129,7 +1137,7 @@ for cdeCombinationsVecIdx=1:length(CDE_combinations)
                         if(ii==2)
                             % deal w/ gaussian case separately b/c we have
                             % to create a correlation matrix
-                            Rho = [1 .75 .85; .75 1 .9; .85 .9 1];
+                            copulaDepParams{ii} = [1 .75 .85; .75 1 .9; .85 .9 1];
                         else
                             copulaDepParams{ii} = 10;       % alpha = 10
                         end
@@ -1137,33 +1145,59 @@ for cdeCombinationsVecIdx=1:length(CDE_combinations)
                         if(ii==2)
                             % deal w/ gaussian case separately b/c we have
                             % to create a correlation matrix
-                            Rho = [1 .1 .2; .1 1 -.1; .2 -.1 1];
+                            copulaDepParams{ii} = [1 .1 .2; .1 1 -.1; .2 -.1 1];
                         else
                             copulaDepParams{ii} = 1;        % alpha = 1
                         end
                     end
                 end
+                alpha_C1 = copulaDepParams{1};
+                Rho_C2 = copulaDepParams{2};
+                alpha_C3 = copulaDepParams{3};
+                
                 c1c2c3Types = C1C2C3_combinations{c1c2c3CombinationsVecIdx};
                 
-                M = mVec(mVecIdx);
+                % compute actual copula's, which will be used for reference
+                % likelihood calculations
+                % compute c1 - either Frank or Clayton copula
+                if(strcmpi(c1c2c3Types{1},'Frank'))
+                    c1 = reshape(copulapdf('Frank', [U1_2(:) U2_2(:)], alpha_C1), K, K);
+                elseif(strcmpi(c1c2c3Types{1},'Clayton'))    
+                    c1 = reshape(copulapdf('Clayton', [U1_2(:) U2_2(:)], alpha_C1), K, K);
+                else
+                    error('Unsupported Copula Type!');
+                end
+                % compute c2 - always Gaussian
+                c2 = reshape(copulapdf('Gaussian', [U1_3(:) U2_3(:) U3_3(:)], Rho_C2), K, K, K);
+                c2_parents = reshape(copulapdf('Gaussian', [U1_2(:) U2_2(:)], Rho_C2(1:2,1:2)), K, K);
+                % compute c3 - either Frank or Clayton copula
+                if(strcmpi(c1c2c3Types{3},'Frank'))
+                    c3 = reshape(copulapdf('Frank', [U1_2(:) U2_2(:)], alpha_C3), K, K);
+                elseif(strcmpi(c1c2c3Types{3},'Clayton'))    
+                    c3 = reshape(copulapdf('Clayton', [U1_2(:) U2_2(:)], alpha_C3), K, K);
+                else
+                    error('Unsupported Copula Type!');
+                end
+                % integrate discrete dimensions so we can calculate
+                % discrete probabilities accurately w/ c-volume
+                C1_partial_discrete_integrate = cumtrapz(u, c1, 1);
+                C2_partial_discrete_integrate = cumtrapz(u, cumtrapz(u, c2, 1), 2);
+                C2_parents_partial_discrete_integrate = cumtrapz(u, cumtrapz(u, c2_parents, 1), 2);
+                C3_partial_discrete_integrate = cumtrapz(u, c3, 1);
                 
+                M = mVec(mVecIdx);
                 %%%%%%%%%%% MAIN SIMULATION CODE %%%%%%%%%%
                 for mcSimNum=1:numMC
                     progressAmt = progressIdx/numTotalLoops*100;
-                    if(strcmp(copulaType,'Gaussian'))
-                        progressStr = sprintf('copulaType=%s x3DistType=%s rho=%f M=%d MC Sim# = %d || Progress=%0.04f', ...
-                                        copulaType, continuousDistType, Rho(1,2), M, mcSimNum, progressAmt);
-                    else
-                        progressStr = sprintf('copulaType=%s x3DistType=%s alpha=%d M=%d MC Sim# = %d || Progress=%0.04f', ...
-                                        copulaType, continuousDistType, alpha, M, mcSimNum, progressAmt);
-                    end
+                    progressStr = sprintf('f(C),f(D),f(E)=%s,%s,%s C1,C2,C3=%s,%s,%s dep=%s,%s,%s M=%d MC Sim# = %d || Progress=%0.04f', ...
+                                    marginalDistributionCombinations{1}, marginalDistributionCombinations{2}, marginalDistributionCombinations{3}, ...
+                                    c1c2c3Types{1}, c1c2c3Types{2}, c1c2c3Types{3}, ...
+                                    dependencyCombinations{1}, dependencyCombinations{2}, dependencyCombinations{3}, ...
+                                    M, mcSimNum, progressAmt);
                     dispstat(progressStr,'keepthis','timestamp');
                     fprintf(fid, progressStr);
                     
                     % Generate the data from the reference BN structure
-                    alpha_C1 = copulaDepParams{1};
-                    Rho_C2 = copulaDepParams{2};
-                    alpha_C3 = copulaDepParams{3};
                     U_C2 = copularnd('Gaussian', Rho_C2, M+numTest);        % (:,1)=A
                                                                             % (:,2)=B
                                                                             % (:,3)=D
@@ -1202,9 +1236,9 @@ for cdeCombinationsVecIdx=1:length(CDE_combinations)
                     X_hybrid(:,1) = a_dist.icdf(U(:,1));
                     X_hybrid(:,2) = b_dist.icdf(U(:,2));
                     for ii=1:M+numTest
-                        X_hybrid(ii,3) = continuousEmpiricalDists.icdf(U(ii,3));
-                        X_hybrid(ii,4) = continuousEmpiricalDists.icdf(U(ii,4));
-                        X_hybrid(ii,5) = continuousEmpiricalDists.icdf(U(ii,5));
+                        X_hybrid(ii,3) = continuousEmpiricalDists{1}.icdf(U(ii,3));
+                        X_hybrid(ii,4) = continuousEmpiricalDists{2}.icdf(U(ii,4));
+                        X_hybrid(ii,5) = continuousEmpiricalDists{3}.icdf(U(ii,5));
                     end
                     % generate train and test datasets
                     X_hybrid_test = X_hybrid(M+1:end,:);
@@ -1215,10 +1249,61 @@ for cdeCombinationsVecIdx=1:length(CDE_combinations)
                     mtebnObj = mtebn(X_hybrid, discreteNodes, dag);
                     clgbnObj = clgbn(X_hybrid, discreteNodes, dag);
                     multinomialbnObj = multinomialbn(X_hybrid, discreteNodes, dag, NUM_DISCRETE_INTERVALS);
-                    cbnObj = cbn(bntPath, X_hybrid, discreteNodes, dag);
+                    cbnObj = cbn(bntPath, X_hybrid, nodeNames, dag);
                     
-                    % TODO: compute the reference likelihood
+                    % compute the reference likelihood
                     refLL = 0;
+                    for ii=1:numTest
+                        x_A = X_hybrid_test(ii,1); x_B = X_hybrid_test(ii,2);
+                        x_C = X_hybrid_test(ii,3); x_D = X_hybrid_test(ii,4); 
+                        x_E = X_hybrid_test(ii,5);
+                        
+                        uu_AB_D_1 = [a_dist.cdf(x_A) b_dist.cdf(x_B) ...
+                                     continuousEmpiricalDists{2}.cdf(x_D)];
+                        uu_AB_D_2 = [a_dist.cdf(x_A-1) b_dist.cdf(x_B) ...
+                                     continuousEmpiricalDists{2}.cdf(x_D)];
+                        uu_AB_D_3 = [a_dist.cdf(x_A) b_dist.cdf(x_B-1) ...
+                                     continuousEmpiricalDists{2}.cdf(x_D)];
+                        uu_AB_D_4 = [a_dist.cdf(x_A-1) b_dist.cdf(x_B-1) ...
+                                     continuousEmpiricalDists{2}.cdf(x_D)];
+                        uu_AB_1 = uu_AB_D_1(1:2);
+                        uu_AB_2 = uu_AB_D_2(1:2);
+                        uu_AB_3 = uu_AB_D_3(1:2);
+                        uu_AB_4 = uu_AB_D_4(1:2);
+                        
+                        uu_A_C_1 = [a_dist.cdf(x_A) continuousEmpiricalDists{1}.cdf(x_C)];
+                        uu_A_C_2 = [a_dist.cdf(x_A-1) continuousEmpiricalDists{1}.cdf(x_C)];
+                        
+                        uu_B_E_1 = [b_dist.cdf(x_B) continuousEmpiricalDists{3}.cdf(x_E)];
+                        uu_B_E_2 = [b_dist.cdf(x_B-1) continuousEmpiricalDists{3}.cdf(x_E)];
+                        
+                        f_A = a_dist.pdf(x_A);
+                        f_B = b_dist.pdf(x_B);
+                        f_AB = empcopulaval(C2_parents_partial_discrete_integrate, uu_AB_1, 1/K) - ...
+                               empcopulaval(C2_parents_partial_discrete_integrate, uu_AB_2, 1/K) - ...
+                               empcopulaval(C2_parents_partial_discrete_integrate, uu_AB_3, 1/K) + ...
+                               empcopulaval(C2_parents_partial_discrete_integrate, uu_AB_4, 1/K);
+                        f_A_C = continuousEmpiricalDists{1}.pdf(x_C) * ...
+                            (empcopulaval(C1_partial_discrete_integrate, uu_A_C_1, 1/K) - ...
+                             empcopulaval(C1_partial_discrete_integrate, uu_A_C_2, 1/K));
+                        f_C_given_A = f_A_C / f_A;
+                        f_AB_D = (empcopulaval(C2_partial_discrete_integrate, uu_AB_D_1, 1/K) - ...
+                                 empcopulaval(C2_partial_discrete_integrate, uu_AB_D_2, 1/K) - ...
+                                 empcopulaval(C2_partial_discrete_integrate, uu_AB_D_3, 1/K) + ...
+                                 empcopulaval(C2_partial_discrete_integrate, uu_AB_D_4, 1/K)) * ...
+                                 continuousEmpiricalDists{2}.pdf(x_D);
+                        f_D_given_AB = f_AB_D/f_AB;
+                        f_B_E = continuousEmpiricalDists{3}.pdf(x_E) * ...
+                            (empcopulaval(C3_partial_discrete_integrate, uu_B_E_1, 1/K) - ...
+                             empcopulaval(C3_partial_discrete_integrate, uu_B_E_2, 1/K));
+                        f_E_given_B = f_B_E/f_B;
+                        
+                        totalProb = f_A * f_B * f_C_given_A * f_D_given_AB * f_E_given_B;
+                        if(totalProb<1e-5)
+                            totalProb = 1e-5;   % PUT BREAK POINT HERE IF YOU WANT TO DEBUG
+                        end
+                        refLL = refLL + log(totalProb);
+                    end
                     
                     % compute likelihood for each of the models
                     hcbnLL = hcbnObj.dataLogLikelihood(X_hybrid_test);

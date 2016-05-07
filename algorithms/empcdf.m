@@ -29,7 +29,14 @@ function [ F, xi ] = empcdf( x, isdiscrete )
 if(isdiscrete)
     [F,x] = ecdf(x);
     diffOutput = diff(x);
-    xi = x; xi(1) = xi(2)-diffOutput(2);
+    
+    if(length(diffOutput)<2)
+        subtractAmt = 1;
+    else
+        subtractAmt = diffOutput(2);
+    end
+    
+    xi = x; xi(1) = xi(2)-subtractAmt;
 else
     [F, xi] = ksdensity(x,'function','cdf');
 end

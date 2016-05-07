@@ -156,8 +156,15 @@ classdef multinomialbn < handle
                         % estimate the discrete domain/pdf/cdf for
                         % X_discrete_subset
                         isdiscrete = 1;
-                        [f,xi] = emppdf(X_discrete_subset, isdiscrete);
-                        F = empcdf(X_discrete_subset, isdiscrete);
+                        if(~isempty(X_discrete_subset))
+                            [f,xi] = emppdf(X_discrete_subset, isdiscrete);
+                            F = empcdf(X_discrete_subset, isdiscrete);
+                        else
+                            % this is the default ...
+                            xi = 1:10;
+                            F = xi/10;
+                            f = .1*ones(1,10);
+                        end
                         empInfo = rvEmpiricalInfo(xi, f, F);
                         
                         tmp = struct;

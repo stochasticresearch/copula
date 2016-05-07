@@ -196,7 +196,6 @@ classdef mtebn < handle
                                 end
                             else
                                 if(size(X_subset_continuous,2)==1)
-                                    warning('USING MTE DEFAULT');
                                     mte_info = obj.MTE_DEFAULT_GAUSSIAN;
                                 else
                                     error('MTE -- Currently unsupported!');

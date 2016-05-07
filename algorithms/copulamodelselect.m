@@ -116,7 +116,22 @@ function [div] = computeBivariateDivergence(U, K, refCopula)
 % compute the multinomial signature of this reference dataset
 empirical_signature = bivariateSignature(U, K);
 tau_hat = corr(U, 'type', 'Kendall');
-alpha = copulaparam( refCopula, tau_hat(1,2));
+tau_hat_12 = tau_hat(1,2);
+
+% ensure that we are within bounds of the copula we are trying to fit
+if(strcmpi(refCopula, 'Frank'))
+    % Frank copula can take [-inf,inf], nothing to do
+elseif(strcmpi(refCopula, 'Gumbel'))
+    if(tau_hat_12<1)
+        tau_hat_12 = 1;
+    end
+elseif(strcmpi(refCopula, 'Clayton'))
+    if(tau_hat_12<0)
+        tau_hat_12 = 0;
+    end
+end
+
+alpha = copulaparam( refCopula, tau_hat_12);
 
 % compute the reference signature for this copula
 ref_signature_M = 2000;
