@@ -133,23 +133,13 @@ classdef clgbn < handle
                         error('CLG model must not have discrete children w/ continuous parents!');
                     else
                         % make combinations for all the parents
-                        % TODO: figure out better way to code this :(
                         if(length(discreteParents)==1)
                             combos = 1:obj.uniqueVals(discreteParents(1));
-                        elseif(length(discreteParents)==2)
-                            combos = combvec(1:obj.uniqueVals(discreteParents(1)), ...
-                                             1:obj.uniqueVals(discreteParents(2)));
-                        elseif(length(discreteParents)==3)
-                            combos = combvec(1:obj.uniqueVals(discreteParents(1)), ...
-                                             1:obj.uniqueVals(discreteParents(2)), ...
-                                             1:obj.uniqueVals(discreteParents(3)));
-                        elseif(length(discreteParents)==4)
-                            combos = combvec(1:obj.uniqueVals(discreteParents(1)), ...
-                                             1:obj.uniqueVals(discreteParents(2)), ...
-                                             1:obj.uniqueVals(discreteParents(3)), ...
-                                             1:obj.uniqueVals(discreteParents(4)));
                         else
-                            error('Figure out a better syntax to generalize this :/');
+                            combos = 1:obj.uniqueVals(discreteParents(1));
+                            for pNode=discreteParents(2:end)
+                                combos = combvec(combos, 1:obj.uniqueVals(discreteParents(pNode)));
+                            end
                         end
                         combos = combos';
                         
