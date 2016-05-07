@@ -60,9 +60,6 @@ classdef hcbn < handle
                         
         LOG_CUTOFF;
                                 
-        DEBUG_MODE; % if turned on, will print out extra stuff to screen to
-                    % monitor what is going on and store extra debugging
-                    % variables (slower)
         SIM_NUM;    % used for debugging
         TYPE_NAME;  % used for debugging
         
@@ -87,7 +84,6 @@ classdef hcbn < handle
             %   [ ] - 
             %
             
-            obj.DEBUG_MODE = 0;
             obj.SIM_NUM = 0;
             obj.TYPE_NAME = '';
             obj.LOG_CUTOFF = 10^-5;
@@ -131,13 +127,68 @@ classdef hcbn < handle
             
             obj.calcEmpInfo();
             
+            error('Finish coding the debug copula input for hcbn :(');
+            
             nVarargs = length(varargin);
             if(nVarargs>0)
                 candidateDag = varargin{1};
                 if(~acyclic(candidateDag))
                     error('Specified DAG is not acyclic!\n');
                 end
-                obj.setDag(candidateDag);
+                if(nVarargs>1)
+                    obj.setDag(candidateDag, 0);    % do NOT compute estimated copula families
+                                                    % b/c they were provided as debugging
+                                                    % input
+                    copulaFamiliesInput = varargin{2};
+                    % inflate the copula families argument input into the
+                    % required format for processing w/ HCBN.  The input format
+                    % of copulaFamiliesInput is a cell array of dimension 
+                    % [1 x D].  copulaFamiliesInput{ii}{1} is a string of the
+                    % copula TYPE for node ii, and copulaFamiliesInput{ii}{2}
+                    % is the dependency parameter for that copula type.  If a
+                    % node is not dependent upon any other nodes, then
+                    % copulaFamiliesInput{ii} = [].  The dependency
+                    % parameter details are as follows -- if it is an
+                    % archimedean copula, then because all dimensions in an
+                    % archimedean copula are the same dependency, a scalar
+                    % is provided.  In the case of the Gaussian copula, the
+                    % input MUST be permuted such that the first column in
+                    % the correlation matrix refers to the child, the 2nd
+                    % to the first parent, the 3rd to the second parent etc
+                    % etc ... so in the 3-D copula case, it should be:
+                    %  |1 Rho(child,parent_1) Rho(child,parent_2)   |
+                    %  |                                            |
+                    %  |Rho(parent1, child)  1 Rho(parent1, parent2)|
+                    %  |                                            |
+                    %  |Rho(parent2, child) Rho(parent2, parent1) 1 |
+                    for dd=1:obj.D
+                        if(isempty(copulaFamiliesInput{dd}))
+                            obj.copulaFamilies{dd} = [];
+                        else
+                            node = obj.nodeNames{dd};
+                            nodeIdx = obj.nodeVals(dd);
+                            [parentIdxs, parentNames] = obj.getParents(nodeIdx);
+                
+                            u = linspace(0,1,obj.K);
+                            % generate the points over which the copulas
+                            % will be computed
+                            
+                            % compute PDF of family copula
+                            
+                            % compute CDF of family copula
+                            % integrate discrete dimensions out
+                            
+                            % compute PDF of parents copula
+                            % compute CDF of parents copula
+                            % integrate discrete dimensions out
+                            
+                            % store into obj.copulaFamilies{dd}
+                        end
+                    end
+                else
+                    obj.setDag(candidateDag);       % compute the estimated copula families
+                end
+                
             end
         end
         
@@ -224,14 +275,6 @@ classdef hcbn < handle
                 node = obj.nodeNames{ii};
                 nodeIdx = obj.nodeVals(ii);
                 [parentIdxs, parentNames] = obj.getParents(nodeIdx);
-                
-                if(obj.DEBUG_MODE)
-                    fprintf('Estimating Copula for Node=%s:%d <-- ', node, nodeIdx);
-                    for jj=1:length(parentNames)
-                        fprintf('%d:%s ', parentIdxs(jj), parentNames{jj});
-                    end
-                    fprintf('\n');
-                end
                 
                 if(isempty(parentIdxs))
                     % no parents situation
