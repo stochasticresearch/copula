@@ -43,7 +43,15 @@ for dd=1:D
 end
 ndgridOutput = cell(1,numel(ndgridInput));
 [ndgridOutput{:}] = ndgrid(ndgridInput{:});
-gridPoints = reshape(cell2mat(ndgridOutput),K^D,D);    
+
+% the loop below to generate the gridPoints emulates the behavior of teh
+% following: [U1,U2,U3] = ndgrid(u); copulapdf('..', [U1(:) U2(:) U3(:)], ..]
+gridPoints = zeros(numel(ndgridOutput{1}), D);
+for dd=1:D
+    gridPoints(:,dd) = reshape(ndgridOutput{dd},numel(ndgridOutput{dd}),1);
+end
+
+% gridPoints = reshape(cell2mat(ndgridOutput),K^D,D);  %% WARNING
 if(strcmpi(method, 'betak'))
     % Beta-Kernel method w/ C implementation for speed improvement
     c = empcopulapdf_c(U, K, h, gridPoints);

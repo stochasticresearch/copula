@@ -74,6 +74,7 @@ end
 idxs = ~all(u,2);
 y(idxs) = 0;
 
+
 end
 
 function [ y ] = iPsi_clayton( u, alpha, varargin )
@@ -94,5 +95,9 @@ y = u.^(-alpha) - 1;
 if(useLog)
     y = log(y);
 end
+% TODO: figure out better way to deal w/ this below.  I think according to
+% Matlab, all edges of any copula density are 0 ... I don't think R
+% follows this, so we need to decide which is more right.
+y(isnan(y)) = 0;
 
 end

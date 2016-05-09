@@ -17,7 +17,7 @@ function [ y ] = gumbelcopulapdf( u, alpha, varargin )
 %                else, compute log of pdf at specified value
 %
 % Outputs:
-%  y - the value of the Clayton copula density at the specified value in
+%  y - the value of the Gumbel copula density at the specified value in
 %      the unit hypercube
 %
 % Acknowledgements:
@@ -80,6 +80,10 @@ end
 % requested boundary copula pdf values
 idxs = ~all(u,2);
 y(idxs) = 0;
+% TODO: figure out better way to deal w/ this below.  I think according to
+% Matlab, all edges of any copula density are 0 ... I don't think R
+% follows this, so we need to decide which is more right.
+y(isnan(y)) = 0;
 
 end
 

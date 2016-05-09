@@ -34,7 +34,6 @@ y_claytonMlab = claytoncopulapdf(u, alpha);
 y_frankMlab = frankcopulapdf(u, alpha);
 y_gumbelMlab = gumbelcopulapdf(u, alpha);
 
-
 mse_clayton_3D = sum((y_claytonR-y_claytonMlab).^2);
 mse_frank_3D = sum((y_frankR-y_frankMlab).^2);
 mse_gumbel_3D = sum((y_gumbelR-y_gumbelMlab).^2);
@@ -46,12 +45,12 @@ mse_gumbel_3D_str = strrep(sprintf('%8.2E',mse_gumbel_3D),'E-0','E-');
 % plot jsut for sanity checks
 subplot(1,3,1);
 plot(1:length(y_claytonR), y_claytonR, 'b*', 1:length(y_claytonR), y_claytonMlab, 'r-');
-grid on; title(sprintf('Clayton Copula | MSE=%s', mse_clayton_3D_str)); legend('R', 'Matlab'); ylabel('MSE');
+grid on; title(sprintf('Clayton Copula | MSE=%s', mse_clayton_3D_str)); legend('R', 'Matlab'); ylabel('Value');
 
 subplot(1,3,2);
 plot(1:length(y_frankR), y_frankR, 'b*', 1:length(y_frankR), y_frankMlab, 'r-');
-grid on; title(sprintf('Frank Copula | MSE=%s', mse_frank_3D_str)); legend('R', 'Matlab'); ylabel('MSE');
+grid on; title(sprintf('Frank Copula | MSE=%s', mse_frank_3D_str)); legend('R', 'Matlab'); ylabel('Value');
 
 subplot(1,3,3);
 plot(1:length(y_gumbelR), y_gumbelR, 'b*', 1:length(y_gumbelR), y_gumbelMlab, 'r-');
-grid on; title(sprintf('Gumbel Copula | MSE=%s', mse_gumbel_3D_str)); legend('R', 'Matlab'); ylabel('MSE');
+grid on; title(sprintf('Gumbel Copula | MSE=%s', mse_gumbel_3D_str)); legend('R', 'Matlab'); ylabel('Value');

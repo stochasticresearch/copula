@@ -48,7 +48,7 @@ classdef cbn < handle
     end
     
     methods
-        function obj = cbn(bntPath, X, nodes, varargin)
+        function obj = cbn(bntPath, X, nodeNames, varargin)
             % CBN - Constructs a CBN object
             %  Inputs:
             %   X - a M x D matrix of the the observable data which the
@@ -73,7 +73,7 @@ classdef cbn < handle
             
             obj.D = size(X,2);      
             
-            obj.nodeNames = nodes;
+            obj.nodeNames = nodeNames;
             obj.nodeVals = 1:obj.D;
             obj.copulaFamilies = cell(1,obj.D);
             obj.empInfo = cell(1,obj.D);

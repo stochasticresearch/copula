@@ -62,7 +62,7 @@ global mVec copulaTypeVec alphaVec RhoVecs_2D RhoVecs_3D
 global numModelsCompared numMC bntPath logFile K h continuousDistTypeVec
 global plotFlag numTest
 global HCBN_LL_MAT_IDX MTE_LL_MAT_IDX CLG_LL_MAT_IDX MULTINOMIAL_LL_MAT_IDX 
-global CBN_LL_MAT_IDX REF_LL_MAT_IDX
+global CBN_LL_MAT_IDX REF_LL_MAT_IDX HCBN_DEBUG_LL_MAT_IDX
 global NUM_DISCRETE_INTERVALS
 global CDE_combinations C1C2C3_combinations dependency_combinations
 
@@ -76,7 +76,7 @@ K = 25; h = 0.05;      % beta kernel estimation parameters
 NUM_DISCRETE_INTERVALS = 10;
 bntPath = '../bnt'; addpath(genpath(bntPath));
 mVec = 250:250:1000;
-copulaTypeVec = {'Frank', 'Gumbel', 'Clayton', 'Gaussian'};
+copulaTypeVec = {'Gumbel', 'Clayton', 'Frank', 'Gaussian'};
 alphaVec = [1 10 20];
 RhoVecs_2D = cell(1,length(alphaVec)); 
 RhoVecs_2D{1} = [1 -0.9; -0.9 1]; RhoVecs_2D{2} = [1 -0.65; -0.65 1];
@@ -89,14 +89,15 @@ RhoVecs_3D{4} = [1 -.75 -.3; -.75 1 .1; -.3 .1 1];
 
 numTest = 1000; % the # of samples to generate to calculate likelihood
 HCBN_LL_MAT_IDX = 1;
-MTE_LL_MAT_IDX = 2;
-CLG_LL_MAT_IDX = 3;
-MULTINOMIAL_LL_MAT_IDX = 4;
-CBN_LL_MAT_IDX = 5;
-REF_LL_MAT_IDX = 6;
+HCBN_DEBUG_LL_MAT_IDX = 2;
+MTE_LL_MAT_IDX = 3;
+CLG_LL_MAT_IDX = 4;
+MULTINOMIAL_LL_MAT_IDX = 5;
+CBN_LL_MAT_IDX = 6;
+REF_LL_MAT_IDX = 7;
 
 continuousDistTypeVec = {'Gaussian', 'Uniform', 'Multimodal', 'ThickTailed'}; 
-numModelsCompared = 6;
+numModelsCompared = 7;
 numMC = numMCSims;
 logFile = logFilename;
 
@@ -233,6 +234,7 @@ global numModelsCompared numMC bntPath logFile K h
 global plotFlag numTest
 global HCBN_LL_MAT_IDX MTE_LL_MAT_IDX CLG_LL_MAT_IDX REF_LL_MAT_IDX
 global MULTINOMIAL_LL_MAT_IDX NUM_DISCRETE_INTERVALS CBN_LL_MAT_IDX
+global HCBN_DEBUG_LL_MAT_IDX
 
 a_dist = makedist('Multinomial','Probabilities',a_probs);
 
@@ -292,33 +294,59 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                 % continuous variable (x_2)
                 u = linspace(0,1,K);
                 [U1,U2] = ndgrid(u);
-                c_actual = reshape( copulapdf(copulaType, [U1(:) U2(:)], alpha), K, K );
+                
+                if(strcmpi(copulaType, 'Gaussian'))
+                    cpdf = copulapdf('Gaussian', [U1(:) U2(:)], alpha);
+                elseif(strcmpi(copulaType, 'Frank'))
+                    cpdf = frankcopulapdf([U1(:) U2(:)], alpha);
+                elseif(strcmpi(copulaType, 'Gumbel'))
+                    cpdf = gumbelcopulapdf([U1(:) U2(:)], alpha);
+                elseif(strcmpi(copulaType, 'Clayton'))
+                    cpdf = claytoncopulapdf([U1(:) U2(:)], alpha);
+                else
+                    error('Unsupported copula type!');
+                end
+                c_actual = reshape(cpdf, K, K );
                 C_actual_discrete_integrate = cumtrapz(u, c_actual, 1);
+                
+                % define the continuous distribution
+                if(strcmp(continuousDistType, 'Multimodal'))
+                    xContinuous = [normrnd(-2,0.3,1000,1); normrnd(2,0.8,1000,1)];
+                elseif(strcmp(continuousDistType, 'Uniform'))
+                    xContinuous = unifrnd(-2,2,2000,1);
+                elseif(strcmp(continuousDistType, 'UnimodalSkewed'))
+                    xContinuous = betarnd(2,5,2000,1);
+                elseif(strcmp(continuousDistType, 'Gaussian'))
+                    xContinuous = normrnd(2,0.5,2000,1);
+                elseif(strcmp(continuousDistType, 'ThickTailed'))
+                    xContinuous = trnd(1, 2000, 1);
+                else
+                    error('Unknown X2 Dist Type!');
+                end
+                xContinuous = xContinuous(randperm(2000),:);     % permute for evenness of samples
+
+                [fContinous,xiContinuous] = emppdf(xContinuous,0);
+                FContinuous = empcdf(xContinuous,0);
+                continuousDistInfo = rvEmpiricalInfo(xiContinuous,fContinous,FContinuous);
+                
+                copulaFamilies = cell(1,2);
+                copulaFamilies{1} = [];
+                tmp = cell(1,2); 
+                tmp{1} = copulaType; tmp{2} = alpha;
+                % NOTE: we don't need to do any permuting of the RHO matrix
+                % because this is 2-D.  Rho(1,2) in the original matrix is
+                % the correlation between parent and child.  Because
+                % correlation is symmetric, the matrix does not need to be
+                % permuted
+                copulaFamilies{2} = tmp;
+                empInfo = cell(1,2);
+                empInfo{1} = a_dist; empInfo{2} = continuousDistInfo;
                 
                 for mcSimNum=1:numMC
                     dispstat(sprintf('MC Sim=%d', mcSimNum), 'timestamp');
                     U = copularnd(copulaType, alpha, M+numTest);
                     X_hybrid = zeros(M+numTest,2);
-                    
-                    % make both X1 and X2 multimodal distributions
-                    if(strcmp(continuousDistType, 'Multimodal'))
-                        xContinuous = [normrnd(-2,0.3,1000,1); normrnd(2,0.8,1000,1)];
-                    elseif(strcmp(continuousDistType, 'Uniform'))
-                        xContinuous = unifrnd(-2,2,2000,1);
-                    elseif(strcmp(continuousDistType, 'UnimodalSkewed'))
-                        xContinuous = betarnd(2,5,2000,1);
-                    elseif(strcmp(continuousDistType, 'Gaussian'))
-                        xContinuous = normrnd(2,0.5,2000,1);
-                    elseif(strcmp(continuousDistType, 'ThickTailed'))
-                        xContinuous = trnd(1, 2000, 1);
-                    else
-                        error('Unknown X2 Dist Type!');
-                    end
-                    xContinuous = xContinuous(randperm(2000),:);     % permute for evenness of samples
 
-                    [fContinous,xiContinuous] = emppdf(xContinuous,0);
-                    FContinuous = empcdf(xContinuous,0);
-                    continuousDistInfo = rvEmpiricalInfo(xiContinuous,fContinous,FContinuous);
                     X_hybrid(:,1) = a_dist.icdf(U(:,1));
                     for ii=1:M+numTest
                         X_hybrid(ii,2) = continuousDistInfo.icdf(U(ii,2));
@@ -335,6 +363,7 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                     distBEst = rvEmpiricalInfo(xBest,fBest,FBest);
 
                     hcbnObj = hcbn(bntPath, X_hybrid, nodeNames, discreteNodeNames, K, h, dag); 
+                    hcbnDebugObj = hcbn(bntPath, X_hybrid, nodeNames, discreteNodeNames, K, h, dag, copulaFamilies, empInfo); 
                     mtebnObj = mtebn(X_hybrid, discreteNodes, dag);
                     clgbnObj = clgbn(X_hybrid, discreteNodes, dag);
                     multinomialbnObj = multinomialbn(X_hybrid, discreteNodes, dag, NUM_DISCRETE_INTERVALS);
@@ -491,6 +520,7 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                     
                     % calculate the reference LL
                     refLL = 0;
+                    totalProbVecRef = zeros(1,numTest);
                     for ii=1:numTest
                         xx = X_hybrid_test(ii,:);
                         uu_continuous = continuousDistInfo.cdf(xx(2));
@@ -502,10 +532,12 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                             totalProb = 1e-5;   % PUT BREAK POINT HERE IF YOU WANT TO DEBUG
                         end
                         refLL = refLL + log(totalProb);
+                        totalProbVecRef(ii) = totalProb;
                     end
                     
                     % calculate LL values and assign to llDivMCMat
                     hcbnLL = hcbnObj.dataLogLikelihood(X_hybrid_test);
+                    [hcbnDebugLL, hcbnDebugTotalProbVec] = hcbnDebugObj.dataLogLikelihood(X_hybrid_test);
                     mteLL = mtebnObj.dataLogLikelihood(X_hybrid_test);
                     clgLL = clgbnObj.dataLogLikelihood(X_hybrid_test);
                     multinomialLL = multinomialbnObj.dataLogLikelihood(X_hybrid_test);
@@ -513,6 +545,7 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                     
                     % assign LL values to matrix
                     llMCMat(HCBN_LL_MAT_IDX,mcSimNum) = hcbnLL;
+                    llMCMat(HCBN_DEBUG_LL_MAT_IDX,mcSimNum) = hcbnDebugLL;
                     llMCMat(MTE_LL_MAT_IDX,mcSimNum) = mteLL;
                     llMCMat(CLG_LL_MAT_IDX,mcSimNum) = clgLL;
                     llMCMat(MULTINOMIAL_LL_MAT_IDX,mcSimNum) = multinomialLL;
@@ -530,6 +563,9 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                 progressStr = sprintf('MEAN{hcbnLL}=%f VAR{hcbnLL}=%f', ...
                     meanLLDivMCMat(HCBN_LL_MAT_IDX), varLLDivMCMat(HCBN_LL_MAT_IDX));
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
+                progressStr = sprintf('MEAN{hcbnDebugLL}=%f VAR{hcbnDebugLL}=%f', ...
+                    meanLLDivMCMat(HCBN_DEBUG_LL_MAT_IDX), varLLDivMCMat(HCBN_DEBUG_LL_MAT_IDX));
+                dispstat(progressStr,'timestamp','keepthis','timestamp');
                 progressStr = sprintf('MEAN{cbnLL}=%f VAR{cbnLL}=%f', ...
                     meanLLDivMCMat(CBN_LL_MAT_IDX), varLLDivMCMat(CBN_LL_MAT_IDX));
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
@@ -539,8 +575,11 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                 progressStr = sprintf('MEAN{clgLL}=%f VAR{clgLL}=%f', ...
                     meanLLDivMCMat(CLG_LL_MAT_IDX), varLLDivMCMat(CLG_LL_MAT_IDX));
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
-                progressStr = sprintf('MEAN{multinomialLL}=%f VAR{multinomialLL}=%f\n', ...
+                progressStr = sprintf('MEAN{multinomialLL}=%f VAR{multinomialLL}=%f', ...
                     meanLLDivMCMat(MULTINOMIAL_LL_MAT_IDX), varLLDivMCMat(MULTINOMIAL_LL_MAT_IDX));
+                dispstat(progressStr,'timestamp','keepthis','timestamp');
+                progressStr = sprintf('mean{hcbnDebugLL}==mean{refLL}=%d\n', ...
+                    meanLLDivMCMat(HCBN_DEBUG_LL_MAT_IDX)==meanLLDivMCMat(REF_LL_MAT_IDX));
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
                 
                 llMat(copulaTypeVecIdx, ...
@@ -606,6 +645,7 @@ global mVec copulaTypeVec alphaVec RhoVecs_3D continuousDistTypeVec
 global numModelsCompared numMC bntPath logFile K h plotFlag numTest
 global HCBN_LL_MAT_IDX MTE_LL_MAT_IDX CLG_LL_MAT_IDX REF_LL_MAT_IDX
 global MULTINOMIAL_LL_MAT_IDX NUM_DISCRETE_INTERVALS CBN_LL_MAT_IDX
+global HCBN_DEBUG_LL_MAT_IDX
 
 a_dist = makedist('Multinomial','Probabilities', a_probs);
 b_dist = makedist('Multinomial','Probabilities', b_probs);
@@ -650,6 +690,61 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                 end
                 M = mVec(mVecIdx);
                 
+                if(strcmp(continuousDistType, 'Multimodal'))
+                    xContinuous = [normrnd(-2,0.3,1000,1); normrnd(2,0.8,1000,1)];
+                elseif(strcmp(continuousDistType, 'Uniform'))
+                    xContinuous = unifrnd(-2,2,2000,1);
+                elseif(strcmp(continuousDistType, 'UnimodalSkewed'))
+                    xContinuous = betarnd(2,5,2000,1);
+                elseif(strcmp(continuousDistType, 'Gaussian'))
+                    xContinuous = normrnd(2,0.5,2000,1);
+                elseif(strcmp(continuousDistType, 'ThickTailed'))
+                    xContinuous = trnd(1, 2000, 1);
+                else
+                    error('Unknown X3 Dist Type!');
+                end
+                xContinuous = xContinuous(randperm(2000),:);     % permute for evenness of samples
+
+                [fContinous,xiContinuous] = emppdf(xContinuous,0);
+                FContinuous = empcdf(xContinuous,0);
+                continuousDistInfo = rvEmpiricalInfo(xiContinuous,fContinous,FContinuous);
+                
+                copulaFamilies = cell(1,3);
+                copulaFamilies{1} = [];
+                copulaFamilies{2} = [];
+                tmp = cell(1,2); 
+                tmp{1} = copulaType; 
+                if(strcmpi(copulaType, 'Gaussian'))
+                    % permute the correlation matrix such that it is in the
+                    % format of Child,Parent1,Parent2
+                    tmp{2} = circshift(circshift(Rho,1,1),1,2);
+                else
+                    tmp{2} = alpha;
+                end
+                copulaFamilies{3} = tmp;
+                empInfo = cell(1,3);
+                empInfo{1} = a_dist; empInfo{2} = b_dist;
+                empInfo{3} = continuousDistInfo;
+                
+                u = linspace(0,1,K); [U1_3,U2_3,U3_3] = ndgrid(u); [U1_2,U2_2] = ndgrid(u);
+                if(strcmp(copulaType, 'Frank'))
+                    c_actual_X1X2X3 = reshape(frankcopulapdf([U1_3(:) U2_3(:) U3_3(:)], alpha),K,K,K);
+                    c_actual_X1X2 = reshape(frankcopulapdf([U1_2(:) U2_2(:)], alpha),K,K);
+                elseif(strcmp(copulaType, 'Gumbel'))
+                    c_actual_X1X2X3 = reshape(gumbelcopulapdf([U1_3(:) U2_3(:) U3_3(:)], alpha),K,K,K);
+                    c_actual_X1X2 = reshape(gumbelcopulapdf([U1_2(:) U2_2(:)], alpha),K,K);
+                elseif(strcmp(copulaType, 'Clayton'))
+                    c_actual_X1X2X3 = reshape(claytoncopulapdf([U1_3(:) U2_3(:) U3_3(:)], alpha),K,K,K);
+                    c_actual_X1X2 = reshape(claytoncopulapdf([U1_2(:) U2_2(:)], alpha),K,K);
+                elseif(strcmp(copulaType, 'Gaussian'))
+                    c_actual_X1X2X3 = reshape(copulapdf('Gaussian', [U1_3(:) U2_3(:) U3_3(:)], Rho),K,K,K);
+                    c_actual_X1X2 = reshape(copulapdf('Gaussian', [U1_2(:) U2_2(:)], Rho(1:2,1:2)),K,K);
+                else
+                    error('Copula Type not recognized!\n');
+                end
+                C_actual_X1X2X3_discrete_integrate = cumtrapz(u,cumtrapz(u, c_actual_X1X2X3, 1),2);
+                C_actual_X1X2_discrete_integrate = cumtrapz(u,cumtrapz(u, c_actual_X1X2, 1),2);
+                
                 %%%%%%%%%%% MAIN SIMULATION CODE %%%%%%%%%%
                 for mcSimNum=1:numMC
                     progressAmt = progressIdx/numTotalLoops*100;
@@ -662,6 +757,7 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                     end
                     dispstat(progressStr,'keepthis','timestamp');
                     fprintf(fid, progressStr);
+                    X_hybrid = zeros(M+numTest,D);
                     
                     % generate the copula random variates
                     if(strcmp(copulaType, 'Frank'))
@@ -675,26 +771,7 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                     else
                         error('Copula Type not recognized!\n');
                     end
-                    X_hybrid = zeros(M+numTest,D);
                     
-                    if(strcmp(continuousDistType, 'Multimodal'))
-                        xContinuous = [normrnd(-2,0.3,1000,1); normrnd(2,0.8,1000,1)];
-                    elseif(strcmp(continuousDistType, 'Uniform'))
-                        xContinuous = unifrnd(-2,2,2000,1);
-                    elseif(strcmp(continuousDistType, 'UnimodalSkewed'))
-                        xContinuous = betarnd(2,5,2000,1);
-                    elseif(strcmp(continuousDistType, 'Gaussian'))
-                        xContinuous = normrnd(2,0.5,2000,1);
-                    elseif(strcmp(continuousDistType, 'ThickTailed'))
-                        xContinuous = trnd(1, 2000, 1);
-                    else
-                        error('Unknown X3 Dist Type!');
-                    end
-                    xContinuous = xContinuous(randperm(2000),:);     % permute for evenness of samples
-                    
-                    [fContinous,xiContinuous] = emppdf(xContinuous,0);
-                    FContinuous = empcdf(xContinuous,0);
-                    continuousDistInfo = rvEmpiricalInfo(xiContinuous,fContinous,FContinuous);
                     X_hybrid(:,1) = a_dist.icdf(u_X1X2X3(:,1));
                     X_hybrid(:,2) = b_dist.icdf(u_X1X2X3(:,2));
                     for ii=1:M+numTest
@@ -718,11 +795,12 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                     FCest = empcdf(X_hybrid(:,3),isdiscrete);
                     distCEst = rvEmpiricalInfo(xCest,fCest,FCest);
                     
-                    hcbnObj = hcbn(bntPath, X_hybrid, nodeNames, discreteNodeNames, K, h, dag); 
+                    hcbnObj = hcbn(bntPath, X_hybrid, nodeNames, discreteNodeNames, K, h, dag);  
+                    hcbnDebugObj = hcbn(bntPath, X_hybrid, nodeNames, discreteNodeNames, K, h, dag, copulaFamilies, empInfo); 
                     mtebnObj = mtebn(X_hybrid, discreteNodes, dag);
                     clgbnObj = clgbn(X_hybrid, discreteNodes, dag);
                     multinomialbnObj = multinomialbn(X_hybrid, discreteNodes, dag, NUM_DISCRETE_INTERVALS);
-                    cbnObj = cbn(bntPath, X_hybrid, discreteNodes, dag);
+                    cbnObj = cbn(bntPath, X_hybrid, nodeNames, dag);
                     
                     X_hybrid_continued = X_hybrid;
                     X_hybrid_continued(:,1) = continueRv(X_hybrid(:,1));
@@ -731,31 +809,12 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                     U_hybrid_continued = pseudoobs(X_hybrid_continued);
                     
                     % setup all the copula calculations for querying after
-                    u = linspace(0,1,K); [U1_3,U2_3,U3_3] = ndgrid(u); [U1_2,U2_2] = ndgrid(u);
                     c_est_X1X2X3 = empcopulapdf(U_hybrid_continued, h, K, 'betak');
                     C_est_X1X2X3 = cumtrapz(u,cumtrapz(u,cumtrapz(u,c_est_X1X2X3,1),2),3);
                     C_est_X1X2X3_discrete_integrate = cumtrapz(u,cumtrapz(u,c_est_X1X2X3,1),2);
                     c_est_X1X2 = empcopulapdf(U_hybrid_continued(:,1:2), h, K, 'betak');
                     C_est_X1X2 = cumtrapz(u,cumtrapz(u,c_est_X1X2,1),2);
                     C_est_X1X2_discrete_integrate = C_est_X1X2;
-
-                    if(strcmp(copulaType, 'Frank'))
-                        c_actual_X1X2X3 = reshape(frankcopulapdf([U1_3(:) U2_3(:) U3_3(:)], alpha),K,K,K);
-                        c_actual_X1X2 = reshape(frankcopulapdf([U1_2(:) U2_2(:)], alpha),K,K);
-                    elseif(strcmp(copulaType, 'Gumbel'))
-                        c_actual_X1X2X3 = reshape(gumbelcopulapdf([U1_3(:) U2_3(:) U3_3(:)], alpha),K,K,K);
-                        c_actual_X1X2 = reshape(gumbelcopulapdf([U1_2(:) U2_2(:)], alpha),K,K);
-                    elseif(strcmp(copulaType, 'Clayton'))
-                        c_actual_X1X2X3 = reshape(claytoncopulapdf([U1_3(:) U2_3(:) U3_3(:)], alpha),K,K,K);
-                        c_actual_X1X2 = reshape(claytoncopulapdf([U1_2(:) U2_2(:)], alpha),K,K);
-                    elseif(strcmp(copulaType, 'Gaussian'))
-                        c_actual_X1X2X3 = reshape(copulapdf('Gaussian', [U1_3(:) U2_3(:) U3_3(:)], Rho),K,K,K);
-                        c_actual_X1X2 = reshape(copulapdf('Gaussian', [U1_2(:) U2_2(:)], Rho(1:2,1:2)),K,K);
-                    else
-                        error('Copula Type not recognized!\n');
-                    end
-                    C_actual_X1X2X3_discrete_integrate = cumtrapz(u,cumtrapz(u, c_actual_X1X2X3, 1),2);
-                    C_actual_X1X2_discrete_integrate = cumtrapz(u,cumtrapz(u, c_actual_X1X2, 1),2);
                     %%%%%%%%%%%%%%%%%%%%%%%
                     
                     if(plotFlag)
@@ -934,6 +993,7 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                     
                     % calculate the reference LL
                     refLL = 0;
+                    totalProbRefVec = zeros(1,numTest);
                     for ii=1:numTest
                         xx = X_hybrid_test(ii,:);
                         uuGenerativeX1X2X3_1 = [a_dist.cdf(xx(1)) ...
@@ -951,19 +1011,20 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                         
                         fX3 = continuousDistInfo.pdf(xx(3));
                         C_actual_partial_X1X2X3 = empcopulaval(C_actual_X1X2X3_discrete_integrate, uuGenerativeX1X2X3_1,1/K) - ...
-                                                       empcopulaval(C_actual_X1X2X3_discrete_integrate, uuGenerativeX1X2X3_2,1/K) - ...
-                                                       empcopulaval(C_actual_X1X2X3_discrete_integrate, uuGenerativeX1X2X3_3,1/K) + ...
-                                                       empcopulaval(C_actual_X1X2X3_discrete_integrate, uuGenerativeX1X2X3_4,1/K);
+                                                  empcopulaval(C_actual_X1X2X3_discrete_integrate, uuGenerativeX1X2X3_2,1/K) - ...
+                                                  empcopulaval(C_actual_X1X2X3_discrete_integrate, uuGenerativeX1X2X3_3,1/K) + ...
+                                                  empcopulaval(C_actual_X1X2X3_discrete_integrate, uuGenerativeX1X2X3_4,1/K);
                         totalProb = C_actual_partial_X1X2X3*fX3;
                         if(totalProb<1e-5)
                             totalProb = 1e-5;   % PUT BREAK POINT HERE IF YOU WANT TO DEBUG
                         end
                         refLL = refLL + log(totalProb);
+                        totalProbRefVec(ii) = totalProb;
                     end
-
                     
                     % calculate LL values and assign to llDivMCMat
                     hcbnLL = hcbnObj.dataLogLikelihood(X_hybrid_test);
+                    [hcbnDebugLL, hcbnDebugTotalProbVec] = hcbnDebugObj.dataLogLikelihood(X_hybrid_test);
                     mteLL = mtebnObj.dataLogLikelihood(X_hybrid_test);
                     clgLL = clgbnObj.dataLogLikelihood(X_hybrid_test);
                     multinomialLL = multinomialbnObj.dataLogLikelihood(X_hybrid_test);
@@ -975,6 +1036,7 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                     
                     % assign LL values to matrix
                     llMCMat(HCBN_LL_MAT_IDX,mcSimNum) = hcbnLL;
+                    llMCMat(HCBN_DEBUG_LL_MAT_IDX,mcSimNum) = hcbnDebugLL;
                     llMCMat(MTE_LL_MAT_IDX,mcSimNum) = mteLL;
                     llMCMat(CLG_LL_MAT_IDX,mcSimNum) = clgLL;
                     llMCMat(MULTINOMIAL_LL_MAT_IDX,mcSimNum) = multinomialLL;
@@ -993,6 +1055,9 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                 progressStr = sprintf('MEAN{hcbnLL}=%f VAR{hcbnLL}=%f', ...
                     meanLLDivMCMat(HCBN_LL_MAT_IDX), varLLDivMCMat(HCBN_LL_MAT_IDX));
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
+                progressStr = sprintf('MEAN{hcbnDebugLL}=%f VAR{hcbnDebugLL}=%f', ...
+                    meanLLDivMCMat(HCBN_DEBUG_LL_MAT_IDX), varLLDivMCMat(HCBN_DEBUG_LL_MAT_IDX));
+                dispstat(progressStr,'timestamp','keepthis','timestamp');
                 progressStr = sprintf('MEAN{cbnLL}=%f VAR{cbnLL}=%f', ...
                     meanLLDivMCMat(CBN_LL_MAT_IDX), varLLDivMCMat(CBN_LL_MAT_IDX));
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
@@ -1002,10 +1067,13 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                 progressStr = sprintf('MEAN{clgLL}=%f VAR{clgLL}=%f', ...
                     meanLLDivMCMat(CLG_LL_MAT_IDX), varLLDivMCMat(CLG_LL_MAT_IDX));
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
-                progressStr = sprintf('MEAN{multinomialLL}=%f VAR{multinomialLL}=%f\n', ...
+                progressStr = sprintf('MEAN{multinomialLL}=%f VAR{multinomialLL}=%f', ...
                     meanLLDivMCMat(MULTINOMIAL_LL_MAT_IDX), varLLDivMCMat(MULTINOMIAL_LL_MAT_IDX));
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
-
+                progressStr = sprintf('mean{hcbnDebugLL}==mean{refLL}=%d\n', ...
+                    meanLLDivMCMat(HCBN_DEBUG_LL_MAT_IDX)==meanLLDivMCMat(REF_LL_MAT_IDX));
+                dispstat(progressStr,'timestamp','keepthis','timestamp');
+                
                 llMat(copulaTypeVecIdx, ...
                          continuousDistTypeVecIdx,...
                          alphaVecIdx,...
@@ -1065,6 +1133,7 @@ global numModelsCompared numMC bntPath logFile K h numTest
 global HCBN_LL_MAT_IDX MTE_LL_MAT_IDX CLG_LL_MAT_IDX REF_LL_MAT_IDX
 global MULTINOMIAL_LL_MAT_IDX NUM_DISCRETE_INTERVALS CBN_LL_MAT_IDX
 global CDE_combinations C1C2C3_combinations dependency_combinations
+global HCBN_DEBUG_LL_MAT_IDX
 
 a_dist = makedist('Multinomial','Probabilities', a_probs);
 b_dist = makedist('Multinomial','Probabilities', b_probs);
@@ -1161,9 +1230,9 @@ for cdeCombinationsVecIdx=1:length(CDE_combinations)
                 % likelihood calculations
                 % compute c1 - either Frank or Clayton copula
                 if(strcmpi(c1c2c3Types{1},'Frank'))
-                    c1 = reshape(copulapdf('Frank', [U1_2(:) U2_2(:)], alpha_C1), K, K);
+                    c1 = reshape(frankcopulapdf([U1_2(:) U2_2(:)], alpha_C1), K, K);
                 elseif(strcmpi(c1c2c3Types{1},'Clayton'))    
-                    c1 = reshape(copulapdf('Clayton', [U1_2(:) U2_2(:)], alpha_C1), K, K);
+                    c1 = reshape(claytoncopulapdf([U1_2(:) U2_2(:)], alpha_C1), K, K);
                 else
                     error('Unsupported Copula Type!');
                 end
@@ -1172,9 +1241,9 @@ for cdeCombinationsVecIdx=1:length(CDE_combinations)
                 c2_parents = reshape(copulapdf('Gaussian', [U1_2(:) U2_2(:)], Rho_C2(1:2,1:2)), K, K);
                 % compute c3 - either Frank or Clayton copula
                 if(strcmpi(c1c2c3Types{3},'Frank'))
-                    c3 = reshape(copulapdf('Frank', [U1_2(:) U2_2(:)], alpha_C3), K, K);
+                    c3 = reshape(frankcopulapdf([U1_2(:) U2_2(:)], alpha_C3), K, K);
                 elseif(strcmpi(c1c2c3Types{3},'Clayton'))    
-                    c3 = reshape(copulapdf('Clayton', [U1_2(:) U2_2(:)], alpha_C3), K, K);
+                    c3 = reshape(claytoncopulapdf([U1_2(:) U2_2(:)], alpha_C3), K, K);
                 else
                     error('Unsupported Copula Type!');
                 end
@@ -1184,6 +1253,26 @@ for cdeCombinationsVecIdx=1:length(CDE_combinations)
                 C2_partial_discrete_integrate = cumtrapz(u, cumtrapz(u, c2, 1), 2);
                 C2_parents_partial_discrete_integrate = cumtrapz(u, cumtrapz(u, c2_parents, 1), 2);
                 C3_partial_discrete_integrate = cumtrapz(u, c3, 1);
+                
+                copulaFamilies = cell(1,5);
+                copulaFamilies{1} = [];
+                copulaFamilies{2} = [];
+                tmp = cell(1,2);
+                tmp{1} = c1c2c3Types{1}; tmp{2} = alpha_C1;
+                copulaFamilies{3} = tmp;
+                tmp = cell(1,2);
+                tmp{1} = c1c2c3Types{3}; tmp{2} = alpha_C3;
+                copulaFamilies{5} = tmp;
+                tmp = cell(1,2); 
+                tmp{1} = 'Gaussian'; 
+                tmp{2} = circshift(circshift(Rho_C2,1,1),1,2);
+                copulaFamilies{4} = tmp;
+                
+                empInfo = cell(1,5);
+                empInfo{1} = a_dist; empInfo{2} = b_dist;
+                empInfo{3} = continuousEmpiricalDists{3};
+                empInfo{4} = continuousEmpiricalDists{4};
+                empInfo{5} = continuousEmpiricalDists{5};
                 
                 M = mVec(mVecIdx);
                 %%%%%%%%%%% MAIN SIMULATION CODE %%%%%%%%%%
@@ -1245,7 +1334,8 @@ for cdeCombinationsVecIdx=1:length(CDE_combinations)
                     X_hybrid = X_hybrid(1:M,:);
                     
                     % create models of the data
-                    hcbnObj = hcbn(bntPath, X_hybrid, nodeNames, discreteNodeNames, K, h, dag); 
+                    hcbnObj = hcbn(bntPath, X_hybrid, nodeNames, discreteNodeNames, K, h, dag);  
+                    hcbnDebugObj = hcbn(bntPath, X_hybrid, nodeNames, discreteNodeNames, K, h, dag, copulaFamilies); 
                     mtebnObj = mtebn(X_hybrid, discreteNodes, dag);
                     clgbnObj = clgbn(X_hybrid, discreteNodes, dag);
                     multinomialbnObj = multinomialbn(X_hybrid, discreteNodes, dag, NUM_DISCRETE_INTERVALS);
@@ -1307,6 +1397,7 @@ for cdeCombinationsVecIdx=1:length(CDE_combinations)
                     
                     % compute likelihood for each of the models
                     hcbnLL = hcbnObj.dataLogLikelihood(X_hybrid_test);
+                    hcbnDebugLL = hcbnDebugObj.dataLogLikelihood(X_hybrid_test);
                     mteLL = mtebnObj.dataLogLikelihood(X_hybrid_test);
                     clgLL = clgbnObj.dataLogLikelihood(X_hybrid_test);
                     multinomialLL = multinomialbnObj.dataLogLikelihood(X_hybrid_test);
@@ -1314,6 +1405,7 @@ for cdeCombinationsVecIdx=1:length(CDE_combinations)
                     
                     % assign LL values to matrix
                     llMCMat(HCBN_LL_MAT_IDX,mcSimNum) = hcbnLL;
+                    llMCMat(HCBN_DEBUG_LL_MAT_IDX,mcSimNum) = hcbnDebugLL;
                     llMCMat(MTE_LL_MAT_IDX,mcSimNum) = mteLL;
                     llMCMat(CLG_LL_MAT_IDX,mcSimNum) = clgLL;
                     llMCMat(MULTINOMIAL_LL_MAT_IDX,mcSimNum) = multinomialLL;
@@ -1333,6 +1425,9 @@ for cdeCombinationsVecIdx=1:length(CDE_combinations)
                 progressStr = sprintf('MEAN{hcbnLL}=%f VAR{hcbnLL}=%f', ...
                     meanLLDivMCMat(HCBN_LL_MAT_IDX), varLLDivMCMat(HCBN_LL_MAT_IDX));
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
+                progressStr = sprintf('MEAN{hcbnDebugLL}=%f VAR{hcbnDebugLL}=%f', ...
+                    meanLLDivMCMat(HCBN_DEBUG_LL_MAT_IDX), varLLDivMCMat(HCBN_DEBUG_LL_MAT_IDX));
+                dispstat(progressStr,'timestamp','keepthis','timestamp');
                 progressStr = sprintf('MEAN{cbnLL}=%f VAR{cbnLL}=%f', ...
                     meanLLDivMCMat(CBN_LL_MAT_IDX), varLLDivMCMat(CBN_LL_MAT_IDX));
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
@@ -1342,10 +1437,13 @@ for cdeCombinationsVecIdx=1:length(CDE_combinations)
                 progressStr = sprintf('MEAN{clgLL}=%f VAR{clgLL}=%f', ...
                     meanLLDivMCMat(CLG_LL_MAT_IDX), varLLDivMCMat(CLG_LL_MAT_IDX));
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
-                progressStr = sprintf('MEAN{multinomialLL}=%f VAR{multinomialLL}=%f\n', ...
+                progressStr = sprintf('MEAN{multinomialLL}=%f VAR{multinomialLL}=%f', ...
                     meanLLDivMCMat(MULTINOMIAL_LL_MAT_IDX), varLLDivMCMat(MULTINOMIAL_LL_MAT_IDX));
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
-
+                progressStr = sprintf('mean{hcbnDebugLL}==mean{refLL}=%d\n', ...
+                    meanLLDivMCMat(HCBN_DEBUG_LL_MAT_IDX)==meanLLDivMCMat(REF_LL_MAT_IDX));
+                dispstat(progressStr,'timestamp','keepthis','timestamp');
+                
                 llMat(cdeCombinationsVecIdx, ...
                      c1c2c3CombinationsVecIdx,...
                      dependencyCombinationsVecIdx,...

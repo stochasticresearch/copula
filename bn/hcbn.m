@@ -67,7 +67,7 @@ classdef hcbn < handle
     end
     
     methods
-        function obj = hcbn(bntPath, X, nodes, discreteNodes, K, h, varargin)
+        function obj = hcbn(bntPath, X, nodeNames, discreteNodes, K, h, varargin)
             % HCBN - Constructs a HCBN object
             %  Inputs:
             %   X - a M x D matrix of the the observable data which the
@@ -95,7 +95,7 @@ classdef hcbn < handle
             
             obj.D = size(X,2);      
             
-            obj.nodeNames = nodes;
+            obj.nodeNames = nodeNames;
             obj.nodeVals = 1:obj.D;
             obj.copulaFamilies = cell(1,obj.D);
             obj.empInfo = cell(1,obj.D);
@@ -126,8 +126,6 @@ classdef hcbn < handle
             end
             
             obj.calcEmpInfo();
-            
-            error('Finish coding the debug copula input for hcbn :(');
             
             nVarargs = length(varargin);
             if(nVarargs>0)
@@ -172,23 +170,119 @@ classdef hcbn < handle
                             u = linspace(0,1,obj.K);
                             % generate the points over which the copulas
                             % will be computed
+                            familyD = length(parentIdxs) + 1;
+                            sz = ones(1,familyD)*obj.K;
+                            ndgridInput = cell(1,familyD);
+                            for family_dd=1:familyD
+                                ndgridInput{family_dd} = u;
+                            end
+                            ndgridOutput = cell(1,numel(ndgridInput));
+                            [ndgridOutput{:}] = ndgrid(ndgridInput{:});
+                            gridPoints_all = zeros(numel(ndgridOutput{1}), familyD);
+                            for family_dd=1:familyD
+                                gridPoints_all(:,family_dd) = reshape(ndgridOutput{family_dd},numel(ndgridOutput{family_dd}),1);
+                            end
                             
+                            copulaType = copulaFamiliesInput{dd}{1};
+                            copulaDep_all  = copulaFamiliesInput{dd}{2};
+                            copulaDep_parents = copulaDep_all;
                             % compute PDF of family copula
+                            if(strcmpi(copulaType, 'Gaussian'))
+                                c = reshape(copulapdf('Gaussian', gridPoints_all, copulaDep_all), sz);
+                                copulaDep_parents = copulaDep_all(2:end,2:end); % remove child correlation from corr matrix
+                            elseif(strcmpi(copulaType, 'Frank'))
+                                c = reshape(frankcopulapdf(gridPoints_all, copulaDep_all), sz);
+                            elseif(strcmpi(copulaType, 'Gumbel'))
+                                c = reshape(gumbelcopulapdf(gridPoints_all, copulaDep_all), sz);
+                            elseif(strcmpi(copulaType, 'Clayton'))
+                                c = reshape(claytoncopulapdf(gridPoints_all, copulaDep_all), sz);
+                            else
+                                error('Unsupported copula!');
+                            end
+                            % NOTE: for the archimedean copulas, since the
+                            % copula dependency parameter remains the
+                            % same,across all the dimensions,
+                            % copulaDep_parents = copulaDep_all
                             
                             % compute CDF of family copula
-                            % integrate discrete dimensions out
+                            C = c;
+                            for family_dd=1:familyD
+                                C = cumtrapz(u, C, family_dd);
+                            end
                             
-                            % compute PDF of parents copula
-                            % compute CDF of parents copula
                             % integrate discrete dimensions out
+                            allIdxs = [nodeIdx parentIdxs];
+                            [~,discreteDimensions,~] = intersect(allIdxs,obj.discNodeIdxs); discreteDimensions = discreteDimensions';
+                            C_discrete_integrate = c;
+                            for discreteDimension=discreteDimensions
+                                C_discrete_integrate = cumtrapz(u,C_discrete_integrate,discreteDimension);
+                            end
                             
+                            if(length(parentIdxs)==1)
+                                % the density will be used directly, so there
+                                % is no need to calculate these copula's (they
+                                % don't actually make sense because there is
+                                % only one dimension, no concept of "joint")
+                                C_parents = [];
+                                c_parents = [];
+                                C_parents_discrete_integrate = [];
+                            else
+                                parentsD = length(parentIdxs);
+                                sz = ones(1,parentsD)*obj.K;
+                                ndgridInput = cell(1,parentsD);
+                                for parents_dd=1:parentsD
+                                    ndgridInput{parents_dd} = u;
+                                end
+                                ndgridOutput = cell(1,numel(ndgridInput));
+                                [ndgridOutput{:}] = ndgrid(ndgridInput{:});
+                                gridPoints_parents = zeros(numel(ndgridOutput{1}), parentsD);
+                                for parents_dd=1:parentsD
+                                    gridPoints_parents(:,parents_dd) = reshape(ndgridOutput{parents_dd},numel(ndgridOutput{parents_dd}),1);
+                                end
+
+                                % compute PDF of parents copula
+                                if(strcmpi(copulaType, 'Gaussian'))
+                                    c_parents = reshape(copulapdf('Gaussian', gridPoints_parents, copulaDep_parents), sz);
+                                elseif(strcmpi(copulaType, 'Frank'))
+                                    c_parents = reshape(frankcopulapdf(gridPoints_parents, copulaDep_parents), sz);
+                                elseif(strcmpi(copulaType, 'Gumbel'))
+                                    c_parents = reshape(gumbelcopulapdf(gridPoints_parents, copulaDep_parents), sz);
+                                elseif(strcmpi(copulaType, 'Clayton'))
+                                    c_parents = reshape(claytoncopulapdf(gridPoints_parents, copulaDep_parents), sz);
+                                else
+                                    error('Unsupported copula!');
+                                end
+                                % compute CDF of parents copula
+                                C_parents = c_parents;
+                                for parent_dd=1:parentsD
+                                    C_parents = cumtrapz(u, C_parents, parent_dd);
+                                end
+                                
+                                % integrate discrete dimensions out
+                                [~,discreteDimensions,~] = intersect(parentIdxs,obj.discNodeIdxs); discreteDimensions = discreteDimensions';
+                                C_parents_discrete_integrate = c_parents;
+                                for discreteDimension=discreteDimensions
+                                    C_parents_discrete_integrate = cumtrapz(u,C_parents_discrete_integrate,discreteDimension);
+                                end
+                                
+                            end
                             % store into obj.copulaFamilies{dd}
+                            copFam = hcbnfamily(node, nodeIdx, parentNames, parentIdxs, ...
+                                    C, c, C_discrete_integrate, C_parents, c_parents, C_parents_discrete_integrate);
+                            obj.copulaFamilies{nodeIdx} = copFam;
                         end
                     end
                 else
                     obj.setDag(candidateDag);       % compute the estimated copula families
                 end
-                
+                if(nVarargs>2)
+                    % overwrite the empirical info w/ the provided
+                    % debugging empirical info
+                    empInfoInput = varargin{3};
+                    for dd=1:obj.D
+                        obj.empInfo{dd} = empInfoInput{dd};
+                    end
+                end
             end
         end
         
@@ -424,9 +518,9 @@ classdef hcbn < handle
                         diffStateIdx = diffStateIdx + 1;
                     end
                     if(parentsFlag)
-                        tmp = (-1)^(sum(rectangleDiffState))*empcopulaval(obj.copulaFamilies{nodeNum}.C_parents_discrete_integrate, u);
+                        tmp = (-1)^(sum(rectangleDiffState))*empcopulaval(obj.copulaFamilies{nodeNum}.C_parents_discrete_integrate, u, 1/obj.K);
                     else
-                        tmp = (-1)^(sum(rectangleDiffState))*empcopulaval(obj.copulaFamilies{nodeNum}.C_discrete_integrate, u);
+                        tmp = (-1)^(sum(rectangleDiffState))*empcopulaval(obj.copulaFamilies{nodeNum}.C_discrete_integrate, u, 1/obj.K);
                     end
 
                     mixedProbability = mixedProbability + tmp;
@@ -447,11 +541,16 @@ classdef hcbn < handle
             conditionalProb = jointProbAllNodes/jointProbParentNodes;
         end
         
-        function [ ll_val ] = dataLogLikelihood(obj, X)
+        function [ ll_val, totalProbVec ] = dataLogLikelihood(obj, X)
             M = size(X,1);
             if(size(X,2)~=obj.D)
                 error('Input data for LL calculation must be the same dimensions as the BN!');
             end      
+            
+            if(nargout>1)
+                totalProbVec = zeros(1,M);
+            end
+            
             ll_val = 0;
             for mm=1:M
                 % for each D-dimensional data point, compute the likelihood
@@ -475,6 +574,10 @@ classdef hcbn < handle
                     totalProb = obj.LOG_CUTOFF;
                 end
                 ll_val = ll_val + log(totalProb);
+                
+                if(nargout>1)
+                    totalProbVec(mm) = totalProb;
+                end
             end
         end
         

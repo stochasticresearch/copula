@@ -187,7 +187,7 @@ classdef multinomialbn < handle
             belowMinIdxs = continuousValues(nanIdxs)<min(edgeInfo);
             aboveMaxIdxs = continuousValues(nanIdxs)>max(edgeInfo);
             discretizedIdxs(nanIdxs(belowMinIdxs)) = 1;
-            discretizedIdxs(nanIdxs(aboveMaxIdxs)) = edgeInfo(end);
+            discretizedIdxs(nanIdxs(aboveMaxIdxs)) = length(edgeInfo);
             discretizedIdxs = floor(discretizedIdxs);
             
             discretizedValues = edgeInfo(discretizedIdxs);

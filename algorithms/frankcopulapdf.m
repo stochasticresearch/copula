@@ -77,5 +77,9 @@ end
 % requested boundary copula pdf values
 idxs = ~all(u,2);
 y(idxs) = 0;
+% TODO: figure out better way to deal w/ this below.  I think according to
+% Matlab, all edges of any copula density are 0 ... I don't think R
+% follows this, so we need to decide which is more right.
+y(isnan(y)) = 0;
 
 end
