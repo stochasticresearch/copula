@@ -167,7 +167,7 @@ classdef clgbn < handle
 %                                     fprintf('Training CLG w/ subset size = %d for combo %s\n', size(X_subset,1), sprintf('%d',combo'));
                                     % get all the continuous data associated with this combo
                                     X_subset_continuous = X_subset(:,continuousNodesIdxs);
-                                    if(size(X_subset_continuous,1)==1)
+                                    if(size(X_subset_continuous,1)==1 || length(unique(X_subset_continuous))==1)
                                         % we only have one sample, default
                                         % mean and covar parameters
                                         Mean = zeros(1,length(continuousNodesIdxs));
