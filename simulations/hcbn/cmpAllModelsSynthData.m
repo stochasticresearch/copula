@@ -76,7 +76,7 @@ K = 25; h = 0.05;      % beta kernel estimation parameters
 NUM_DISCRETE_INTERVALS = 10;
 bntPath = '../bnt'; addpath(genpath(bntPath));
 mVec = 250:250:1000;
-copulaTypeVec = {'Gumbel', 'Clayton', 'Frank', 'Gaussian'};
+copulaTypeVec = {'Gumbel', 'Clayton', 'Frank', 'Gaussian'}; copulaTypeVec = {'Gaussian'};
 alphaVec = [1 10 20];
 RhoVecs_2D = cell(1,length(alphaVec)); 
 RhoVecs_2D{1} = [1 -0.9; -0.9 1]; RhoVecs_2D{2} = [1 -0.65; -0.65 1];
@@ -96,7 +96,7 @@ MULTINOMIAL_LL_MAT_IDX = 5;
 CBN_LL_MAT_IDX = 6;
 REF_LL_MAT_IDX = 7;
 
-continuousDistTypeVec = {'Gaussian', 'Uniform', 'Multimodal', 'ThickTailed'}; 
+continuousDistTypeVec = {'Gaussian', 'Uniform', 'Multimodal', 'ThickTailed'};
 numModelsCompared = 7;
 numMC = numMCSims;
 logFile = logFilename;

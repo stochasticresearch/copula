@@ -187,7 +187,9 @@ classdef mtebn < handle
                                 % get all the continuous data associated with this combo
                                 X_subset_continuous = X_subset(:,continuousNodesIdxs);
 
-                                if(size(X_subset_continuous,2)==1)
+                                if(length(unique(X_subset_continuous))==1)
+                                    mte_info = obj.MTE_DEFAULT_GAUSSIAN;
+                                elseif(size(X_subset_continuous,2)==1)
                                     % estimate univariate MTE parameters
                                     mte_info = estMteDensity(X_subset_continuous);
                                 else
@@ -200,6 +202,10 @@ classdef mtebn < handle
                                 else
                                     error('MTE -- Currently unsupported!');
                                 end
+                            end
+                            
+                            if(any(isnan(mte_info.density)))
+                                1;
                             end
                             
                             nodeBnParams{nodeBnParamsIdx} = mteNodeBnParam(node, combo, parentCombinationProbability, mte_info);
@@ -250,6 +256,11 @@ classdef mtebn < handle
                 if(familyProb<=obj.LOG_CUTOFF)
                     familyProb = obj.LOG_CUTOFF;
                 end
+                
+                if(isnan(familyProb))
+                    1;
+                end
+                
                 log_familyProb = log(familyProb);
                 llVal = llVal + log_familyProb;
                 if(nargout>1)

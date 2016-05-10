@@ -39,7 +39,23 @@ if(D==1)
         x = mte_params_1{ii}.xi_subset;
         a = mte_params_1{ii}.a; b = mte_params_1{ii}.b;
         c = mte_params_1{ii}.c; d = mte_params_1{ii}.d;
-        mte_subset_reconstruct = a*exp(b*x)+c*exp(d*x);
+        term1_exp = exp(b*x);
+        term2_exp = exp(d*x);
+        if(any(isinf(term1_exp)))
+            if(a==0)
+                term1_exp = zeros(length(x),1);
+            else
+                term1_exp = 10000*ones(length(x),1);
+            end
+        end
+        if(any(isinf(term2_exp)))
+            if(b==0)
+                term2_exp = zeros(length(x),1);
+            else
+                term2_exp = 10000*ones(length(x),1);
+            end
+        end
+        mte_subset_reconstruct = a*term1_exp+c*term2_exp;
         mte_pdf_estimate = [mte_pdf_estimate; mte_subset_reconstruct];
         xi = [xi; x];
     end
@@ -74,7 +90,16 @@ for subset=1:numSubsets
     xi_subset = xi(intervals(subset,1):intervals(subset,2));
     
     % fit to 2 term exponential using matlab's fit functionality
-    f2 = fit(xi_subset,f_subset,'exp2');
+    warning('error', 'curvefit:fit:invalidStartPoint');
+    try
+        f2 = fit(xi_subset,f_subset,'exp2');
+    catch
+        f2 = struct;
+        f2.a = 1;
+        f2.b = 1;
+        f2.c = 1;
+        f2.d = 1;
+    end
     
     tmp = struct;
     tmp.subset = subset;

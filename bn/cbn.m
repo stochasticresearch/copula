@@ -224,6 +224,9 @@ classdef cbn < handle
                     end
                     
                     ll_val = ll_val + log(f_Xi) + log(R_ci);
+                    if(~isreal(ll_val))
+                        1;
+                    end
                 end
             end
         end
@@ -246,15 +249,14 @@ classdef cbn < handle
             if(isempty(copFam))
                 rcVal = 1;
             else
-                x_all = x([nodeIdx copFam.parentNodeIdxs]);
+                idxs_all = [nodeIdx copFam.parentNodeIdxs];
+                x_all = x(idxs_all);
                 u_all = zeros(1,length(x_all));
                 % convert to pseudo-observations via ECDF
                 for ii=1:length(x_all)
-                    u_all(ii) = obj.empInfo{ii}.cdf(x_all(ii));
+                    u_all(ii) = obj.empInfo{idxs_all(ii)}.cdf(x_all(ii));
                 end
-                u_all = fixU(u_all);        % because we query the copula-pdf, it is important
-                                            % to make sure we don't query the
-                                            % edges of the hypercube
+                
                 u_parents = u_all(2:end);
                 if(strcmpi(copFam.C, 'Gaussian'))
                     rcNumVal = copulapdf('Gaussian', u_all, copFam.C_param);
@@ -285,6 +287,20 @@ classdef cbn < handle
                         rcDenVal = 1;
                     end
                 end
+                if(~isreal(rcNumVal))
+                    if(imag(rcNumVal)<0.001)
+                        rcNumVal = real(rcNumVal);
+                    else
+                        error('rcNumVal has a significant imaginary component!');
+                    end
+                end
+                if(~isreal(rcDenVal))
+                    if(imag(rcDenVal)<0.001)
+                        rcDenVal = real(rcDenVal);
+                    else
+                        error('rcNumVal has a significant imaginary component!');
+                    end
+                end 
                 rcVal = rcNumVal/rcDenVal;
             end
         end
