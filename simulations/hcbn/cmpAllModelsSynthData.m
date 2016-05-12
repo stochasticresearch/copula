@@ -58,7 +58,7 @@ function [llMat, llVarMat] = cmpAllModelsSynthData( D, numMCSims, cfg, logFilena
 
 % define the parametrization variables
 % parametrization variables
-global mVec copulaTypeVec alphaVec RhoVecs_2D RhoVecs_3D  
+global mVec copulaTypeVec_2D alphaVec RhoVecs_2D RhoVecs_3D copulaTypeVec_3D
 global numModelsCompared numMC bntPath logFile K h continuousDistTypeVec
 global plotFlag numTest
 global HCBN_LL_MAT_IDX MTE_LL_MAT_IDX CLG_LL_MAT_IDX MULTINOMIAL_LL_MAT_IDX 
@@ -76,16 +76,20 @@ K = 25; h = 0.05;      % beta kernel estimation parameters
 NUM_DISCRETE_INTERVALS = 10;
 bntPath = '../bnt'; addpath(genpath(bntPath));
 mVec = 250:250:1000;
-copulaTypeVec = {'Gumbel', 'Clayton', 'Frank', 'Gaussian'}; copulaTypeVec = {'Gaussian'};
+copulaTypeVec_2D = {'Gumbel', 'Clayton', 'Frank', 'Gaussian'};
+copulaTypeVec_3D = {'Gaussian'};
 alphaVec = [1 10 20];
 RhoVecs_2D = cell(1,length(alphaVec)); 
 RhoVecs_2D{1} = [1 -0.9; -0.9 1]; RhoVecs_2D{2} = [1 -0.65; -0.65 1];
 RhoVecs_2D{3} = [1 0.35; 0.35 1]; RhoVecs_2D{4} = [1 0.1; 0.1 1];
 RhoVecs_3D = cell(1,length(alphaVec));
-RhoVecs_3D{1} = [1 .4 .2; .4 1 -.8; .2 -.8 1];
-RhoVecs_3D{2} = [1 .1 .3; .1 1 -.6; .3 -.6 1];
-RhoVecs_3D{3} = [1 .75 .3; .75 1 -.1; .3 -.1 1];
-RhoVecs_3D{4} = [1 -.75 -.3; -.75 1 .1; -.3 .1 1];
+% notice below that correlation matrices have enforced 0 correlation
+% between node1 and node2, which are the 2 parent nodes.  The DAG structure
+% implies that the 2 parent nodes are independent of each other.
+RhoVecs_3D{1} = [1 0 .2; 0 1 -.8; .2 -.8 1];
+RhoVecs_3D{2} = [1 0 .3; 0 1 -.6; .3 -.6 1];
+RhoVecs_3D{3} = [1 0 .3; 0 1 -.1; .3 -.1 1];
+RhoVecs_3D{4} = [1 0 -.3; 0 1 .1; -.3 .1 1];
 
 numTest = 1000; % the # of samples to generate to calculate likelihood
 HCBN_LL_MAT_IDX = 1;
@@ -229,7 +233,7 @@ probs = 0.05*ones(1,20);
 end
 
 function [llMat, llVarMat] = runD2(a_probs)
-global mVec copulaTypeVec alphaVec RhoVecs_2D continuousDistTypeVec 
+global mVec copulaTypeVec_2D alphaVec RhoVecs_2D continuousDistTypeVec 
 global numModelsCompared numMC bntPath logFile K h
 global plotFlag numTest
 global HCBN_LL_MAT_IDX MTE_LL_MAT_IDX CLG_LL_MAT_IDX REF_LL_MAT_IDX
@@ -248,12 +252,12 @@ nodeNames = {'A', 'B'};
 discreteNodeNames = {'A'};
 
 llMCMat = zeros(numModelsCompared,numMC);
-llMat = zeros(length(copulaTypeVec),...
+llMat = zeros(length(copulaTypeVec_2D),...
               length(continuousDistTypeVec),...
               length(alphaVec),...
               length(mVec),...
               numModelsCompared);
-llVarMat = zeros(length(copulaTypeVec),...
+llVarMat = zeros(length(copulaTypeVec_2D),...
               length(continuousDistTypeVec),...
               length(alphaVec),...
               length(mVec),...
@@ -262,13 +266,13 @@ llVarMat = zeros(length(copulaTypeVec),...
 fid = fopen(logFile, 'a');
 dispstat('','init'); % One time only initialization
 dispstat(sprintf('Begining the simulation...\n'),'keepthis','timestamp');
-numTotalLoops = length(copulaTypeVec)*length(continuousDistTypeVec)*length(alphaVec)*length(mVec)*numMC;
+numTotalLoops = length(copulaTypeVec_2D)*length(continuousDistTypeVec)*length(alphaVec)*length(mVec)*numMC;
 progressIdx = 1;
-for copulaTypeVecIdx=1:length(copulaTypeVec)
+for copulaTypeVecIdx=1:length(copulaTypeVec_2D)
     for continuousDistTypeVecIdx=1:length(continuousDistTypeVec)
         for alphaVecIdx=1:length(alphaVec)
             for mVecIdx=1:length(mVec)
-                copulaType = copulaTypeVec{copulaTypeVecIdx};
+                copulaType = copulaTypeVec_2D{copulaTypeVecIdx};
                 continuousDistType = continuousDistTypeVec{continuousDistTypeVecIdx};
                 if(strcmp(copulaType, 'Gaussian'))
                     alpha = RhoVecs_2D{alphaVecIdx};        % alpha is Rho here
@@ -641,7 +645,7 @@ end
 
 
 function [llMat, llVarMat] = runD3(a_probs, b_probs)
-global mVec copulaTypeVec alphaVec RhoVecs_3D continuousDistTypeVec 
+global mVec copulaTypeVec_3D alphaVec RhoVecs_3D continuousDistTypeVec 
 global numModelsCompared numMC bntPath logFile K h plotFlag numTest
 global HCBN_LL_MAT_IDX MTE_LL_MAT_IDX CLG_LL_MAT_IDX REF_LL_MAT_IDX
 global MULTINOMIAL_LL_MAT_IDX NUM_DISCRETE_INTERVALS CBN_LL_MAT_IDX
@@ -661,12 +665,12 @@ nodeNames = {'A', 'B', 'C'};
 discreteNodeNames = {'A','B'};
 
 llMCMat = zeros(numModelsCompared,numMC);
-llMat = zeros(length(copulaTypeVec),...
+llMat = zeros(length(copulaTypeVec_3D),...
               length(continuousDistTypeVec),...
               length(alphaVec),...
               length(mVec),...
               numModelsCompared);
-llVarMat = zeros(length(copulaTypeVec),...
+llVarMat = zeros(length(copulaTypeVec_3D),...
               length(continuousDistTypeVec),...
               length(alphaVec),...
               length(mVec),...
@@ -675,13 +679,13 @@ llVarMat = zeros(length(copulaTypeVec),...
 fid = fopen(logFile, 'a');
 dispstat('','init'); % One time only initialization
 dispstat(sprintf('Begining the simulation...'),'keepthis','timestamp');
-numTotalLoops = length(copulaTypeVec)*length(continuousDistTypeVec)*length(alphaVec)*length(mVec)*numMC;
+numTotalLoops = length(copulaTypeVec_3D)*length(continuousDistTypeVec)*length(alphaVec)*length(mVec)*numMC;
 progressIdx = 1;
-for copulaTypeVecIdx=1:length(copulaTypeVec)
+for copulaTypeVecIdx=1:length(copulaTypeVec_3D)
     for continuousDistTypeVecIdx=1:length(continuousDistTypeVec)
         for alphaVecIdx=1:length(alphaVec)
             for mVecIdx=1:length(mVec)
-                copulaType = copulaTypeVec{copulaTypeVecIdx};
+                copulaType = copulaTypeVec_3D{copulaTypeVecIdx};
                 continuousDistType = continuousDistTypeVec{continuousDistTypeVecIdx};
                 if(strcmp(copulaType, 'Gaussian'))
                     Rho = RhoVecs_3D{alphaVecIdx};        % alpha is Rho here
@@ -719,7 +723,7 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                     % format of Child,Parent1,Parent2
                     tmp{2} = circshift(circshift(Rho,1,1),1,2);
                 else
-                    tmp{2} = alpha;
+                    error('Unrecognized Copula Type!!');
                 end
                 copulaFamilies{3} = tmp;
                 empInfo = cell(1,3);
@@ -727,16 +731,7 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                 empInfo{3} = continuousDistInfo;
                 
                 u = linspace(0,1,K); [U1_3,U2_3,U3_3] = ndgrid(u); [U1_2,U2_2] = ndgrid(u);
-                if(strcmp(copulaType, 'Frank'))
-                    c_actual_X1X2X3 = reshape(frankcopulapdf([U1_3(:) U2_3(:) U3_3(:)], alpha),K,K,K);
-                    c_actual_X1X2 = reshape(frankcopulapdf([U1_2(:) U2_2(:)], alpha),K,K);
-                elseif(strcmp(copulaType, 'Gumbel'))
-                    c_actual_X1X2X3 = reshape(gumbelcopulapdf([U1_3(:) U2_3(:) U3_3(:)], alpha),K,K,K);
-                    c_actual_X1X2 = reshape(gumbelcopulapdf([U1_2(:) U2_2(:)], alpha),K,K);
-                elseif(strcmp(copulaType, 'Clayton'))
-                    c_actual_X1X2X3 = reshape(claytoncopulapdf([U1_3(:) U2_3(:) U3_3(:)], alpha),K,K,K);
-                    c_actual_X1X2 = reshape(claytoncopulapdf([U1_2(:) U2_2(:)], alpha),K,K);
-                elseif(strcmp(copulaType, 'Gaussian'))
+                if(strcmp(copulaType, 'Gaussian'))
                     c_actual_X1X2X3 = reshape(copulapdf('Gaussian', [U1_3(:) U2_3(:) U3_3(:)], Rho),K,K,K);
                     c_actual_X1X2 = reshape(copulapdf('Gaussian', [U1_2(:) U2_2(:)], Rho(1:2,1:2)),K,K);
                 else
@@ -752,21 +747,14 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                         progressStr = sprintf('copulaType=%s x3DistType=%s rho=%f M=%d MC Sim# = %d || Progress=%0.04f', ...
                                         copulaType, continuousDistType, Rho(1,2), M, mcSimNum, progressAmt);
                     else
-                        progressStr = sprintf('copulaType=%s x3DistType=%s alpha=%d M=%d MC Sim# = %d || Progress=%0.04f', ...
-                                        copulaType, continuousDistType, alpha, M, mcSimNum, progressAmt);
+                        error('Unrecognized Copula Type!');
                     end
                     dispstat(progressStr,'keepthis','timestamp');
                     fprintf(fid, progressStr);
                     X_hybrid = zeros(M+numTest,D);
                     
                     % generate the copula random variates
-                    if(strcmp(copulaType, 'Frank'))
-                        u_X1X2X3 = frankcopularnd(M+numTest, D, alpha);
-                    elseif(strcmp(copulaType, 'Gumbel'))
-                        u_X1X2X3 = gumbelcopularnd(M+numTest, D, alpha);
-                    elseif(strcmp(copulaType, 'Clayton'))
-                        u_X1X2X3 = claytoncopularnd(M+numTest, D, alpha);
-                    elseif(strcmp(copulaType, 'Gaussian'))
+                    if(strcmp(copulaType, 'Gaussian'))
                         u_X1X2X3 = copularnd('Gaussian', Rho, M+numTest);
                     else
                         error('Copula Type not recognized!\n');
@@ -1229,7 +1217,9 @@ for cdeCombinationsVecIdx=1:length(CDE_combinations)
                         if(ii==2)
                             % deal w/ gaussian case separately b/c we have
                             % to create a correlation matrix
-                            copulaDepParams{ii} = [1 .75 .85; .75 1 .9; .85 .9 1];
+                            % we put 0 correlation between X1&X2 to ensure
+                            % that the DAG is valid
+                            copulaDepParams{ii} = [1 0 -.8; 0 1 .59; -.8 .59 1];
                         else
                             copulaDepParams{ii} = 10;       % alpha = 10
                         end
@@ -1237,7 +1227,9 @@ for cdeCombinationsVecIdx=1:length(CDE_combinations)
                         if(ii==2)
                             % deal w/ gaussian case separately b/c we have
                             % to create a correlation matrix
-                            copulaDepParams{ii} = [1 .1 .2; .1 1 -.1; .2 -.1 1];
+                            % we put 0 correlation between X1&X2 to ensure
+                            % that the DAG is valid
+                            copulaDepParams{ii} = [1 0 .2; 0 1 -.1; .2 -.1 1];
                         else
                             copulaDepParams{ii} = 1;        % alpha = 1
                         end
