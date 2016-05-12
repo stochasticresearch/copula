@@ -58,12 +58,13 @@ function [llMat, llVarMat] = cmpAllModelsSynthData( D, numMCSims, cfg, logFilena
 
 % define the parametrization variables
 % parametrization variables
-global mVec copulaTypeVec_2D alphaVec RhoVecs_2D RhoVecs_3D copulaTypeVec_3D
+global mVec copulaTypeVec alphaVec RhoVecs_2D RhoVecs_3D  
 global numModelsCompared numMC bntPath logFile K h continuousDistTypeVec
 global plotFlag numTest
 global HCBN_LL_MAT_IDX MTE_LL_MAT_IDX CLG_LL_MAT_IDX MULTINOMIAL_LL_MAT_IDX 
-global CBN_LL_MAT_IDX REF_LL_MAT_IDX HCBN_DEBUG_LL_MAT_IDX
+global CBN_LL_MAT_IDX REF_LL_MAT_IDX
 global NUM_DISCRETE_INTERVALS
+global HCBN_DEBUGALL_LL_MAT_IDX HCBN_DEBUGCOPULA_LL_MAT_IDX HCBN_DEBUGEMPINFO_LL_MAT_IDX
 global CDE_combinations C1C2C3_combinations dependency_combinations
 
 if(nargin>4)
@@ -76,16 +77,12 @@ K = 25; h = 0.05;      % beta kernel estimation parameters
 NUM_DISCRETE_INTERVALS = 10;
 bntPath = '../bnt'; addpath(genpath(bntPath));
 mVec = 250:250:1000;
-copulaTypeVec_2D = {'Gumbel', 'Clayton', 'Frank', 'Gaussian'};
-copulaTypeVec_3D = {'Gaussian'};
+copulaTypeVec = {'Gumbel', 'Clayton', 'Frank', 'Gaussian'};
 alphaVec = [1 10 20];
 RhoVecs_2D = cell(1,length(alphaVec)); 
 RhoVecs_2D{1} = [1 -0.9; -0.9 1]; RhoVecs_2D{2} = [1 -0.65; -0.65 1];
 RhoVecs_2D{3} = [1 0.35; 0.35 1]; RhoVecs_2D{4} = [1 0.1; 0.1 1];
 RhoVecs_3D = cell(1,length(alphaVec));
-% notice below that correlation matrices have enforced 0 correlation
-% between node1 and node2, which are the 2 parent nodes.  The DAG structure
-% implies that the 2 parent nodes are independent of each other.
 RhoVecs_3D{1} = [1 0 .2; 0 1 -.8; .2 -.8 1];
 RhoVecs_3D{2} = [1 0 .3; 0 1 -.6; .3 -.6 1];
 RhoVecs_3D{3} = [1 0 .3; 0 1 -.1; .3 -.1 1];
@@ -93,15 +90,17 @@ RhoVecs_3D{4} = [1 0 -.3; 0 1 .1; -.3 .1 1];
 
 numTest = 1000; % the # of samples to generate to calculate likelihood
 HCBN_LL_MAT_IDX = 1;
-HCBN_DEBUG_LL_MAT_IDX = 2;
-MTE_LL_MAT_IDX = 3;
-CLG_LL_MAT_IDX = 4;
-MULTINOMIAL_LL_MAT_IDX = 5;
-CBN_LL_MAT_IDX = 6;
-REF_LL_MAT_IDX = 7;
+HCBN_DEBUGALL_LL_MAT_IDX = 2;
+HCBN_DEBUGCOPULA_LL_MAT_IDX = 3;
+HCBN_DEBUGEMPINFO_LL_MAT_IDX = 4;
+MTE_LL_MAT_IDX = 5;
+CLG_LL_MAT_IDX = 6;
+MULTINOMIAL_LL_MAT_IDX = 7;
+CBN_LL_MAT_IDX = 8;
+REF_LL_MAT_IDX = 9;
 
 continuousDistTypeVec = {'Gaussian', 'Uniform', 'Multimodal', 'ThickTailed'};
-numModelsCompared = 7;
+numModelsCompared = 9;
 numMC = numMCSims;
 logFile = logFilename;
 
@@ -233,12 +232,12 @@ probs = 0.05*ones(1,20);
 end
 
 function [llMat, llVarMat] = runD2(a_probs)
-global mVec copulaTypeVec_2D alphaVec RhoVecs_2D continuousDistTypeVec 
+global mVec copulaTypeVec alphaVec RhoVecs_2D continuousDistTypeVec 
 global numModelsCompared numMC bntPath logFile K h
 global plotFlag numTest
 global HCBN_LL_MAT_IDX MTE_LL_MAT_IDX CLG_LL_MAT_IDX REF_LL_MAT_IDX
 global MULTINOMIAL_LL_MAT_IDX NUM_DISCRETE_INTERVALS CBN_LL_MAT_IDX
-global HCBN_DEBUG_LL_MAT_IDX
+global HCBN_DEBUGALL_LL_MAT_IDX HCBN_DEBUGCOPULA_LL_MAT_IDX HCBN_DEBUGEMPINFO_LL_MAT_IDX
 
 a_dist = makedist('Multinomial','Probabilities',a_probs);
 
@@ -252,12 +251,12 @@ nodeNames = {'A', 'B'};
 discreteNodeNames = {'A'};
 
 llMCMat = zeros(numModelsCompared,numMC);
-llMat = zeros(length(copulaTypeVec_2D),...
+llMat = zeros(length(copulaTypeVec),...
               length(continuousDistTypeVec),...
               length(alphaVec),...
               length(mVec),...
               numModelsCompared);
-llVarMat = zeros(length(copulaTypeVec_2D),...
+llVarMat = zeros(length(copulaTypeVec),...
               length(continuousDistTypeVec),...
               length(alphaVec),...
               length(mVec),...
@@ -266,13 +265,13 @@ llVarMat = zeros(length(copulaTypeVec_2D),...
 fid = fopen(logFile, 'a');
 dispstat('','init'); % One time only initialization
 dispstat(sprintf('Begining the simulation...\n'),'keepthis','timestamp');
-numTotalLoops = length(copulaTypeVec_2D)*length(continuousDistTypeVec)*length(alphaVec)*length(mVec)*numMC;
+numTotalLoops = length(copulaTypeVec)*length(continuousDistTypeVec)*length(alphaVec)*length(mVec)*numMC;
 progressIdx = 1;
-for copulaTypeVecIdx=1:length(copulaTypeVec_2D)
+for copulaTypeVecIdx=1:length(copulaTypeVec)
     for continuousDistTypeVecIdx=1:length(continuousDistTypeVec)
         for alphaVecIdx=1:length(alphaVec)
             for mVecIdx=1:length(mVec)
-                copulaType = copulaTypeVec_2D{copulaTypeVecIdx};
+                copulaType = copulaTypeVec{copulaTypeVecIdx};
                 continuousDistType = continuousDistTypeVec{continuousDistTypeVecIdx};
                 if(strcmp(copulaType, 'Gaussian'))
                     alpha = RhoVecs_2D{alphaVecIdx};        % alpha is Rho here
@@ -367,7 +366,9 @@ for copulaTypeVecIdx=1:length(copulaTypeVec_2D)
                     distBEst = rvEmpiricalInfo(xBest,fBest,FBest);
 
                     hcbnObj = hcbn(bntPath, X_hybrid, nodeNames, discreteNodeNames, K, h, dag); 
-                    hcbnDebugObj = hcbn(bntPath, X_hybrid, nodeNames, discreteNodeNames, K, h, dag, copulaFamilies, empInfo); 
+                    hcbnDebugAllObj = hcbn(bntPath, X_hybrid, nodeNames, discreteNodeNames, K, h, dag, 'copulaFamilyInput', copulaFamilies, 'empInfoInput', empInfo); 
+                    hcbnDebugCopulaObj = hcbn(bntPath, X_hybrid, nodeNames, discreteNodeNames, K, h, dag, 'copulaFamilyInput', copulaFamilies); 
+                    hcbnDebugEmpInfoObj = hcbn(bntPath, X_hybrid, nodeNames, discreteNodeNames, K, h, dag, 'empInfoInput', empInfo); 
                     mtebnObj = mtebn(X_hybrid, discreteNodes, dag);
                     clgbnObj = clgbn(X_hybrid, discreteNodes, dag);
                     multinomialbnObj = multinomialbn(X_hybrid, discreteNodes, dag, NUM_DISCRETE_INTERVALS);
@@ -541,7 +542,9 @@ for copulaTypeVecIdx=1:length(copulaTypeVec_2D)
                     
                     % calculate LL values and assign to llDivMCMat
                     hcbnLL = hcbnObj.dataLogLikelihood(X_hybrid_test);
-                    [hcbnDebugLL, hcbnDebugTotalProbVec] = hcbnDebugObj.dataLogLikelihood(X_hybrid_test);
+                    hcbnDebugAllLL = hcbnDebugAllObj.dataLogLikelihood(X_hybrid_test);
+                    hcbnDebugCopulaLL = hcbnDebugCopulaObj.dataLogLikelihood(X_hybrid_test);
+                    hcbnDebugEmpInfoLL = hcbnDebugEmpInfoObj.dataLogLikelihood(X_hybrid_test);
                     mteLL = mtebnObj.dataLogLikelihood(X_hybrid_test);
                     clgLL = clgbnObj.dataLogLikelihood(X_hybrid_test);
                     multinomialLL = multinomialbnObj.dataLogLikelihood(X_hybrid_test);
@@ -549,7 +552,9 @@ for copulaTypeVecIdx=1:length(copulaTypeVec_2D)
                     
                     % assign LL values to matrix
                     llMCMat(HCBN_LL_MAT_IDX,mcSimNum) = hcbnLL;
-                    llMCMat(HCBN_DEBUG_LL_MAT_IDX,mcSimNum) = hcbnDebugLL;
+                    llMCMat(HCBN_DEBUGALL_LL_MAT_IDX,mcSimNum) = hcbnDebugAllLL;
+                    llMCMat(HCBN_DEBUGCOPULA_LL_MAT_IDX,mcSimNum) = hcbnDebugCopulaLL;
+                    llMCMat(HCBN_DEBUGEMPINFO_LL_MAT_IDX,mcSimNum) = hcbnDebugEmpInfoLL;
                     llMCMat(MTE_LL_MAT_IDX,mcSimNum) = mteLL;
                     llMCMat(CLG_LL_MAT_IDX,mcSimNum) = clgLL;
                     llMCMat(MULTINOMIAL_LL_MAT_IDX,mcSimNum) = multinomialLL;
@@ -561,29 +566,35 @@ for copulaTypeVecIdx=1:length(copulaTypeVec_2D)
                 meanLLDivMCMat = mean(llMCMat,2);
                 varLLDivMCMat = mean(llMCMat.^2,2)-meanLLDivMCMat.^2;
                 
-                progressStr = sprintf('MEAN{refLL}=%f VAR{refLL}=%f', ...
+                progressStr = sprintf('MEAN{ref}=%f VAR{ref}=%f', ...
                     meanLLDivMCMat(REF_LL_MAT_IDX), varLLDivMCMat(REF_LL_MAT_IDX));
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
-                progressStr = sprintf('MEAN{hcbnLL}=%f VAR{hcbnLL}=%f', ...
+                progressStr = sprintf('MEAN{hcbn}=%f VAR{hcbn}=%f', ...
                     meanLLDivMCMat(HCBN_LL_MAT_IDX), varLLDivMCMat(HCBN_LL_MAT_IDX));
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
-                progressStr = sprintf('MEAN{hcbnDebugLL}=%f VAR{hcbnDebugLL}=%f', ...
-                    meanLLDivMCMat(HCBN_DEBUG_LL_MAT_IDX), varLLDivMCMat(HCBN_DEBUG_LL_MAT_IDX));
+                progressStr = sprintf('MEAN{hcbnDebugAll}=%f VAR{hcbnDebugAll}=%f', ...
+                    meanLLDivMCMat(HCBN_DEBUGALL_LL_MAT_IDX), varLLDivMCMat(HCBN_DEBUGALL_LL_MAT_IDX));
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
-                progressStr = sprintf('MEAN{cbnLL}=%f VAR{cbnLL}=%f', ...
+                progressStr = sprintf('MEAN{hcbnDebugCopula}=%f VAR{hcbnDebugCopula}=%f', ...
+                    meanLLDivMCMat(HCBN_DEBUGCOPULA_LL_MAT_IDX), varLLDivMCMat(HCBN_DEBUGCOPULA_LL_MAT_IDX));
+                dispstat(progressStr,'timestamp','keepthis','timestamp');
+                progressStr = sprintf('MEAN{hcbnDebugEmpInfo}=%f VAR{hcbnDebugEmpInfo}=%f', ...
+                    meanLLDivMCMat(HCBN_DEBUGEMPINFO_LL_MAT_IDX), varLLDivMCMat(HCBN_DEBUGEMPINFO_LL_MAT_IDX));
+                dispstat(progressStr,'timestamp','keepthis','timestamp');
+                progressStr = sprintf('MEAN{cbn}=%f VAR{cbn}=%f', ...
                     meanLLDivMCMat(CBN_LL_MAT_IDX), varLLDivMCMat(CBN_LL_MAT_IDX));
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
-                progressStr = sprintf('MEAN{mteLL}=%f VAR{mteLL}=%f', ...
+                progressStr = sprintf('MEAN{mte}=%f VAR{mte}=%f', ...
                     meanLLDivMCMat(MTE_LL_MAT_IDX), varLLDivMCMat(MTE_LL_MAT_IDX));
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
-                progressStr = sprintf('MEAN{clgLL}=%f VAR{clgLL}=%f', ...
+                progressStr = sprintf('MEAN{clg}=%f VAR{clg}=%f', ...
                     meanLLDivMCMat(CLG_LL_MAT_IDX), varLLDivMCMat(CLG_LL_MAT_IDX));
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
-                progressStr = sprintf('MEAN{multinomialLL}=%f VAR{multinomialLL}=%f', ...
+                progressStr = sprintf('MEAN{multinomial}=%f VAR{multinomial}=%f', ...
                     meanLLDivMCMat(MULTINOMIAL_LL_MAT_IDX), varLLDivMCMat(MULTINOMIAL_LL_MAT_IDX));
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
-                progressStr = sprintf('mean{hcbnDebugLL}==mean{refLL}=%d\n', ...
-                    meanLLDivMCMat(HCBN_DEBUG_LL_MAT_IDX)==meanLLDivMCMat(REF_LL_MAT_IDX));
+                progressStr = sprintf('mean{hcbnDebug}==mean{ref}=%d\n', ...
+                    abs(meanLLDivMCMat(HCBN_DEBUGALL_LL_MAT_IDX)-meanLLDivMCMat(REF_LL_MAT_IDX)) < .1 );
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
                 
                 llMat(copulaTypeVecIdx, ...
@@ -645,11 +656,11 @@ end
 
 
 function [llMat, llVarMat] = runD3(a_probs, b_probs)
-global mVec copulaTypeVec_3D alphaVec RhoVecs_3D continuousDistTypeVec 
+global mVec copulaTypeVec alphaVec RhoVecs_3D continuousDistTypeVec 
 global numModelsCompared numMC bntPath logFile K h plotFlag numTest
 global HCBN_LL_MAT_IDX MTE_LL_MAT_IDX CLG_LL_MAT_IDX REF_LL_MAT_IDX
 global MULTINOMIAL_LL_MAT_IDX NUM_DISCRETE_INTERVALS CBN_LL_MAT_IDX
-global HCBN_DEBUG_LL_MAT_IDX
+global HCBN_DEBUGALL_LL_MAT_IDX HCBN_DEBUGCOPULA_LL_MAT_IDX HCBN_DEBUGEMPINFO_LL_MAT_IDX
 
 a_dist = makedist('Multinomial','Probabilities', a_probs);
 b_dist = makedist('Multinomial','Probabilities', b_probs);
@@ -665,12 +676,12 @@ nodeNames = {'A', 'B', 'C'};
 discreteNodeNames = {'A','B'};
 
 llMCMat = zeros(numModelsCompared,numMC);
-llMat = zeros(length(copulaTypeVec_3D),...
+llMat = zeros(length(copulaTypeVec),...
               length(continuousDistTypeVec),...
               length(alphaVec),...
               length(mVec),...
               numModelsCompared);
-llVarMat = zeros(length(copulaTypeVec_3D),...
+llVarMat = zeros(length(copulaTypeVec),...
               length(continuousDistTypeVec),...
               length(alphaVec),...
               length(mVec),...
@@ -679,13 +690,13 @@ llVarMat = zeros(length(copulaTypeVec_3D),...
 fid = fopen(logFile, 'a');
 dispstat('','init'); % One time only initialization
 dispstat(sprintf('Begining the simulation...'),'keepthis','timestamp');
-numTotalLoops = length(copulaTypeVec_3D)*length(continuousDistTypeVec)*length(alphaVec)*length(mVec)*numMC;
+numTotalLoops = length(copulaTypeVec)*length(continuousDistTypeVec)*length(alphaVec)*length(mVec)*numMC;
 progressIdx = 1;
-for copulaTypeVecIdx=1:length(copulaTypeVec_3D)
+for copulaTypeVecIdx=1:length(copulaTypeVec)
     for continuousDistTypeVecIdx=1:length(continuousDistTypeVec)
         for alphaVecIdx=1:length(alphaVec)
             for mVecIdx=1:length(mVec)
-                copulaType = copulaTypeVec_3D{copulaTypeVecIdx};
+                copulaType = copulaTypeVec{copulaTypeVecIdx};
                 continuousDistType = continuousDistTypeVec{continuousDistTypeVecIdx};
                 if(strcmp(copulaType, 'Gaussian'))
                     Rho = RhoVecs_3D{alphaVecIdx};        % alpha is Rho here
@@ -721,9 +732,9 @@ for copulaTypeVecIdx=1:length(copulaTypeVec_3D)
                 if(strcmpi(copulaType, 'Gaussian'))
                     % permute the correlation matrix such that it is in the
                     % format of Child,Parent1,Parent2
-                    tmp{2} = circshift(circshift(Rho,1,1),1,2);
-                else
                     error('Unrecognized Copula Type!!');
+                else
+                    tmp{2} = alpha;
                 end
                 copulaFamilies{3} = tmp;
                 empInfo = cell(1,3);
@@ -784,7 +795,9 @@ for copulaTypeVecIdx=1:length(copulaTypeVec_3D)
                     distCEst = rvEmpiricalInfo(xCest,fCest,FCest);
                     
                     hcbnObj = hcbn(bntPath, X_hybrid, nodeNames, discreteNodeNames, K, h, dag);  
-                    hcbnDebugObj = hcbn(bntPath, X_hybrid, nodeNames, discreteNodeNames, K, h, dag, copulaFamilies, empInfo); 
+                    hcbnDebugAllObj = hcbn(bntPath, X_hybrid, nodeNames, discreteNodeNames, K, h, dag, 'copulaFamilyInput', copulaFamilies, 'empInfoInput', empInfo);  
+                    hcbnDebugCopulaObj = hcbn(bntPath, X_hybrid, nodeNames, discreteNodeNames, K, h, dag, 'copulaFamilyInput', copulaFamilies); 
+                    hcbnDebugEmpInfoObj = hcbn(bntPath, X_hybrid, nodeNames, discreteNodeNames, K, h, dag, 'empInfoInput', empInfo); 
                     mtebnObj = mtebn(X_hybrid, discreteNodes, dag);
                     clgbnObj = clgbn(X_hybrid, discreteNodes, dag);
                     multinomialbnObj = multinomialbn(X_hybrid, discreteNodes, dag, NUM_DISCRETE_INTERVALS);
@@ -1035,7 +1048,9 @@ for copulaTypeVecIdx=1:length(copulaTypeVec_3D)
                     
                     % calculate LL values and assign to llDivMCMat
                     hcbnLL = hcbnObj.dataLogLikelihood(X_hybrid_test);
-                    [hcbnDebugLL, hcbnDebugTotalProbVec] = hcbnDebugObj.dataLogLikelihood(X_hybrid_test);
+                    hcbnDebugAllLL = hcbnDebugAllObj.dataLogLikelihood(X_hybrid_test);
+                    hcbnDebugCopulaLL = hcbnDebugCopulaObj.dataLogLikelihood(X_hybrid_test);
+                    hcbnDebugEmpInfoLL = hcbnDebugEmpInfoObj.dataLogLikelihood(X_hybrid_test);
                     mteLL = mtebnObj.dataLogLikelihood(X_hybrid_test);
                     clgLL = clgbnObj.dataLogLikelihood(X_hybrid_test);
                     multinomialLL = multinomialbnObj.dataLogLikelihood(X_hybrid_test);
@@ -1047,7 +1062,9 @@ for copulaTypeVecIdx=1:length(copulaTypeVec_3D)
                     
                     % assign LL values to matrix
                     llMCMat(HCBN_LL_MAT_IDX,mcSimNum) = hcbnLL;
-                    llMCMat(HCBN_DEBUG_LL_MAT_IDX,mcSimNum) = hcbnDebugLL;
+                    llMCMat(HCBN_DEBUGALL_LL_MAT_IDX,mcSimNum) = hcbnDebugAllLL;
+                    llMCMat(HCBN_DEBUGCOPULA_LL_MAT_IDX,mcSimNum) = hcbnDebugCopulaLL;
+                    llMCMat(HCBN_DEBUGEMPINFO_LL_MAT_IDX,mcSimNum) = hcbnDebugEmpInfoLL;
                     llMCMat(MTE_LL_MAT_IDX,mcSimNum) = mteLL;
                     llMCMat(CLG_LL_MAT_IDX,mcSimNum) = clgLL;
                     llMCMat(MULTINOMIAL_LL_MAT_IDX,mcSimNum) = multinomialLL;
@@ -1060,29 +1077,35 @@ for copulaTypeVecIdx=1:length(copulaTypeVec_3D)
                 meanLLDivMCMat = mean(llMCMat,2);
                 varLLDivMCMat = mean(llMCMat.^2,2)-meanLLDivMCMat.^2;
                                     
-                progressStr = sprintf('MEAN{refLL}=%f VAR{refLL}=%f', ...
+                progressStr = sprintf('MEAN{ref}=%f VAR{ref}=%f', ...
                     meanLLDivMCMat(REF_LL_MAT_IDX), varLLDivMCMat(REF_LL_MAT_IDX));
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
-                progressStr = sprintf('MEAN{hcbnLL}=%f VAR{hcbnLL}=%f', ...
+                progressStr = sprintf('MEAN{hcbn}=%f VAR{hcbn}=%f', ...
                     meanLLDivMCMat(HCBN_LL_MAT_IDX), varLLDivMCMat(HCBN_LL_MAT_IDX));
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
-                progressStr = sprintf('MEAN{hcbnDebugLL}=%f VAR{hcbnDebugLL}=%f', ...
-                    meanLLDivMCMat(HCBN_DEBUG_LL_MAT_IDX), varLLDivMCMat(HCBN_DEBUG_LL_MAT_IDX));
+                progressStr = sprintf('MEAN{hcbnDebugAll}=%f VAR{hcbnDebugAll}=%f', ...
+                    meanLLDivMCMat(HCBN_DEBUGALL_LL_MAT_IDX), varLLDivMCMat(HCBN_DEBUGALL_LL_MAT_IDX));
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
-                progressStr = sprintf('MEAN{cbnLL}=%f VAR{cbnLL}=%f', ...
+                progressStr = sprintf('MEAN{hcbnDebugCopula}=%f VAR{hcbnDebugCopula}=%f', ...
+                    meanLLDivMCMat(HCBN_DEBUGCOPULA_LL_MAT_IDX), varLLDivMCMat(HCBN_DEBUGCOPULA_LL_MAT_IDX));
+                dispstat(progressStr,'timestamp','keepthis','timestamp');
+                progressStr = sprintf('MEAN{hcbnDebugEmpInfo}=%f VAR{hcbnDebugEmpInfo}=%f', ...
+                    meanLLDivMCMat(HCBN_DEBUGEMPINFO_LL_MAT_IDX), varLLDivMCMat(HCBN_DEBUGEMPINFO_LL_MAT_IDX));
+                dispstat(progressStr,'timestamp','keepthis','timestamp');
+                progressStr = sprintf('MEAN{cbn}=%f VAR{cbn}=%f', ...
                     meanLLDivMCMat(CBN_LL_MAT_IDX), varLLDivMCMat(CBN_LL_MAT_IDX));
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
-                progressStr = sprintf('MEAN{mteLL}=%f VAR{mteLL}=%f', ...
+                progressStr = sprintf('MEAN{mte}=%f VAR{mte}=%f', ...
                     meanLLDivMCMat(MTE_LL_MAT_IDX), varLLDivMCMat(MTE_LL_MAT_IDX));
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
-                progressStr = sprintf('MEAN{clgLL}=%f VAR{clgLL}=%f', ...
+                progressStr = sprintf('MEAN{clg}=%f VAR{clg}=%f', ...
                     meanLLDivMCMat(CLG_LL_MAT_IDX), varLLDivMCMat(CLG_LL_MAT_IDX));
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
-                progressStr = sprintf('MEAN{multinomialLL}=%f VAR{multinomialLL}=%f', ...
+                progressStr = sprintf('MEAN{multinomial}=%f VAR{multinomial}=%f', ...
                     meanLLDivMCMat(MULTINOMIAL_LL_MAT_IDX), varLLDivMCMat(MULTINOMIAL_LL_MAT_IDX));
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
-                progressStr = sprintf('mean{hcbnDebugLL}==mean{refLL}=%d\n', ...
-                    (abs(meanLLDivMCMat(HCBN_DEBUG_LL_MAT_IDX)-meanLLDivMCMat(REF_LL_MAT_IDX))<.01));
+                progressStr = sprintf('mean{hcbnDebug}==mean{ref}=%d\n', ...
+                    abs(meanLLDivMCMat(HCBN_DEBUGALL_LL_MAT_IDX)-meanLLDivMCMat(REF_LL_MAT_IDX)) < .1 );
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
                 
                 llMat(copulaTypeVecIdx, ...
@@ -1144,7 +1167,7 @@ global numModelsCompared numMC bntPath logFile K h numTest
 global HCBN_LL_MAT_IDX MTE_LL_MAT_IDX CLG_LL_MAT_IDX REF_LL_MAT_IDX
 global MULTINOMIAL_LL_MAT_IDX NUM_DISCRETE_INTERVALS CBN_LL_MAT_IDX
 global CDE_combinations C1C2C3_combinations dependency_combinations
-global HCBN_DEBUG_LL_MAT_IDX
+global HCBN_DEBUGALL_LL_MAT_IDX HCBN_DEBUGCOPULA_LL_MAT_IDX HCBN_DEBUGEMPINFO_LL_MAT_IDX
 
 a_dist = makedist('Multinomial','Probabilities', a_probs);
 b_dist = makedist('Multinomial','Probabilities', b_probs);
@@ -1217,8 +1240,6 @@ for cdeCombinationsVecIdx=1:length(CDE_combinations)
                         if(ii==2)
                             % deal w/ gaussian case separately b/c we have
                             % to create a correlation matrix
-                            % we put 0 correlation between X1&X2 to ensure
-                            % that the DAG is valid
                             copulaDepParams{ii} = [1 0 -.8; 0 1 .59; -.8 .59 1];
                         else
                             copulaDepParams{ii} = 10;       % alpha = 10
@@ -1227,8 +1248,6 @@ for cdeCombinationsVecIdx=1:length(CDE_combinations)
                         if(ii==2)
                             % deal w/ gaussian case separately b/c we have
                             % to create a correlation matrix
-                            % we put 0 correlation between X1&X2 to ensure
-                            % that the DAG is valid
                             copulaDepParams{ii} = [1 0 .2; 0 1 -.1; .2 -.1 1];
                         else
                             copulaDepParams{ii} = 1;        % alpha = 1
@@ -1350,7 +1369,9 @@ for cdeCombinationsVecIdx=1:length(CDE_combinations)
                     
                     % create models of the data
                     hcbnObj = hcbn(bntPath, X_hybrid, nodeNames, discreteNodeNames, K, h, dag);  
-                    hcbnDebugObj = hcbn(bntPath, X_hybrid, nodeNames, discreteNodeNames, K, h, dag, copulaFamilies, empInfo); 
+                    hcbnDebugAllObj = hcbn(bntPath, X_hybrid, nodeNames, discreteNodeNames, K, h, dag, 'copulaFamilyInput', copulaFamilies, 'empInfoInput', empInfo);  
+                    hcbnDebugCopulaObj = hcbn(bntPath, X_hybrid, nodeNames, discreteNodeNames, K, h, dag, 'copulaFamilyInput', copulaFamilies); 
+                    hcbnDebugEmpInfoObj = hcbn(bntPath, X_hybrid, nodeNames, discreteNodeNames, K, h, dag, 'empInfoInput', empInfo); 
                     mtebnObj = mtebn(X_hybrid, discreteNodes, dag);
                     clgbnObj = clgbn(X_hybrid, discreteNodes, dag);
                     multinomialbnObj = multinomialbn(X_hybrid, discreteNodes, dag, NUM_DISCRETE_INTERVALS);
@@ -1412,7 +1433,9 @@ for cdeCombinationsVecIdx=1:length(CDE_combinations)
                     
                     % compute likelihood for each of the models
                     hcbnLL = hcbnObj.dataLogLikelihood(X_hybrid_test);
-                    hcbnDebugLL = hcbnDebugObj.dataLogLikelihood(X_hybrid_test);
+                    hcbnDebugAllLL = hcbnDebugAllObj.dataLogLikelihood(X_hybrid_test);
+                    hcbnDebugCopulaLL = hcbnDebugCopulaObj.dataLogLikelihood(X_hybrid_test);
+                    hcbnDebugEmpInfoLL = hcbnDebugEmpInfoObj.dataLogLikelihood(X_hybrid_test);
                     mteLL = mtebnObj.dataLogLikelihood(X_hybrid_test);
                     clgLL = clgbnObj.dataLogLikelihood(X_hybrid_test);
                     multinomialLL = multinomialbnObj.dataLogLikelihood(X_hybrid_test);
@@ -1420,7 +1443,9 @@ for cdeCombinationsVecIdx=1:length(CDE_combinations)
                     
                     % assign LL values to matrix
                     llMCMat(HCBN_LL_MAT_IDX,mcSimNum) = hcbnLL;
-                    llMCMat(HCBN_DEBUG_LL_MAT_IDX,mcSimNum) = hcbnDebugLL;
+                    llMCMat(HCBN_DEBUGALL_LL_MAT_IDX,mcSimNum) = hcbnDebugAllLL;
+                    llMCMat(HCBN_DEBUGCOPULA_LL_MAT_IDX,mcSimNum) = hcbnDebugCopulaLL;
+                    llMCMat(HCBN_DEBUGEMPINFO_LL_MAT_IDX,mcSimNum) = hcbnDebugEmpInfoLL;
                     llMCMat(MTE_LL_MAT_IDX,mcSimNum) = mteLL;
                     llMCMat(CLG_LL_MAT_IDX,mcSimNum) = clgLL;
                     llMCMat(MULTINOMIAL_LL_MAT_IDX,mcSimNum) = multinomialLL;
@@ -1434,29 +1459,35 @@ for cdeCombinationsVecIdx=1:length(CDE_combinations)
                 meanLLDivMCMat = mean(llMCMat,2);
                 varLLDivMCMat = mean(llMCMat.^2,2)-meanLLDivMCMat.^2;
                                     
-                progressStr = sprintf('MEAN{refLL}=%f VAR{refLL}=%f', ...
+                progressStr = sprintf('MEAN{ref}=%f VAR{ref}=%f', ...
                     meanLLDivMCMat(REF_LL_MAT_IDX), varLLDivMCMat(REF_LL_MAT_IDX));
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
-                progressStr = sprintf('MEAN{hcbnLL}=%f VAR{hcbnLL}=%f', ...
+                progressStr = sprintf('MEAN{hcbn}=%f VAR{hcbn}=%f', ...
                     meanLLDivMCMat(HCBN_LL_MAT_IDX), varLLDivMCMat(HCBN_LL_MAT_IDX));
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
-                progressStr = sprintf('MEAN{hcbnDebugLL}=%f VAR{hcbnDebugLL}=%f', ...
-                    meanLLDivMCMat(HCBN_DEBUG_LL_MAT_IDX), varLLDivMCMat(HCBN_DEBUG_LL_MAT_IDX));
+                progressStr = sprintf('MEAN{hcbnDebugAll}=%f VAR{hcbnDebugAll}=%f', ...
+                    meanLLDivMCMat(HCBN_DEBUGALL_LL_MAT_IDX), varLLDivMCMat(HCBN_DEBUGALL_LL_MAT_IDX));
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
-                progressStr = sprintf('MEAN{cbnLL}=%f VAR{cbnLL}=%f', ...
+                progressStr = sprintf('MEAN{hcbnDebugCopula}=%f VAR{hcbnDebugCopula}=%f', ...
+                    meanLLDivMCMat(HCBN_DEBUGCOPULA_LL_MAT_IDX), varLLDivMCMat(HCBN_DEBUGCOPULA_LL_MAT_IDX));
+                dispstat(progressStr,'timestamp','keepthis','timestamp');
+                progressStr = sprintf('MEAN{hcbnDebugEmpInfo}=%f VAR{hcbnDebugEmpInfo}=%f', ...
+                    meanLLDivMCMat(HCBN_DEBUGEMPINFO_LL_MAT_IDX), varLLDivMCMat(HCBN_DEBUGEMPINFO_LL_MAT_IDX));
+                dispstat(progressStr,'timestamp','keepthis','timestamp');
+                progressStr = sprintf('MEAN{cbn}=%f VAR{cbn}=%f', ...
                     meanLLDivMCMat(CBN_LL_MAT_IDX), varLLDivMCMat(CBN_LL_MAT_IDX));
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
-                progressStr = sprintf('MEAN{mteLL}=%f VAR{mteLL}=%f', ...
+                progressStr = sprintf('MEAN{mte}=%f VAR{mte}=%f', ...
                     meanLLDivMCMat(MTE_LL_MAT_IDX), varLLDivMCMat(MTE_LL_MAT_IDX));
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
-                progressStr = sprintf('MEAN{clgLL}=%f VAR{clgLL}=%f', ...
+                progressStr = sprintf('MEAN{clg}=%f VAR{clg}=%f', ...
                     meanLLDivMCMat(CLG_LL_MAT_IDX), varLLDivMCMat(CLG_LL_MAT_IDX));
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
-                progressStr = sprintf('MEAN{multinomialLL}=%f VAR{multinomialLL}=%f', ...
+                progressStr = sprintf('MEAN{multinomial}=%f VAR{multinomial}=%f', ...
                     meanLLDivMCMat(MULTINOMIAL_LL_MAT_IDX), varLLDivMCMat(MULTINOMIAL_LL_MAT_IDX));
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
-                progressStr = sprintf('mean{hcbnDebugLL}==mean{refLL}=%d\n', ...
-                    abs(meanLLDivMCMat(HCBN_DEBUG_LL_MAT_IDX)-meanLLDivMCMat(REF_LL_MAT_IDX)) < .1 );
+                progressStr = sprintf('mean{hcbnDebug}==mean{ref}=%d\n', ...
+                    abs(meanLLDivMCMat(HCBN_DEBUGALL_LL_MAT_IDX)-meanLLDivMCMat(REF_LL_MAT_IDX)) < .1 );
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
                 
                 llMat(cdeCombinationsVecIdx, ...

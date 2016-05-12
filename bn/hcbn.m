@@ -133,155 +133,198 @@ classdef hcbn < handle
                 if(~acyclic(candidateDag))
                     error('Specified DAG is not acyclic!\n');
                 end
-                if(nVarargs>1)
-                    obj.setDag(candidateDag, 0);    % do NOT compute estimated copula families
-                                                    % b/c they were provided as debugging
-                                                    % input
-                    copulaFamiliesInput = varargin{2};
-                    % inflate the copula families argument input into the
-                    % required format for processing w/ HCBN.  The input format
-                    % of copulaFamiliesInput is a cell array of dimension 
-                    % [1 x D].  copulaFamiliesInput{ii}{1} is a string of the
-                    % copula TYPE for node ii, and copulaFamiliesInput{ii}{2}
-                    % is the dependency parameter for that copula type.  If a
-                    % node is not dependent upon any other nodes, then
-                    % copulaFamiliesInput{ii} = [].  The dependency
-                    % parameter details are as follows -- if it is an
-                    % archimedean copula, then because all dimensions in an
-                    % archimedean copula are the same dependency, a scalar
-                    % is provided.  In the case of the Gaussian copula, the
-                    % input MUST be permuted such that the first column in
-                    % the correlation matrix refers to the child, the 2nd
-                    % to the first parent, the 3rd to the second parent etc
-                    % etc ... so in the 3-D copula case, it should be:
-                    %  |1 Rho(child,parent_1) Rho(child,parent_2)   |
-                    %  |                                            |
-                    %  |Rho(parent1, child)  1 Rho(parent1, parent2)|
-                    %  |                                            |
-                    %  |Rho(parent2, child) Rho(parent2, parent1) 1 |
-                    for dd=1:obj.D
-                        if(isempty(copulaFamiliesInput{dd}))
-                            obj.copulaFamilies{dd} = [];
-                        else
-                            node = obj.nodeNames{dd};
-                            nodeIdx = obj.nodeVals(dd);
-                            [parentIdxs, parentNames] = obj.getParents(nodeIdx);
-                
-                            u = linspace(0,1,obj.K);
-                            % generate the points over which the copulas
-                            % will be computed
-                            familyD = length(parentIdxs) + 1;
-                            sz = ones(1,familyD)*obj.K;
-                            ndgridInput = cell(1,familyD);
-                            for family_dd=1:familyD
-                                ndgridInput{family_dd} = u;
-                            end
-                            ndgridOutput = cell(1,numel(ndgridInput));
-                            [ndgridOutput{:}] = ndgrid(ndgridInput{:});
-                            gridPoints_all = zeros(numel(ndgridOutput{1}), familyD);
-                            for family_dd=1:familyD
-                                gridPoints_all(:,family_dd) = reshape(ndgridOutput{family_dd},numel(ndgridOutput{family_dd}),1);
-                            end
-                            
-                            copulaType = copulaFamiliesInput{dd}{1};
-                            copulaDep_all  = copulaFamiliesInput{dd}{2};
-                            copulaDep_parents = copulaDep_all;
-                            % compute PDF of family copula
-                            if(strcmpi(copulaType, 'Gaussian'))
-                                c = reshape(copulapdf('Gaussian', gridPoints_all, copulaDep_all), sz);
-                                copulaDep_parents = copulaDep_all(2:end,2:end); % remove child correlation from corr matrix
-                            elseif(strcmpi(copulaType, 'Frank'))
-                                c = reshape(frankcopulapdf(gridPoints_all, copulaDep_all), sz);
-                            elseif(strcmpi(copulaType, 'Gumbel'))
-                                c = reshape(gumbelcopulapdf(gridPoints_all, copulaDep_all), sz);
-                            elseif(strcmpi(copulaType, 'Clayton'))
-                                c = reshape(claytoncopulapdf(gridPoints_all, copulaDep_all), sz);
-                            else
-                                error('Unsupported copula!');
-                            end
-                            % NOTE: for the archimedean copulas, since the
-                            % copula dependency parameter remains the
-                            % same,across all the dimensions,
-                            % copulaDep_parents = copulaDep_all
-                            
-                            % compute CDF of family copula
-                            C = c;
-                            for family_dd=1:familyD
-                                C = cumtrapz(u, C, family_dd);
-                            end
-                            
-                            % integrate discrete dimensions out
-                            allIdxs = [nodeIdx parentIdxs];
-                            [~,discreteDimensions,~] = intersect(allIdxs,obj.discNodeIdxs); discreteDimensions = discreteDimensions';
-                            C_discrete_integrate = c;
-                            for discreteDimension=discreteDimensions
-                                C_discrete_integrate = cumtrapz(u,C_discrete_integrate,discreteDimension);
-                            end
-                            
-                            if(length(parentIdxs)==1)
-                                % the density will be used directly, so there
-                                % is no need to calculate these copula's (they
-                                % don't actually make sense because there is
-                                % only one dimension, no concept of "joint")
-                                C_parents = [];
-                                c_parents = [];
-                                C_parents_discrete_integrate = [];
-                            else
-                                parentsD = length(parentIdxs);
-                                sz = ones(1,parentsD)*obj.K;
-                                ndgridInput = cell(1,parentsD);
-                                for parents_dd=1:parentsD
-                                    ndgridInput{parents_dd} = u;
-                                end
-                                ndgridOutput = cell(1,numel(ndgridInput));
-                                [ndgridOutput{:}] = ndgrid(ndgridInput{:});
-                                gridPoints_parents = zeros(numel(ndgridOutput{1}), parentsD);
-                                for parents_dd=1:parentsD
-                                    gridPoints_parents(:,parents_dd) = reshape(ndgridOutput{parents_dd},numel(ndgridOutput{parents_dd}),1);
-                                end
-
-                                % compute PDF of parents copula
-                                if(strcmpi(copulaType, 'Gaussian'))
-                                    c_parents = reshape(copulapdf('Gaussian', gridPoints_parents, copulaDep_parents), sz);
-                                elseif(strcmpi(copulaType, 'Frank'))
-                                    c_parents = reshape(frankcopulapdf(gridPoints_parents, copulaDep_parents), sz);
-                                elseif(strcmpi(copulaType, 'Gumbel'))
-                                    c_parents = reshape(gumbelcopulapdf(gridPoints_parents, copulaDep_parents), sz);
-                                elseif(strcmpi(copulaType, 'Clayton'))
-                                    c_parents = reshape(claytoncopulapdf(gridPoints_parents, copulaDep_parents), sz);
-                                else
-                                    error('Unsupported copula!');
-                                end
-                                % compute CDF of parents copula
-                                C_parents = c_parents;
-                                for parent_dd=1:parentsD
-                                    C_parents = cumtrapz(u, C_parents, parent_dd);
-                                end
-                                
-                                % integrate discrete dimensions out
-                                [~,discreteDimensions,~] = intersect(parentIdxs,obj.discNodeIdxs); discreteDimensions = discreteDimensions';
-                                C_parents_discrete_integrate = c_parents;
-                                for discreteDimension=discreteDimensions
-                                    C_parents_discrete_integrate = cumtrapz(u,C_parents_discrete_integrate,discreteDimension);
-                                end
-                                
-                            end
-                            % store into obj.copulaFamilies{dd}
-                            copFam = hcbnfamily(node, nodeIdx, parentNames, parentIdxs, ...
-                                    C, c, C_discrete_integrate, C_parents, c_parents, C_parents_discrete_integrate);
-                            obj.copulaFamilies{nodeIdx} = copFam;
-                        end
+                if(nVarargs>4)
+                    opt1 = varargin{2};
+                    if(strcmpi(opt1,'copulaFamilyInput'))
+                        obj.setDag(candidateDag, 0);    % do NOT compute estimated copula families
+                                                        % b/c they were provided as debugging
+                                                        % input
+                        copulaFamiliesInput = varargin{3};
+                        obj.inflateCopulaInformation(copulaFamiliesInput);
+                    elseif(strcmpi(opt1,'empInfoInput'))
+                        % overwrite the empirical info w/ the provided
+                        % debugging empirical info
+                        empInfoInput = varargin{3};
+                        obj.inflateEmpInfo(empInfoInput);
+                    else
+                        error('Unrecognized var-input!');
+                    end
+                    opt2 = varargin{4};
+                    if(strcmpi(opt2,'copulaFamilyInput'))
+                        obj.setDag(candidateDag, 0);    % do NOT compute estimated copula families
+                                                        % b/c they were provided as debugging
+                                                        % input
+                        copulaFamiliesInput = varargin{5};
+                        obj.inflateCopulaInformation(copulaFamiliesInput);
+                    elseif(strcmpi(opt2,'empInfoInput'))
+                        % overwrite the empirical info w/ the provided
+                        % debugging empirical info
+                        empInfoInput = varargin{5};
+                        obj.inflateEmpInfo(empInfoInput);
+                    else
+                        error('Unrecognized var-input');
+                    end
+                elseif(nVarargs>2)
+                    opt1 = varargin{2};
+                    if(strcmpi(opt1,'copulaFamilyInput'))
+                        obj.setDag(candidateDag, 0);    % do NOT compute estimated copula families
+                                                        % b/c they were provided as debugging
+                                                        % input
+                        copulaFamiliesInput = varargin{3};
+                        obj.inflateCopulaInformation(copulaFamiliesInput);
+                    elseif(strcmpi(opt1,'empInfoInput'))
+                        % overwrite the empirical info w/ the provided
+                        % debugging empirical info
+                        empInfoInput = varargin{3};
+                        obj.inflateEmpInfo(empInfoInput);
+                    else
+                        error('Unrecognized var-input!');
                     end
                 else
-                    obj.setDag(candidateDag);       % compute the estimated copula families
+                    obj.setDag(candidateDag);       % estimate the copula families
                 end
-                if(nVarargs>2)
-                    % overwrite the empirical info w/ the provided
-                    % debugging empirical info
-                    empInfoInput = varargin{3};
-                    for dd=1:obj.D
-                        obj.empInfo{dd} = empInfoInput{dd};
+            end
+        end
+        
+        function [] = inflateEmpInfo(obj, empInfoInput)
+            for dd=1:obj.D
+                obj.empInfo{dd} = empInfoInput{dd};
+            end
+        end
+        
+        function [] = inflateCopulaInformation(obj, copulaFamiliesInput)
+            % inflate the copula families argument input into the
+            % required format for processing w/ HCBN.  The input format
+            % of copulaFamiliesInput is a cell array of dimension 
+            % [1 x D].  copulaFamiliesInput{ii}{1} is a string of the
+            % copula TYPE for node ii, and copulaFamiliesInput{ii}{2}
+            % is the dependency parameter for that copula type.  If a
+            % node is not dependent upon any other nodes, then
+            % copulaFamiliesInput{ii} = [].  The dependency
+            % parameter details are as follows -- if it is an
+            % archimedean copula, then because all dimensions in an
+            % archimedean copula are the same dependency, a scalar
+            % is provided.  In the case of the Gaussian copula, the
+            % input MUST be permuted such that the first column in
+            % the correlation matrix refers to the child, the 2nd
+            % to the first parent, the 3rd to the second parent etc
+            % etc ... so in the 3-D copula case, it should be:
+            %  |1 Rho(child,parent_1) Rho(child,parent_2)   |
+            %  |                                            |
+            %  |Rho(parent1, child)  1 Rho(parent1, parent2)|
+            %  |                                            |
+            %  |Rho(parent2, child) Rho(parent2, parent1) 1 |
+            for dd=1:obj.D
+                if(isempty(copulaFamiliesInput{dd}))
+                    obj.copulaFamilies{dd} = [];
+                else
+                    node = obj.nodeNames{dd};
+                    nodeIdx = obj.nodeVals(dd);
+                    [parentIdxs, parentNames] = obj.getParents(nodeIdx);
+
+                    u = linspace(0,1,obj.K);
+                    % generate the points over which the copulas
+                    % will be computed
+                    familyD = length(parentIdxs) + 1;
+                    sz = ones(1,familyD)*obj.K;
+                    ndgridInput = cell(1,familyD);
+                    for family_dd=1:familyD
+                        ndgridInput{family_dd} = u;
                     end
+                    ndgridOutput = cell(1,numel(ndgridInput));
+                    [ndgridOutput{:}] = ndgrid(ndgridInput{:});
+                    gridPoints_all = zeros(numel(ndgridOutput{1}), familyD);
+                    for family_dd=1:familyD
+                        gridPoints_all(:,family_dd) = reshape(ndgridOutput{family_dd},numel(ndgridOutput{family_dd}),1);
+                    end
+
+                    copulaType = copulaFamiliesInput{dd}{1};
+                    copulaDep_all  = copulaFamiliesInput{dd}{2};
+                    copulaDep_parents = copulaDep_all;
+                    % compute PDF of family copula
+                    if(strcmpi(copulaType, 'Gaussian'))
+                        c = reshape(copulapdf('Gaussian', gridPoints_all, copulaDep_all), sz);
+                        copulaDep_parents = copulaDep_all(2:end,2:end); % remove child correlation from corr matrix
+                    elseif(strcmpi(copulaType, 'Frank'))
+                        c = reshape(frankcopulapdf(gridPoints_all, copulaDep_all), sz);
+                    elseif(strcmpi(copulaType, 'Gumbel'))
+                        c = reshape(gumbelcopulapdf(gridPoints_all, copulaDep_all), sz);
+                    elseif(strcmpi(copulaType, 'Clayton'))
+                        c = reshape(claytoncopulapdf(gridPoints_all, copulaDep_all), sz);
+                    else
+                        error('Unsupported copula!');
+                    end
+                    % NOTE: for the archimedean copulas, since the
+                    % copula dependency parameter remains the
+                    % same,across all the dimensions,
+                    % copulaDep_parents = copulaDep_all
+
+                    % compute CDF of family copula
+                    C = c;
+                    for family_dd=1:familyD
+                        C = cumtrapz(u, C, family_dd);
+                    end
+
+                    % integrate discrete dimensions out
+                    allIdxs = [nodeIdx parentIdxs];
+                    [~,discreteDimensions,~] = intersect(allIdxs,obj.discNodeIdxs); discreteDimensions = discreteDimensions';
+                    C_discrete_integrate = c;
+                    for discreteDimension=discreteDimensions
+                        C_discrete_integrate = cumtrapz(u,C_discrete_integrate,discreteDimension);
+                    end
+
+                    if(length(parentIdxs)==1)
+                        % the density will be used directly, so there
+                        % is no need to calculate these copula's (they
+                        % don't actually make sense because there is
+                        % only one dimension, no concept of "joint")
+                        C_parents = [];
+                        c_parents = [];
+                        C_parents_discrete_integrate = [];
+                    else
+                        parentsD = length(parentIdxs);
+                        sz = ones(1,parentsD)*obj.K;
+                        ndgridInput = cell(1,parentsD);
+                        for parents_dd=1:parentsD
+                            ndgridInput{parents_dd} = u;
+                        end
+                        ndgridOutput = cell(1,numel(ndgridInput));
+                        [ndgridOutput{:}] = ndgrid(ndgridInput{:});
+                        gridPoints_parents = zeros(numel(ndgridOutput{1}), parentsD);
+                        for parents_dd=1:parentsD
+                            gridPoints_parents(:,parents_dd) = reshape(ndgridOutput{parents_dd},numel(ndgridOutput{parents_dd}),1);
+                        end
+
+                        % compute PDF of parents copula
+                        if(strcmpi(copulaType, 'Gaussian'))
+                            c_parents = reshape(copulapdf('Gaussian', gridPoints_parents, copulaDep_parents), sz);
+                        elseif(strcmpi(copulaType, 'Frank'))
+                            c_parents = reshape(frankcopulapdf(gridPoints_parents, copulaDep_parents), sz);
+                        elseif(strcmpi(copulaType, 'Gumbel'))
+                            c_parents = reshape(gumbelcopulapdf(gridPoints_parents, copulaDep_parents), sz);
+                        elseif(strcmpi(copulaType, 'Clayton'))
+                            c_parents = reshape(claytoncopulapdf(gridPoints_parents, copulaDep_parents), sz);
+                        else
+                            error('Unsupported copula!');
+                        end
+                        % compute CDF of parents copula
+                        C_parents = c_parents;
+                        for parent_dd=1:parentsD
+                            C_parents = cumtrapz(u, C_parents, parent_dd);
+                        end
+
+                        % integrate discrete dimensions out
+                        [~,discreteDimensions,~] = intersect(parentIdxs,obj.discNodeIdxs); discreteDimensions = discreteDimensions';
+                        C_parents_discrete_integrate = c_parents;
+                        for discreteDimension=discreteDimensions
+                            C_parents_discrete_integrate = cumtrapz(u,C_parents_discrete_integrate,discreteDimension);
+                        end
+
+                    end
+                    % store into obj.copulaFamilies{dd}
+                    copFam = hcbnfamily(node, nodeIdx, parentNames, parentIdxs, ...
+                            C, c, C_discrete_integrate, C_parents, c_parents, C_parents_discrete_integrate);
+                    obj.copulaFamilies{nodeIdx} = copFam;
                 end
             end
         end
