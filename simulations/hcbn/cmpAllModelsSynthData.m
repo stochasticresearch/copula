@@ -152,17 +152,10 @@ switch D
                 [llMat, llVarMat, llBiasMat] = runD2CFG3();
             case 4
                 [llMat, llVarMat, llBiasMat] = runD2CFG4();
-            case 5
+            case 5      % BIAS/VARIANCE TEST CASE
                 [llMat, llVarMat, llBiasMat] = runD2CFG5();
-            case 6
+            case 6      % BIAS/VARIANCE TEST CASE
                 [llMat, llVarMat, llBiasMat] = runD2CFG6();
-            % VARIANCE TESTING CASES BELOW
-            case 7
-                [llMat, llVarMat, llBiasMat] = runD2CFG7();
-            case 8
-                [llMat, llVarMat, llBiasMat] = runD2CFG8();
-            case 9
-                [llMat, llVarMat, llBiasMat] = runD2CFG9();
             otherwise
                 error('CFG not valid for D=2!');
         end
@@ -176,17 +169,10 @@ switch D
                 [llMat, llVarMat, llBiasMat] = runD3CFG3();
             case 4
                 [llMat, llVarMat, llBiasMat] = runD3CFG4();
-            case 5
+            case 5      % BIAS/VARIANCE TEST CASE
                 [llMat, llVarMat, llBiasMat] = runD3CFG5();
-            % VARIANCE TESTING CASES BELOW
-            case 6
+            case 6      % BIAS/VARIANCE TEST CASE
                 [llMat, llVarMat, llBiasMat] = runD3CFG6();
-            case 7
-                [llMat, llVarMat, llBiasMat] = runD3CFG7();
-            case 8
-                [llMat, llVarMat, llBiasMat] = runD3CFG8();
-            case 9
-                [llMat, llVarMat, llBiasMat] = runD3CFG9();
             otherwise
                 error('CFG not valid for D=3!');
         end
@@ -198,12 +184,11 @@ switch D
                     [llMat, llVarMat, llBiasMat] = runD4CFG2();
                 case 3
                     [llMat, llVarMat, llBiasMat] = runD4CFG3();
-                % VARIANCE TESTING CASES BELOW
                 case 4
                     [llMat, llVarMat, llBiasMat] = runD4CFG4();
-                case 5
+                case 5      % BIAS/VARIANCE TEST CASE
                     [llMat, llVarMat, llBiasMat] = runD4CFG5();
-                case 6
+                case 6      % BIAS/VARIANCE TEST CASE
                     [llMat, llVarMat, llBiasMat] = runD4CFG6();
                 otherwise
                     error('CFG not valid for D=4!');
@@ -218,17 +203,10 @@ switch D
                 [llMat, llVarMat, llBiasMat] = runD5CFG3();
             case 4
                 [llMat, llVarMat, llBiasMat] = runD5CFG4();
-            case 5
+            case 5      % BIAS/VARIANCE TEST CASE
                 [llMat, llVarMat, llBiasMat] = runD5CFG5();
-            % VARIANCE TESTING CASES BELOW
-            case 6
+            case 6      % BIAS/VARIANCE TEST CASE
                 [llMat, llVarMat, llBiasMat] = runD5CFG6();
-            case 7
-                [llMat, llVarMat, llBiasMat] = runD5CFG7();
-            case 8
-                [llMat, llVarMat, llBiasMat] = runD5CFG8();
-            case 9
-                [llMat, llVarMat, llBiasMat] = runD5CFG9();
             otherwise
                 error('CFG not valid for D=5!');
         end
@@ -239,57 +217,39 @@ end
 end
 
 function [llMat, llVarMat, llBiasMat] = runD2CFG1()
-% runD2CFG1 - the multinomial probabilities are evenly distributed
-probs = [0.25 0.25 0.25 0.25];
-[llMat, llVarMat, llBiasMat] = runD2(probs);
-end
-
-function [llMat, llVarMat, llBiasMat] = runD2CFG2()
-% runD2CFG2 - the multinomial probabilities are skewed left
-probs = [0.5 0.3 0.1 0.1];
-[llMat, llVarMat, llBiasMat] = runD2(probs);
-end
-
-function [llMat, llVarMat, llBiasMat] = runD2CFG3()
-% runD2CFG2 - the multinomial probabilities are skewed left
-probs = fliplr([0.5 0.3 0.1 0.1]);
-[llMat, llVarMat, llBiasMat] = runD2(probs);
-end
-
-function [llMat, llVarMat, llBiasMat] = runD2CFG4()
 % runD2CFG2 - the multinomial probabilities are skewed right
 probs = [0.5 0.5];
 [llMat, llVarMat, llBiasMat] = runD2(probs);
 end
 
-function [llMat, llVarMat, llBiasMat] = runD2CFG5()
+function [llMat, llVarMat, llBiasMat] = runD2CFG2()
 % runD2CFG2 - the multinomial probabilities are skewed left
 probs = [0.7 0.3];
 [llMat, llVarMat, llBiasMat] = runD2(probs);
 end
 
-function [llMat, llVarMat, llBiasMat] = runD2CFG6()
-% runD2CFG2 - the multinomial probabilities are skewed right
-probs = [0.3 0.7];
+function [llMat, llVarMat, llBiasMat] = runD2CFG3()
+% runD2CFG1 - the multinomial probabilities are evenly distributed
+probs = [0.25 0.25 0.25 0.25];
 [llMat, llVarMat, llBiasMat] = runD2(probs);
 end
 
-function [llMat, llVarMat, llBiasMat] = runD2CFG7()
+function [llMat, llVarMat, llBiasMat] = runD2CFG4()
+% runD2CFG2 - the multinomial probabilities are skewed left
+probs = [0.5 0.3 0.1 0.1];
+[llMat, llVarMat, llBiasMat] = runD2(probs);
+end
+
+function [llMat, llVarMat, llBiasMat] = runD2CFG5()
 % runD2CFG2 - the multinomial probabilities are uniformly distributed
 numElem = 10;
 probs = 1/numElem*ones(1,numElem);
 [llMat, llVarMat, llBiasMat] = runD2(probs);
 end
 
-function [llMat, llVarMat, llBiasMat] = runD2CFG8()
+function [llMat, llVarMat, llBiasMat] = runD2CFG6()
 % runD2CFG2 - the multinomial probabilities are skewed left
 probs = [.25 .2 .15 .1 .05 .05 .05 .05 .05 .05];
-[llMat, llVarMat, llBiasMat] = runD2(probs);
-end
-
-function [llMat, llVarMat, llBiasMat] = runD2CFG9()
-% runD2CFG2 - the multinomial probabilities are skewed left
-probs = fliplr([.25 .2 .15 .1 .05 .05 .05 .05 .05 .05]);
 [llMat, llVarMat, llBiasMat] = runD2(probs);
 end
 
@@ -688,23 +648,24 @@ fclose(fid);
 end
 
 function [llMat, llVarMat, llBiasMat] = runD3CFG1()
-% runD2CFG1 - the multinomial probabilities are evenly distributed
-probsA = [0.25 0.25 0.25 0.25];
-probsB = [0.25 0.25 0.25 0.25];
+% runD2CFG2 - the multinomial probabilities are skewed right
+probsA = [0.5 0.5];
+probsB = [0.5 0.5];
 [llMat, llVarMat, llBiasMat] = runD3(probsA, probsB);
 end
 
 function [llMat, llVarMat, llBiasMat] = runD3CFG2()
-% runD2CFG2 - the multinomial probabilities are skewed left
-probsA = [0.5 0.3 0.1 0.1];
-probsB = [0.5 0.3 0.1 0.1];
+% runD2CFG2 - the multinomial probabilities are skewed right and left
+% oppositely
+probsA = [0.3 0.7];
+probsB = fliplr([0.3 0.7]);
 [llMat, llVarMat, llBiasMat] = runD3(probsA, probsB);
 end
 
 function [llMat, llVarMat, llBiasMat] = runD3CFG3()
-% runD2CFG2 - the multinomial probabilities are skewed right
-probsA = [0.3 0.7];
-probsB = [0.3 0.7];
+% runD2CFG1 - the multinomial probabilities are evenly distributed
+probsA = [0.25 0.25 0.25 0.25];
+probsB = [0.25 0.25 0.25 0.25];
 [llMat, llVarMat, llBiasMat] = runD3(probsA, probsB);
 end
 
@@ -717,41 +678,18 @@ probsB = fliplr([0.5 0.3 0.1 0.1]);
 end
 
 function [llMat, llVarMat, llBiasMat] = runD3CFG5()
-% runD2CFG2 - the multinomial probabilities are skewed right and left
-% oppositely
-probsA = [0.3 0.7];
-probsB = fliplr([0.3 0.7]);
-[llMat, llVarMat, llBiasMat] = runD3(probsA, probsB);
-end
-
-function [llMat, llVarMat, llBiasMat] = runD3CFG6()
 % runD2CFG1 - the multinomial probabilities are evenly distributed
 probsA = .1*ones(1,10);
 probsB = .1*ones(1,10);
 [llMat, llVarMat, llBiasMat] = runD3(probsA, probsB);
 end
 
-function [llMat, llVarMat, llBiasMat] = runD3CFG7()
-% runD2CFG1 - both multinomial probabilities are skewed left
-probsA = [.25 .2 .15 .1 .05 .05 .05 .05 .05 .05];
-probsB = [.25 .2 .15 .1 .05 .05 .05 .05 .05 .05];
-[llMat, llVarMat, llBiasMat] = runD3(probsA, probsB);
-end
-
-function [llMat, llVarMat, llBiasMat] = runD3CFG8()
-% runD2CFG1 - both multinomial probabilities are skewed right
-probsA = fliplr([.25 .2 .15 .1 .05 .05 .05 .05 .05 .05]);
-probsB = fliplr([.25 .2 .15 .1 .05 .05 .05 .05 .05 .05]);
-[llMat, llVarMat, llBiasMat] = runD3(probsA, probsB);
-end
-
-function [llMat, llVarMat, llBiasMat] = runD3CFG9()
+function [llMat, llVarMat, llBiasMat] = runD3CFG6()
 % runD2CFG1 - both multinomial probabilities are skewed left & right
 probsA = [.25 .2 .15 .1 .05 .05 .05 .05 .05 .05];
 probsB = fliplr([.25 .2 .15 .1 .05 .05 .05 .05 .05 .05]);
 [llMat, llVarMat, llBiasMat] = runD3(probsA, probsB);
 end
-
 
 function [llMat, llVarMat, llBiasMat] = runD3(a_probs, b_probs)
 global mVec copulaTypeVec_3D alphaVec RhoVecs_3D continuousDistTypeVec 
@@ -1220,8 +1158,23 @@ end
 
 end
 
-
 function [llMat, llVarMat, llBiasMat] = runD4CFG1()
+% runD2CFG1 - the multinomial probabilities are evenly distributed
+probsA = [0.5 0.5];
+probsB = [0.5 0.5];
+probsC = [0.5 0.5];
+[llMat, llVarMat, llBiasMat] = runD4(probsA, probsB, probsC);
+end
+
+function [llMat, llVarMat, llBiasMat] = runD4CFG2()
+% runD2CFG1 - the multinomial probabilities are evenly distributed
+probsA = [0.7 0.3];
+probsB = [0.5 0.5];
+probsC = [0.3 0.7];
+[llMat, llVarMat, llBiasMat] = runD4(probsA, probsB, probsC);
+end
+
+function [llMat, llVarMat, llBiasMat] = runD4CFG3()
 % runD2CFG1 - the multinomial probabilities are evenly distributed
 probsA = [0.25 0.25 0.25 0.25];
 probsB = [0.25 0.25 0.25 0.25];
@@ -1229,35 +1182,19 @@ probsC = [0.25 0.25 0.25 0.25];
 [llMat, llVarMat, llBiasMat] = runD4(probsA, probsB, probsC);
 end
 
-function [llMat, llVarMat, llBiasMat] = runD4CFG2()
+function [llMat, llVarMat, llBiasMat] = runD4CFG4()
 % runD2CFG2 - the multinomial probabilities are skewed left
 probsA = [0.5 0.3 0.1 0.1];
 probsB = [0.5 0.3 0.1 0.1];
-probsC = [0.5 0.3 0.1 0.1];
-[llMat, llVarMat, llBiasMat] = runD4(probsA, probsB, probsC);
-end
-
-function [llMat, llVarMat, llBiasMat] = runD4CFG3()
-% runD2CFG1 - the multinomial probabilities are evenly distributed
-probsA = .1*ones(1,10);
-probsB = .1*ones(1,10);
-probsC = .1*ones(1,10);
-[llMat, llVarMat, llBiasMat] = runD4(probsA, probsB, probsC);
-end
-
-function [llMat, llVarMat, llBiasMat] = runD4CFG4()
-% runD2CFG1 - both multinomial probabilities are skewed left
-probsA = [.25 .2 .15 .1 .05 .05 .05 .05 .05 .05];
-probsB = [.25 .2 .15 .1 .05 .05 .05 .05 .05 .05];
-probsC = [.25 .2 .15 .1 .05 .05 .05 .05 .05 .05];
+probsC = fliplr([0.5 0.3 0.1 0.1]);
 [llMat, llVarMat, llBiasMat] = runD4(probsA, probsB, probsC);
 end
 
 function [llMat, llVarMat, llBiasMat] = runD4CFG5()
-% runD2CFG1 - both multinomial probabilities are skewed right
-probsA = fliplr([.25 .2 .15 .1 .05 .05 .05 .05 .05 .05]);
-probsB = fliplr([.25 .2 .15 .1 .05 .05 .05 .05 .05 .05]);
-probsC = fliplr([.25 .2 .15 .1 .05 .05 .05 .05 .05 .05]);
+% runD2CFG1 - the multinomial probabilities are evenly distributed
+probsA = .1*ones(1,10);
+probsB = .1*ones(1,10);
+probsC = .1*ones(1,10);
 [llMat, llVarMat, llBiasMat] = runD4(probsA, probsB, probsC);
 end
 
@@ -1467,9 +1404,6 @@ for copulaTypeVecIdx=1:length(copulaTypeVec_4D)
                 progressStr = sprintf('MEAN{multinomial}=%f VAR{multinomial}=%f BIAS{multinomial}=%f', ...
                     meanLLDivMCMat(MULTINOMIAL_LL_MAT_IDX), varLLDivMCMat(MULTINOMIAL_LL_MAT_IDX), biasLLDivMCMat(MULTINOMIAL_LL_MAT_IDX));
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
-                progressStr = sprintf('mean{hcbnDebug}==mean{ref}=%d\n', ...
-                    abs(meanLLDivMCMat(HCBN_DEBUGALL_LL_MAT_IDX)-meanLLDivMCMat(REF_LL_MAT_IDX)) < .1 );
-                dispstat(progressStr,'timestamp','keepthis','timestamp');
                 
                 llMat(copulaTypeVecIdx, ...
                         continuousDistTypeVecIdx,...
@@ -1492,25 +1426,25 @@ end
 
 end
 
-
 function [llMat, llVarMat, llBiasMat] = runD5CFG1()
-% runD2CFG1 - the multinomial probabilities are evenly distributed
-probsA = [0.25 0.25 0.25 0.25];
-probsB = [0.25 0.25 0.25 0.25];
+% runD2CFG2 - the multinomial probabilities are skewed right
+probsA = [0.5 0.5];
+probsB = [0.5 0.5];
 [llMat, llVarMat, llBiasMat] = runD5(probsA, probsB);
 end
 
 function [llMat, llVarMat, llBiasMat] = runD5CFG2()
-% runD2CFG2 - the multinomial probabilities are skewed left
-probsA = [0.5 0.3 0.1 0.1];
-probsB = [0.5 0.3 0.1 0.1];
+% runD2CFG2 - the multinomial probabilities are skewed right and left
+% oppositely
+probsA = [0.3 0.7];
+probsB = fliplr([0.3 0.7]);
 [llMat, llVarMat, llBiasMat] = runD5(probsA, probsB);
 end
 
 function [llMat, llVarMat, llBiasMat] = runD5CFG3()
-% runD2CFG2 - the multinomial probabilities are skewed right
-probsA = [0.3 0.7];
-probsB = [0.3 0.7];
+% runD2CFG1 - the multinomial probabilities are evenly distributed
+probsA = [0.25 0.25 0.25 0.25];
+probsB = [0.25 0.25 0.25 0.25];
 [llMat, llVarMat, llBiasMat] = runD5(probsA, probsB);
 end
 
@@ -1523,39 +1457,17 @@ probsB = fliplr([0.5 0.3 0.1 0.1]);
 end
 
 function [llMat, llVarMat, llBiasMat] = runD5CFG5()
-% runD2CFG2 - the multinomial probabilities are skewed right and left
-% oppositely
-probsA = [0.3 0.7];
-probsB = fliplr([0.3 0.7]);
+% runD2CFG1 - the multinomial probabilities are evenly distributed
+probsA = .1*ones(1,10);
+probsB = .1*ones(1,10);
 [llMat, llVarMat, llBiasMat] = runD5(probsA, probsB);
 end
 
 function [llMat, llVarMat, llBiasMat] = runD5CFG6()
-% runD2CFG1 - the multinomial probabilities are evenly distributed
-probsA = .1*ones(1,10);
-probsB = .1*ones(1,10);
-[llMat, llVarMat, llBiasMat] = runD3(probsA, probsB);
-end
-
-function [llMat, llVarMat, llBiasMat] = runD5CFG7()
-% runD2CFG1 - both multinomial probabilities are skewed left
-probsA = [.25 .2 .15 .1 .05 .05 .05 .05 .05 .05];
-probsB = [.25 .2 .15 .1 .05 .05 .05 .05 .05 .05];
-[llMat, llVarMat, llBiasMat] = runD3(probsA, probsB);
-end
-
-function [llMat, llVarMat, llBiasMat] = runD5CFG8()
-% runD2CFG1 - both multinomial probabilities are skewed right
-probsA = fliplr([.25 .2 .15 .1 .05 .05 .05 .05 .05 .05]);
-probsB = fliplr([.25 .2 .15 .1 .05 .05 .05 .05 .05 .05]);
-[llMat, llVarMat, llBiasMat] = runD3(probsA, probsB);
-end
-
-function [llMat, llVarMat, llBiasMat] = runD5CFG9()
 % runD2CFG1 - both multinomial probabilities are skewed left & right
 probsA = [.25 .2 .15 .1 .05 .05 .05 .05 .05 .05];
 probsB = fliplr([.25 .2 .15 .1 .05 .05 .05 .05 .05 .05]);
-[llMat, llVarMat, llBiasMat] = runD3(probsA, probsB);
+[llMat, llVarMat, llBiasMat] = runD5(probsA, probsB);
 end
 
 function [llMat, llVarMat, llBiasMat] = runD5(a_probs, b_probs)

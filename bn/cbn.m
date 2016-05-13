@@ -184,7 +184,16 @@ classdef cbn < handle
                     U_parents = U_in(:,2:end);
                     
                     % estimate the best copula for the family
-                    [C_all, C_all_params] = copulamodelselect(U_in);
+                    if(size(U_in,2)>2)
+                        % force the Gaussian Copula here, b/c it is the
+                        % only parametric model we have for situations
+                        % where D>2
+                        C_all = 'Gaussian';
+                        C_all_params = copulafit('Gaussian', U_in);
+                    else
+                        [C_all, C_all_params] = copulamodelselect(U_in);
+                    end
+                    
                     
                     % estimate the best copula for the parents
                     if(length(parentNames)==1)
