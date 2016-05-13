@@ -177,6 +177,7 @@ classdef hcbn < handle
                         % debugging empirical info
                         empInfoInput = varargin{3};
                         obj.inflateEmpInfo(empInfoInput);
+                        obj.setDag(candidateDag);
                     else
                         error('Unrecognized var-input!');
                     end
