@@ -180,14 +180,18 @@ classdef multinomialbn < handle
         
         function [discretizedValues] = getDiscreteValueMapping(obj, continuousValues, associatedNode)
             edgeInfo = obj.continuousNodesDiscretizedEdges{associatedNode};
-            discretizedIdxs = discretize(continuousValues, edgeInfo);
+%             discretizedIdxs = discretize(continuousValues, edgeInfo);
+            % using below because it is compatible w/ R2014b ... discretize
+            % was introduced in R2015a :(
+            [~,~,discretizedIdxs] = histcounts(continuousValues, edgeInfo);
+            
             % find any NaN's and fix
             % NaN's occur due to out of range exceptions
-            nanIdxs = find(isnan(discretizedIdxs));
-            belowMinIdxs = continuousValues(nanIdxs)<min(edgeInfo);
-            aboveMaxIdxs = continuousValues(nanIdxs)>max(edgeInfo);
-            discretizedIdxs(nanIdxs(belowMinIdxs)) = 1;
-            discretizedIdxs(nanIdxs(aboveMaxIdxs)) = length(edgeInfo);
+            badIdxs = [find(isnan(discretizedIdxs)) find(discretizedIdxs==0)];
+            belowMinIdxs = continuousValues(badIdxs)<min(edgeInfo);
+            aboveMaxIdxs = continuousValues(badIdxs)>max(edgeInfo);
+            discretizedIdxs(badIdxs(belowMinIdxs)) = 1;
+            discretizedIdxs(badIdxs(aboveMaxIdxs)) = length(edgeInfo);
             discretizedIdxs = floor(discretizedIdxs);
             
             discretizedValues = edgeInfo(discretizedIdxs);

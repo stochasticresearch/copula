@@ -22,6 +22,8 @@
 clear;
 clc;
 
+rng(12345);
+
 M = 1000;
 X = randn(M*2,1);
 X_train = X(1:M);
@@ -32,9 +34,10 @@ nlogL = normlike([muhat,sigmahat],X_test);
 
 % discretize the RV and compute the likelihood
 [X_train_discretized, edges] = discretizeRv(X_train, 10);
-[testDiscretizedIdxs] = discretize(X_test, edges);
+% [testDiscretizedIdxs] = discretize(X_test, edges);
+[~,~,testDiscretizedIdxs] = histcounts(X_test, edges);
 % deal w/ NaN's :(
-nanIdxs = find(isnan(testDiscretizedIdxs));
+nanIdxs = [find(isnan(testDiscretizedIdxs)) find(testDiscretizedIdxs==0)];
 belowMinIdxs = X_test(nanIdxs)<min(edges);
 aboveMaxIdxs = X_test(nanIdxs)>max(edges);
 testDiscretizedIdxs(nanIdxs(belowMinIdxs)) = 1;
