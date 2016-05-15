@@ -1,6 +1,88 @@
 % A script which shows the effect of continuing a RV on
 % pseudo-observations, which are then used to estimate the copula density
 
+%% experiments on pseudo-observations of marginal distributions
+M = 250;
+X1 = normrnd(0,1,M,1);
+X2 = exprnd(2, M, 1);
+X3 = betarnd(2,3,M,1);
+X4 = trnd(5, M, 1);
+
+U1 = pseudoobs(X1);
+U2 = pseudoobs(X2);
+U3 = pseudoobs(X3);
+U4 = pseudoobs(X4);
+subplot(2,2,1); ksdensity(X1); hold on; ksdensity(U1); legend('X1', 'U1'); grid on;
+subplot(2,2,2); ksdensity(X2); hold on; ksdensity(U2); legend('X1', 'U1'); grid on;
+subplot(2,2,3); ksdensity(X3); hold on; ksdensity(U3); legend('X1', 'U1'); grid on;
+subplot(2,2,4); ksdensity(X4); hold on; ksdensity(U4); legend('X1', 'U1'); grid on;
+
+%% D=2
+clear;
+clc;
+
+M = 1000;
+alpha = 1;
+U = copularnd('Gumbel', alpha, M);
+
+prob = [0.5 0.5];
+% prob = [0.5 0.15 0.15 0.05 0.05 0.05 0.025 0.025];
+% prob = .1*ones(1,10);
+% prob = [0.25 0.25 0.25 0.25];
+% prob = [0.6 0.25 0.1 0.05];
+a_dist = makedist('Multinomial','Probabilities',prob);
+X_hybrid(:,1) = a_dist.icdf(U(:,1));
+X_hybrid(:,2) = norminv(U(:,2), 0, 1);
+
+X_hybrid_continued = X_hybrid;
+X_hybrid_continued(:,1) = continueRv(X_hybrid(:,1));
+% 
+% for mm=1:M
+%     if(X_hybrid_continued(mm,1)==1 || X_hybrid_continued(mm,1)==3)
+%         X_hybrid_continued(mm,1) = X_hybrid_continued(mm,1)+rand()-1;
+%     end
+% end
+
+U_hybrid = pseudoobs(X_hybrid);
+U_hybrid_continued = pseudoobs(X_hybrid_continued);
+
+tau1 = corr(X_hybrid(:,1),X_hybrid(:,2),'type','kendall');
+tau2 = corr(X_hybrid_continued(:,1),X_hybrid_continued(:,2),'type','kendall');
+fprintf('tau1-tau2=%f\n', tau1-tau2);
+% NOTE -- code below yields same result as below b/c kendall is a rank
+% based estimator, so it re-ranks if not ranked already!
+% corr(U_hybrid(:,1),U_hybrid(:,2),'type','kendall')
+% corr(U_hybrid_continued(:,1),U_hybrid_continued(:,2),'type','kendall')
+
+coeff = U_hybrid(:,1)\U_hybrid(:,2);
+xx = linspace(0,1,M);
+yy = coeff*xx;
+
+subplot(2,2,1);
+scatter(X_hybrid(:,1),X_hybrid(:,2)); grid on; title('X Hybrid');
+subplot(2,2,2);
+scatter(X_hybrid_continued(:,1),X_hybrid_continued(:,2)); grid on; title('X Hybrid Continued');
+subplot(2,2,3);
+scatter(U_hybrid(:,1),U_hybrid(:,2)); grid on; title('U Hybrid');
+hold on;
+scatter(U(:,1), U(:,2), 'r')
+plot(xx,yy, 'g+')
+
+subplot(2,2,4);
+scatter(U_hybrid_continued(:,1),U_hybrid_continued(:,2)); grid on; title('U Hybrid Continued');
+hold on;
+scatter(U(:,1), U(:,2), 'r')
+plot(xx,yy, 'g+')
+
+%% simulation for testing difference in tau's as a metric for determining
+%  if we want to do this idea
+copulaTypeVec = {'Frank', 'Gumbel', 'Clayton', 'Gaussian'};
+alphaVec = 1:100;
+for copulaType=copulaTypeVec
+    for alpha=alphaVec
+    end
+end
+
 %% D = 2
 clear;
 clc;
@@ -37,7 +119,7 @@ discreteDistTypeVec{9} = makedist('Multinomial','Probabilities',prob); discreteD
 
 fig_num = 1;
 numTotalLoops = length(copulaTypeVec)*length(continuousDistTypeVec)*length(alphaVec)*length(discreteDistTypeVec)*length(mVec);
-fid = fopen('/home/kiran/ownCloud/PhD/sim_results/idea/progress.txt', 'a');
+fid = fopen('/Users/kiran/ownCloud/PhD/sim_results/idea/progress.txt', 'a');
 for copulaTypeVecIdx=1:length(copulaTypeVec)
     for continuousDistTypeVecIdx=1:length(continuousDistTypeVec)
         for alphaVecIdx=1:length(alphaVec)
@@ -109,12 +191,13 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                     
                     subplot(2,6,[7 8 9]); surf(U1,U2,reshape( copulapdf(copulaType, [U1(:), U2(:)], alpha), K, K)); title('Actual Copula'); xlabel('u_1'); ylabel('u_2'); grid on;
                     subplot(2,6,[10 11 12]); surf(U1,U2,c_est); title('Estimated Copula'); xlabel('u_1'); ylabel('u_2'); grid on;                    
-                    figureFilename = sprintf('/home/kiran/ownCloud/PhD/sim_results/idea/fig_%d', fig_num);
+                    figureFilename = sprintf('/Users/kiran/ownCloud/PhD/sim_results/idea/fig_%d', fig_num);
                     fig = gcf;
                     fig.PaperPositionMode = 'auto';
                     print(figureFilename,'-dpng','-r0')
                     fig_num = fig_num + 1;
-                    pause(1);
+%                     pause(1);
+                    pause;
 %                     clf(fig1);
                 end
             end
