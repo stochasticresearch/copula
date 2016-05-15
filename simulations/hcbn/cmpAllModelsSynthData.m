@@ -746,6 +746,16 @@ for copulaTypeVecIdx=1:length(copulaTypeVec_3D)
                 end
                 M = mVec(mVecIdx);
                 
+                progressAmt = progressIdx/numTotalLoops*100;
+                if(strcmp(copulaType,'Gaussian'))
+                    progressStr = sprintf('copulaType=%s x3DistType=%s rho=%f M=%d || Progress=%0.04f', ...
+                                    copulaType, continuousDistType, Rho(1,3), M, progressAmt);
+                else
+                    error('Unrecognized Copula Type!');
+                end
+                dispstat(progressStr,'keepthis','timestamp');
+                fprintf(fid, progressStr);
+                
                 if(strcmp(continuousDistType, 'Multimodal'))
                     xContinuous = [normrnd(-2,0.3,1000,1); normrnd(2,0.8,1000,1)];
                 elseif(strcmp(continuousDistType, 'Uniform'))
@@ -794,15 +804,7 @@ for copulaTypeVecIdx=1:length(copulaTypeVec_3D)
                 
                 %%%%%%%%%%% MAIN SIMULATION CODE %%%%%%%%%%
                 for mcSimNum=1:numMC
-                    progressAmt = progressIdx/numTotalLoops*100;
-                    if(strcmp(copulaType,'Gaussian'))
-                        progressStr = sprintf('copulaType=%s x3DistType=%s rho=%f M=%d MC Sim# = %d || Progress=%0.04f', ...
-                                        copulaType, continuousDistType, Rho(1,3), M, mcSimNum, progressAmt);
-                    else
-                        error('Unrecognized Copula Type!');
-                    end
-                    dispstat(progressStr,'keepthis','timestamp');
-                    fprintf(fid, progressStr);
+                    dispstat(sprintf('MC Sim=%d', mcSimNum), 'timestamp');
                     X_hybrid = zeros(M+numTest,D);
                     
                     % generate the copula random variates
