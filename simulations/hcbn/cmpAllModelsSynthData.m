@@ -1265,6 +1265,16 @@ for copulaTypeVecIdx=1:length(copulaTypeVec_4D)
                 end
                 M = mVec(mVecIdx);
                 
+                progressAmt = progressIdx/numTotalLoops*100;
+                if(strcmp(copulaType,'Gaussian'))
+                    progressStr = sprintf('copulaType=%s x4DistType=%s rho=%f M=%d || Progress=%0.04f', ...
+                                    copulaType, continuousDistType, Rho(1,4), M, progressAmt);
+                else
+                    error('Unrecognized Copula Type!');
+                end
+                dispstat(progressStr,'keepthis','timestamp');
+                fprintf(fid, progressStr);
+                
                 if(strcmp(continuousDistType, 'Multimodal'))
                     xContinuous = [normrnd(-2,0.3,1000,1); normrnd(2,0.8,1000,1)];
                 elseif(strcmp(continuousDistType, 'Uniform'))
@@ -1304,15 +1314,7 @@ for copulaTypeVecIdx=1:length(copulaTypeVec_4D)
                 
                 %%%%%%%%%%% MAIN SIMULATION CODE %%%%%%%%%%
                 for mcSimNum=1:numMC
-                    progressAmt = progressIdx/numTotalLoops*100;
-                    if(strcmp(copulaType,'Gaussian'))
-                        progressStr = sprintf('copulaType=%s x3DistType=%s rho=%f M=%d MC Sim# = %d || Progress=%0.04f', ...
-                                        copulaType, continuousDistType, Rho(1,4), M, mcSimNum, progressAmt);
-                    else
-                        error('Unrecognized Copula Type!');
-                    end
-                    dispstat(progressStr,'keepthis','timestamp');
-                    fprintf(fid, progressStr);
+                    dispstat(sprintf('MC Sim=%d', mcSimNum), 'timestamp');
                     X_hybrid = zeros(M+numTest,D);
                     
                     % generate the copula random variates
@@ -1625,17 +1627,19 @@ for cdeCombinationsVecIdx=1:length(CDE_combinations)
                 empInfo{5} = continuousEmpiricalDists{3};
                 
                 M = mVec(mVecIdx);
+                
+                progressAmt = progressIdx/numTotalLoops*100;
+                progressStr = sprintf('f(C),f(D),f(E)=%s,%s,%s C1,C2,C3=%s,%s,%s dep=%s,%s,%s M=%d || Progress=%0.04f', ...
+                                marginalDistributionCombinations{1}, marginalDistributionCombinations{2}, marginalDistributionCombinations{3}, ...
+                                c1c2c3Types{1}, c1c2c3Types{2}, c1c2c3Types{3}, ...
+                                dependencyCombinations{1}, dependencyCombinations{2}, dependencyCombinations{3}, ...
+                                M, progressAmt);
+                dispstat(progressStr,'keepthis','timestamp');
+                fprintf(fid, progressStr);
+                
                 %%%%%%%%%%% MAIN SIMULATION CODE %%%%%%%%%%
                 for mcSimNum=1:numMC
-                    progressAmt = progressIdx/numTotalLoops*100;
-                    progressStr = sprintf('f(C),f(D),f(E)=%s,%s,%s C1,C2,C3=%s,%s,%s dep=%s,%s,%s M=%d MC Sim# = %d || Progress=%0.04f', ...
-                                    marginalDistributionCombinations{1}, marginalDistributionCombinations{2}, marginalDistributionCombinations{3}, ...
-                                    c1c2c3Types{1}, c1c2c3Types{2}, c1c2c3Types{3}, ...
-                                    dependencyCombinations{1}, dependencyCombinations{2}, dependencyCombinations{3}, ...
-                                    M, mcSimNum, progressAmt);
-                    dispstat(progressStr,'keepthis','timestamp');
-                    fprintf(fid, progressStr);
-                    
+                    dispstat(sprintf('MC Sim=%d', mcSimNum), 'timestamp');
                     % Generate the data from the reference BN structure
                     U_C2 = copularnd('Gaussian', Rho_C2, M+numTest);        % (:,1)=A
                                                                             % (:,2)=B
