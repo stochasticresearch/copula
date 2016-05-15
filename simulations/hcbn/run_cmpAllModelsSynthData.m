@@ -24,7 +24,7 @@
 clear;
 clc;
 numMCSims = 25;
-saveDir = '/Users/kiran/ownCloud/PhD/sim_results';
+saveDir = '/home/kiran/ownCloud/PhD/sim_results';
 
 %% D=2, CFG=1
 D = 2;
@@ -37,3 +37,15 @@ rng(12345);
 [llMat, llVarMat, llBiasMat] = cmpAllModelsSynthData(D,numMCSims,cfg,'/tmp/out.log');
 % save the results off also
 save(fullfile(saveDir, 'd2_cfg1_25.mat'));
+
+%% D=3, CFG=1
+D = 3;
+cfg = 1;
+
+diary off;
+delete(fullfile(saveDir, 'd3_cfg1_25mc.log')); 
+diary(fullfile(saveDir, 'd3_cfg1_25mc.log')); 
+rng(12345); 
+[llMat, llVarMat, llBiasMat] = cmpAllModelsSynthData(D,numMCSims,cfg,'/tmp/out.log');
+% save the results off also
+save(fullfile(saveDir, 'd3_cfg1_25.mat'));
