@@ -33,8 +33,8 @@ mu = 2; a = 3; b = 2;
 x = [expinv(u(:,1),mu), gaminv(u(:,2), a, b)];
 
 numECDFPts = 100;
-U_ecdf = pseudoobs(x, 'ecdf', numECDFPts);
-U_rank = pseudoobs(x);
+U_ecdf = pobs(x, 'ecdf', numECDFPts);
+U_rank = pobs(x);
 
 figure;
 subplot(3,3,1); scatter(x(:,1),x(:,2)); grid on; xlabel('X'); ylabel('Y'); title('Original Samples')
@@ -71,8 +71,8 @@ for ii=1:nsim
     x = [expinv(u(:,1),mu), gaminv(u(:,2), a, b)];
 
     numECDFPts = 100;
-    U_ecdf = pseudoobs(x, 'ecdf', numECDFPts);
-    U_rank = pseudoobs(x);
+    U_ecdf = pobs(x, 'ecdf', numECDFPts);
+    U_rank = pobs(x);
     
     c_ecdf(ii) = empcopulaval(empcopulapdf(U_ecdf, h, K, 'betak'), u_v);
     c_rank(ii) = empcopulaval(empcopulapdf(U_rank, h, K, 'betak'), u_v);

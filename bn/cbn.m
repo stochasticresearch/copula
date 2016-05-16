@@ -177,9 +177,9 @@ classdef cbn < handle
                     X_in(:,kk) = obj.X(:,parentIdxs);
                     
                     if(strcmpi(obj.PSEUDO_OBS_CALC_METHOD, 'ecdf'))
-                        U_in = pseudoobs(X_in, 'ecdf', 100);
+                        U_in = pobs(X_in, 'ecdf', 100);
                     else
-                        U_in = pseudoobs(X_in);
+                        U_in = pobs(X_in);
                     end
                     U_parents = U_in(:,2:end);
                     

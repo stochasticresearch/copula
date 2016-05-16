@@ -61,8 +61,8 @@ end
 X_hybrid_continued = X_hybrid;
 X_hybrid_continued(:,1) = continueRv(X_hybrid(:,1));
 % generate pseudo-observations
-% U_hybrid_continued = pseudoobs(X_hybrid_continued, 'ecdf', 100); %% HCBN
-U_hybrid_continued = pseudoobs(X_hybrid_continued);        %% not HCBN
+% U_hybrid_continued = pobs(X_hybrid_continued, 'ecdf', 100); %% HCBN
+U_hybrid_continued = pobs(X_hybrid_continued);        %% not HCBN
 
 K = 100; h = 0.01;
 u = linspace(0,1,K);

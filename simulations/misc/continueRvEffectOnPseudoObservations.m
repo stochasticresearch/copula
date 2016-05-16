@@ -8,10 +8,10 @@ X2 = exprnd(2, M, 1);
 X3 = betarnd(2,3,M,1);
 X4 = trnd(5, M, 1);
 
-U1 = pseudoobs(X1);
-U2 = pseudoobs(X2);
-U3 = pseudoobs(X3);
-U4 = pseudoobs(X4);
+U1 = pobs(X1);
+U2 = pobs(X2);
+U3 = pobs(X3);
+U4 = pobs(X4);
 subplot(2,2,1); ksdensity(X1); hold on; ksdensity(U1); legend('X1', 'U1'); grid on;
 subplot(2,2,2); ksdensity(X2); hold on; ksdensity(U2); legend('X1', 'U1'); grid on;
 subplot(2,2,3); ksdensity(X3); hold on; ksdensity(U3); legend('X1', 'U1'); grid on;
@@ -22,7 +22,7 @@ clear;
 clc;
 
 M = 1000;
-alpha = 3;
+alpha = 10;
 U = copularnd('Gumbel', alpha, M);
 
 % prob = [0.5 0.5];
@@ -43,9 +43,9 @@ X_hybrid_continued(:,1) = continueRv(X_hybrid(:,1));
 %     end
 % end
 
-U_hybrid = pseudoobs(X_hybrid);
-U_hybrid_continued = pseudoobs(X_hybrid_continued);
-U_hybrid_corrected = pseudoobs(X_hybrid_continued, 'correction', 50);
+U_hybrid = pobs(X_hybrid);
+U_hybrid_continued = pobs(X_hybrid_continued);
+U_hybrid_corrected = pobs(X_hybrid_continued, 'correction', 5);
 
 tau1 = corr(U_hybrid(:,1),U_hybrid(:,2),'type','spearman');
 tau2 = corr(U_hybrid_continued(:,1),U_hybrid_continued(:,2),'type','spearman');
@@ -53,6 +53,7 @@ tau2 = corr(U_hybrid_continued(:,1),U_hybrid_continued(:,2),'type','spearman');
 xx = linspace(0,1,M);
 tau1_rescaled = tau1/(12*sqrt(prod(var(U_hybrid))));
 tau2_rescaled = tau2/(12*sqrt(prod(var(U_hybrid_continued))));
+tau3_rescaled = ndcorr(U_hybrid, 'spearman');
 yy1 = tau1_rescaled*xx;
 yy2 = tau2_rescaled*xx;
 yy3 = tau2*xx;
@@ -69,7 +70,7 @@ plot(xx,yy1, 'g+')
 plot(xx,yy2, 'k+')
 plot(xx,yy3, 'm--')
 subplot(3,2,4);
-scatter(U_hybrid_continued(:,1),U_hybrid_continued(:,2)); grid on; title('U Hybrid Continued');
+scatter(U_hybrid_continued(:,1),U_hybrid_continued(:,2)); grid on; title(sprintf('U Hybrid Continued - tau3=%0.04f', tau3_rescaled));
 subplot(3,2,6);
 scatter(U_hybrid_corrected(:,1),U_hybrid_corrected(:,2)); 
 axis([0 1 0 1]);
@@ -145,9 +146,14 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                     X_hybrid_continued = X_hybrid;
                     X_hybrid_continued(:,1) = continueRv(X_hybrid(:,1));
                     
-                    U_hybrid = pseudoobs(X_hybrid);
+                    U_hybrid = pobs(X_hybrid);
                     tau1 = corr(U_hybrid(:,1),U_hybrid(:,2),'type','spearman');
-                    sRhoRescaled = sRhoRescaled + tau1/(12*sqrt(prod(var(U_hybrid))));
+                    sRhoCalc1 = tau1/(12*sqrt(prod(var(U_hybrid))));
+                    sRhoRescaled = sRhoRescaled + sRhoCalc1;
+                    sRhoCalc2 = ndcorr(U_hybrid, 'spearman');
+                    if(sRhoCalc1 ~= sRhoCalc2)
+                        1;
+                    end
                 end
                 sRhoRescaled = sRhoRescaled/numMCSims;
 
@@ -469,8 +475,8 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
 
                     X_hybrid_continued = X_hybrid;
                     X_hybrid_continued(:,1) = continueRv(X_hybrid(:,1));
-                    U_hybrid_continued = pseudoobs(X_hybrid_continued);
-                    U_hybrid = pseudoobs(X_hybrid);
+                    U_hybrid_continued = pobs(X_hybrid_continued);
+                    U_hybrid = pobs(X_hybrid);
 
                     % estimate the copula for U_hybrid_continued
                     c_est = empcopulapdf(U_hybrid_continued, h, K, 'betak');

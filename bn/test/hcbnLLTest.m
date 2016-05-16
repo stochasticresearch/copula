@@ -54,7 +54,7 @@ end
 X = X(randperm(M),:);
 
 X_xform = X; X_xform(:,1) = continueRv(X(:,1));
-U_xform = pseudoobs(X_xform);
+U_xform = pobs(X_xform);
 
 % now look at the pseudo-observations that are created to see the best way
 % to create them

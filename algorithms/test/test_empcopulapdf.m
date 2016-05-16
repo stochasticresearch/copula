@@ -182,7 +182,7 @@ X = [gaminv(U(:,1),2,1) ...
 X_vec = [continueRv(X(:,4)) X(:,2)];
 
 % create pseudo-observations
-U_in = pseudoobs(X_vec);
+U_in = pobs(X_vec);
 
 c1_ref = empcopulapdf(U_C2, h, K, 'betak');
 c1_proper = empcopulapdf(U_in, h, K, 'betak');
@@ -213,7 +213,7 @@ X = [unidinv(U(:,1),3) ...
 X_xform = continueRv(X);
 
 % generate pseudoobservations from X_xform
-U_in = pseudoobs(X_xform);
+U_in = pobs(X_xform);
 
 % estimate the copula density
 h = 0.05;
@@ -250,7 +250,7 @@ X = [unidinv(U(:,1),3) ...
 X_xform = continueRv(X);
 
 % generate pseudoobservations from X_xform
-U_in = pseudoobs(X_xform);
+U_in = pobs(X_xform);
 
 % estimate the copula density
 h = 0.02;
@@ -293,7 +293,7 @@ probMatrix(4,1) = nn(8,1)/M; probMatrix(4,2) = nn(8,3)/M; probMatrix(4,3) = nn(8
 probMatrix(5,1) = nn(10,1)/M; probMatrix(5,2) = nn(10,3)/M; probMatrix(5,3) = nn(10,6)/M; probMatrix(5,4) = nn(10,8)/M; probMatrix(5,5) = nn(10,10)/M;
 
 X_xform = continueRv(X);
-U_in = pseudoobs(X_xform);
+U_in = pobs(X_xform);
 
 % estimate the copula density
 h = 0.02;
@@ -365,7 +365,7 @@ U = copularnd(copType, Rho, M);
 % Create a multivariate gaussian :) easy for testing
 X = [norminv(U(:,1),0,1) ...
      norminv(U(:,2),0,1)];
-U_in = pseudoobs(X);
+U_in = pobs(X);
 
 % estimate the copula density
 h = 0.01;

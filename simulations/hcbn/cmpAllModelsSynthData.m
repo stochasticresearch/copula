@@ -78,10 +78,10 @@ K = 25; h = 0.05;      % beta kernel estimation parameters
 NUM_DISCRETE_INTERVALS = 10;
 bntPath = '../bnt'; addpath(genpath(bntPath));
 mVec = 250:250:1000;
-copulaTypeVec_2D = {'Gumbel', 'Clayton', 'Frank', 'Gaussian'};
+copulaTypeVec_2D = {'Clayton', 'Gaussian'};
 copulaTypeVec_3D = {'Gaussian'};
 copulaTypeVec_4D = {'Gaussian'};
-alphaVec = [1 10 20];
+alphaVec = [1 10];
 RhoVecs_2D = cell(1,length(alphaVec)); 
 RhoVecs_2D{1} = [1 -0.9; -0.9 1]; RhoVecs_2D{2} = [1 -0.65; -0.65 1];
 RhoVecs_2D{3} = [1 0.35; 0.35 1]; RhoVecs_2D{4} = [1 0.1; 0.1 1];
@@ -123,11 +123,9 @@ CDE_combinations{6} = {'Gaussian', 'Multimodal', 'Uniform'};
 CDE_combinations{7} = {'Uniform', 'Uniform', 'ThickTailed'};
 CDE_combinations{8} = {'Multimodal', 'Gaussian', 'Uniform'};
 
-C1C2C3_combinations = cell(1,4);
-C1C2C3_combinations{1} = {'Frank', 'Gaussian', 'Frank'};
+C1C2C3_combinations = cell(1,2);
+C1C2C3_combinations{1} = {'Gaussian', 'Gaussian', 'Gaussian'};
 C1C2C3_combinations{2} = {'Clayton', 'Gaussian', 'Clayton'};
-C1C2C3_combinations{3} = {'Frank', 'Gaussian', 'Clayton'};
-C1C2C3_combinations{3} = {'Clayton', 'Gaussian', 'Frank'};
 
 dependency_combinations = cell(1,4);
 dependency_combinations{1} = {'Strong', 'Strong', 'Strong'};
@@ -404,7 +402,7 @@ for copulaTypeVecIdx=1:length(copulaTypeVec_2D)
                     X_hybrid_continued = X_hybrid;
                     X_hybrid_continued(:,1) = continueRv(X_hybrid(:,1));
                     % generate pseudo-observations
-                    U_hybrid_continued = pseudoobs(X_hybrid_continued, 'ecdf', 100);
+                    U_hybrid_continued = pobs(X_hybrid_continued, 'ecdf', 100);
                     c_est = empcopulapdf(U_hybrid_continued, h, K, 'betak');
                     C_est_discrete_integrate = cumtrapz(u, c_est, 1);
                     
@@ -850,7 +848,7 @@ for copulaTypeVecIdx=1:length(copulaTypeVec_3D)
                     X_hybrid_continued(:,1) = continueRv(X_hybrid(:,1));
                     X_hybrid_continued(:,2) = continueRv(X_hybrid(:,2));
                     
-                    U_hybrid_continued = pseudoobs(X_hybrid_continued);
+                    U_hybrid_continued = pobs(X_hybrid_continued);
                     
                     % setup all the copula calculations for querying after
                     c_est_X1X2X3 = empcopulapdf(U_hybrid_continued, h, K, 'betak');
@@ -1343,12 +1341,6 @@ for copulaTypeVecIdx=1:length(copulaTypeVec_4D)
                     multinomialbnObj = multinomialbn(X_hybrid, discreteNodes, dag, NUM_DISCRETE_INTERVALS);
                     cbnObj = cbn(bntPath, X_hybrid, nodeNames, dag);
                     
-                    X_hybrid_continued = X_hybrid;
-                    X_hybrid_continued(:,1) = continueRv(X_hybrid(:,1));
-                    X_hybrid_continued(:,2) = continueRv(X_hybrid(:,2));
-                    X_hybrid_continued(:,3) = continueRv(X_hybrid(:,3));
-                    U_hybrid_continued = pseudoobs(X_hybrid_continued);
-                    
                     %%%%%%%%%%%%%%%%%%%%%%%
                     
                     % calculate LL values and assign to llDivMCMat
@@ -1528,6 +1520,7 @@ for cdeCombinationsVecIdx=1:length(CDE_combinations)
                 
                 marginalDistributionCombinations = CDE_combinations{cdeCombinationsVecIdx};
                 dependencyCombinations = dependency_combinations{dependencyCombinationsVecIdx};
+                c1c2c3Types = C1C2C3_combinations{c1c2c3CombinationsVecIdx};
                 
                 % setup the empirical marginal distribution definitions
                 empiricalDistSamples = 2000;
@@ -1560,7 +1553,11 @@ for cdeCombinationsVecIdx=1:length(CDE_combinations)
                             % to create a correlation matrix
                             copulaDepParams{ii} = [1 0 -.8; 0 1 .59; -.8 .59 1];
                         else
-                            copulaDepParams{ii} = 10;       % alpha = 10
+                            if(strcmpi(c1c2c3Types{ii},'Gaussian'))
+                                copulaDepParams{ii} = [1 -0.8; -0.8 1];
+                            else
+                                copulaDepParams{ii} = 10;       % alpha = 10
+                            end
                         end
                     elseif(strcmpi(dependencyCombinations{ii}, 'Weak'))
                         if(ii==2)
@@ -1568,34 +1565,36 @@ for cdeCombinationsVecIdx=1:length(CDE_combinations)
                             % to create a correlation matrix
                             copulaDepParams{ii} = [1 0 .2; 0 1 -.1; .2 -.1 1];
                         else
-                            copulaDepParams{ii} = 1;        % alpha = 1
+                            if(strcmpi(c1c2c3Types{ii},'Gaussian'))
+                                copulaDepParams{ii} = [1 -0.1; -0.1 1];
+                            else
+                                copulaDepParams{ii} = 1;       % alpha = 1
+                            end
                         end
                     end
                 end
-                alpha_C1 = copulaDepParams{1};
-                Rho_C2 = copulaDepParams{2};
-                alpha_C3 = copulaDepParams{3};
-                
-                c1c2c3Types = C1C2C3_combinations{c1c2c3CombinationsVecIdx};
+                dep_C1 = copulaDepParams{1};
+                dep_C2 = copulaDepParams{2};
+                dep_C3 = copulaDepParams{3};
                 
                 % compute actual copula's, which will be used for reference
                 % likelihood calculations
                 % compute c1 - either Frank or Clayton copula
-                if(strcmpi(c1c2c3Types{1},'Frank'))
-                    c1 = reshape(frankcopulapdf([U1_2(:) U2_2(:)], alpha_C1), K, K);
-                elseif(strcmpi(c1c2c3Types{1},'Clayton'))    
-                    c1 = reshape(claytoncopulapdf([U1_2(:) U2_2(:)], alpha_C1), K, K);
+                if(strcmpi(c1c2c3Types{1},'Clayton'))    
+                    c1 = reshape(claytoncopulapdf([U1_2(:) U2_2(:)], dep_C1), K, K);
+                elseif(strcmpi(c1c2c3Types{1},'Gaussian'))
+                    c1 = reshape(copulapdf('Gaussian', [U1_2(:) U2_2(:)], dep_C1), K, K);
                 else
                     error('Unsupported Copula Type!');
                 end
                 % compute c2 - always Gaussian
-                c2 = reshape(copulapdf('Gaussian', [U1_3(:) U2_3(:) U3_3(:)], Rho_C2), K, K, K);
-                c2_parents = reshape(copulapdf('Gaussian', [U1_2(:) U2_2(:)], Rho_C2(1:2,1:2)), K, K);
+                c2 = reshape(copulapdf('Gaussian', [U1_3(:) U2_3(:) U3_3(:)], dep_C2), K, K, K);
+                c2_parents = reshape(copulapdf('Gaussian', [U1_2(:) U2_2(:)], dep_C2(1:2,1:2)), K, K);
                 % compute c3 - either Frank or Clayton copula
-                if(strcmpi(c1c2c3Types{3},'Frank'))
-                    c3 = reshape(frankcopulapdf([U1_2(:) U2_2(:)], alpha_C3), K, K);
-                elseif(strcmpi(c1c2c3Types{3},'Clayton'))    
-                    c3 = reshape(claytoncopulapdf([U1_2(:) U2_2(:)], alpha_C3), K, K);
+                if(strcmpi(c1c2c3Types{3},'Clayton'))    
+                    c3 = reshape(claytoncopulapdf([U1_2(:) U2_2(:)], dep_C3), K, K);
+                elseif(strcmpi(c1c2c3Types{3},'Gaussian'))
+                    c3 = reshape(copulapdf('Gaussian', [U1_2(:) U2_2(:)], dep_C3), K, K);
                 else
                     error('Unsupported Copula Type!');
                 end
@@ -1610,14 +1609,14 @@ for cdeCombinationsVecIdx=1:length(CDE_combinations)
                 copulaFamilies{1} = [];
                 copulaFamilies{2} = [];
                 tmp = cell(1,2);
-                tmp{1} = c1c2c3Types{1}; tmp{2} = alpha_C1;
+                tmp{1} = c1c2c3Types{1}; tmp{2} = dep_C1;
                 copulaFamilies{3} = tmp;
                 tmp = cell(1,2);
-                tmp{1} = c1c2c3Types{3}; tmp{2} = alpha_C3;
+                tmp{1} = c1c2c3Types{3}; tmp{2} = dep_C3;
                 copulaFamilies{5} = tmp;
                 tmp = cell(1,2); 
                 tmp{1} = 'Gaussian'; 
-                tmp{2} = circshift(circshift(Rho_C2,1,1),1,2);
+                tmp{2} = circshift(circshift(dep_C2,1,1),1,2);
                 copulaFamilies{4} = tmp;
                 
                 empInfo = cell(1,5);
@@ -1641,16 +1640,19 @@ for cdeCombinationsVecIdx=1:length(CDE_combinations)
                 for mcSimNum=1:numMC
                     dispstat(sprintf('MC Sim=%d', mcSimNum), 'timestamp');
                     % Generate the data from the reference BN structure
-                    U_C2 = copularnd('Gaussian', Rho_C2, M+numTest);        % (:,1)=A
+                    U_C2 = copularnd('Gaussian', dep_C2, M+numTest);        % (:,1)=A
                                                                             % (:,2)=B
                                                                             % (:,3)=D
                     % generate U_C1
                     u1 = U_C2(:,1);
                     p = rand(M+numTest,1);
-                    if(strcmpi(c1c2c3Types{1},'Frank'))
-                        U_C1_2 = -log((exp(-alpha_C1.*u1).*(1-p)./p + exp(-alpha_C1))./(1 + exp(-alpha_C1.*u1).*(1-p)./p))./alpha_C1;
-                    elseif(strcmpi(c1c2c3Types{1},'Clayton'))    
-                        U_C1_2 = u1.*(p.^(-alpha_C1./(1+alpha_C1)) - 1 + u1.^alpha_C1).^(-1./alpha_C1);
+                    if(strcmpi(c1c2c3Types{1},'Clayton'))    
+                        U_C1_2 = u1.*(p.^(-dep_C1./(1+dep_C1)) - 1 + u1.^dep_C1).^(-1./dep_C1);
+                    elseif(strcmpi(c1c2c3Types{1},'Gaussian'))
+                        x1 = norminv(u1, 0, 1);
+                        U = chol(dep_C1,'upper');
+                        x2 = [x1 normrnd(0, 1, length(u1), 1)]*U;
+                        U_C1_2 = normcdf(x2(:,2));
                     else
                         error('Unsupported Copula Type!');
                     end
@@ -1658,10 +1660,13 @@ for cdeCombinationsVecIdx=1:length(CDE_combinations)
                     % generate U_C3
                     u1 = U_C2(:,2);
                     p = rand(M+numTest,1);
-                    if(strcmpi(c1c2c3Types{3},'Frank'))
-                        U_C3_2 = -log((exp(-alpha_C3.*u1).*(1-p)./p + exp(-alpha_C3))./(1 + exp(-alpha_C3.*u1).*(1-p)./p))./alpha_C3;
-                    elseif(strcmpi(c1c2c3Types{3},'Clayton'))
-                        U_C3_2 = u1.*(p.^(-alpha_C3./(1+alpha_C3)) - 1 + u1.^alpha_C3).^(-1./alpha_C3);
+                    if(strcmpi(c1c2c3Types{3},'Clayton'))
+                        U_C3_2 = u1.*(p.^(-dep_C3./(1+dep_C3)) - 1 + u1.^dep_C3).^(-1./dep_C3);
+                    elseif(strcmpi(c1c2c3Types{3},'Gaussian'))
+                        x1 = norminv(u1, 0, 1);
+                        U = chol(dep_C3,'upper');
+                        x2 = [x1 normrnd(0, 1, length(u1), 1)]*U;
+                        U_C3_2 = normcdf(x2(:,2));
                     else
                         error('Unsupported Copula Type!');
                     end

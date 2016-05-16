@@ -29,7 +29,8 @@ function [corrcoef] = ndcorr(X, type)
 %**************************************************************************
 
 [~,D] = size(X);
-weight = 1/nchoosek(D,2);
+% weight = 1/nchoosek(D,2);
+sRhoTieCorrectedVec = zeros(1,nchoosek(D,2));
 
 if(strcmpi(type,'spearman'))
     corrcoef = 0;
@@ -39,7 +40,8 @@ if(strcmpi(type,'spearman'))
                 matrixSlice = [X(:,ii) X(:,jj)];
                 sRho = corr(X(:,ii),X(:,jj),'type','spearman');
                 sRhoTieCorrected = sRho/(12*sqrt(prod(var(matrixSlice))));
-                corrcoef = corrcoef + weight*sRhoTieCorrected;
+%                 corrcoef = corrcoef + weight*sRhoTieCorrected;
+                sRhoTieCorrectedVec(sRhoTieCorrectedVecIdx) = sRhoTieCorrected;
             end
         end
     end
@@ -48,5 +50,17 @@ elseif(strcmpi(type,'kendall'))
 else
     error('Unknown type argument specified!');
 end
+
+% if all sRho's are similar in magnitude, we assume that this is a
+% one-parameter archimedean copula so we just average all the
+% sRhoTieCorrected values.  
+% if there are sRho's that are significant then we assume that we have a 
+% multiparameter copula, so we just return the vector as-is in the form of 
+% a correlation matrix. Whether that correlation matrix is then used for a 
+% Gaussian copula, or something else is upto the user!
+
+% TODO: we need a statistically significant test for testing whether the
+% sRho's magnitude differences are significant enough to warrant deeming
+% this a multi-parameter copula rather than a single parameter copula.
 
 end

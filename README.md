@@ -27,7 +27,7 @@ Contains many tools useful for copula modeling in Matlab that do not exist direc
   | *hyperFunctionError.m* | Computes error between two functions in the same arbitrary dimensional plane |
   | *log1mexp.m* | Convenience function for log(1-exp(a)) |
   | *logserrnd.m* | Samples from the Log-Series distribution |
-  | *pseudoobs.m* | Computes pseudo-observations for a given (multivariate) random vector |
+  | *pobs.m* | Computes pseudo-observations for a given (multivariate) random vector |
   | *stable1rnd.m* | Samples from the Stable Distribution |
   | *etstablernd.m* | Samples from the Exponentially Tilted Distribution |
   | *logrnd.m* | Samples from the Log Distribution |

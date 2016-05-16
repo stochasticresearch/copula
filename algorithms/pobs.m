@@ -1,4 +1,4 @@
-function [ U ] = pseudoobs( X, varargin )
+function [ U ] = pobs( X, varargin )
 %PSEUDOOBS Generates Pseudo-Observations from a given multivariate vector
 %          See https://en.wikipedia.org/wiki/Copula_(probability_theory)#Empirical_copulas
 %          for details
@@ -58,14 +58,15 @@ if(nVarargin>0)
                 error('Not enough arguments provided for selecting pseudo-observations calculation method!');
             end
         elseif(strcmpi(varargin{ii},'correction'))
-            if(nVarargin>=ii+1)
+            if(nVarargin>=ii+3)
                 correctionFlag = 1;
-                if(isnumeric(varargin{ii+1}))
-                    alpha = varargin{ii+1};
-                else
-                    error('Correction factor argument must be a numeric value');
+                sRho = varargin{ii+1};
+                alpha = varargin{ii+2};
+                discreteIdxs = varargin{ii+3};
+                if(~isnumeric(sRho) || ~isnumeric(alpha))
+                    error('sRho and alpha must be numeric values!');
                 end
-                ii = ii + 1;        % we gobbled those arguments, so fast-foward
+                ii = ii + 3;        % we gobbled those arguments, so fast-foward
             else
                 error('Not enough arguments provided for selecting correction factor!');
             end
@@ -88,17 +89,13 @@ elseif(strcmpi(method,'ecdf'))
 end
 
 if(correctionFlag)
-    % compute the distance between the computed pseudo-observations and the
-    % center-line
-    curve = [zeros(1,D); ones(1,D)];
-    [closestPoints,distances] = distance2curve(curve, U);
-    % compute the ties corrected spearman's rho of the original hybrid data
-    sRho = ndcorr(X, 'spearman');
-    pertubationValues = exprnd(distances*sRho*alpha);
-    pertubationValues = repmat(pertubationValues,1,D);
-    % gravitate the points towards the center according to the factors
-    % specified
-    U_corrected = U + pertubationValues.*(closestPoints-U);
+    % TODO: generalize below for n-dimensional, right now only 2-d
+    if(sRho>=0)
+        projectionPoints = repmat(U(:,1), 1, 2);
+    else
+        projectionPoints = [U(:,1) 1-U(:,1)];
+    end
+    U_corrected = U + abs(sRho)*alpha*(projectionPoints-U);
     U = U_corrected;
 end
 

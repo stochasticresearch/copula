@@ -146,8 +146,8 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                     X_hybrid_continued = X_hybrid;
                     X_hybrid_continued(:,1) = continueRv(X_hybrid(:,1));
                     % generate pseudo-observations
-                    % U_hybrid_continued = pseudoobs(X_hybrid_continued, 'ecdf', 100); %% HCBN  implements this version, so we compare here w/ non-ecdf
-                    U_hybrid_continued = pseudoobs(X_hybrid_continued);
+                    % U_hybrid_continued = pobs(X_hybrid_continued, 'ecdf', 100); %% HCBN  implements this version, so we compare here w/ non-ecdf
+                    U_hybrid_continued = pobs(X_hybrid_continued);
                     h = 0.05; K = 100; c_est = empcopulapdf(U_hybrid_continued, h, K, 'betak');
 
                     % c_estTest = empcopulapdf(fliplr(U_hybrid_continued), h, K, 'betak');

@@ -127,7 +127,7 @@ for copulaType=copulaTypes
                     % marginal distribution functions for the continued
                     % random variables, and estimate the empirical copula
                     % density from those
-                    U_pseudoObs = pseudoobs(X_continued);
+                    U_pseudoObs = pobs(X_continued);
                     
                     % estimate the copula density from the continued 
                     % observations - call this c_hat_dobs
