@@ -78,7 +78,7 @@ K = 25; h = 0.05;      % beta kernel estimation parameters
 NUM_DISCRETE_INTERVALS = 10;
 bntPath = '../bnt'; addpath(genpath(bntPath));
 mVec = 250:250:1000;
-copulaTypeVec_2D = {'Clayton', 'Gaussian'};
+copulaTypeVec_2D = {'Frank', 'Gaussian'};
 copulaTypeVec_3D = {'Gaussian'};
 copulaTypeVec_4D = {'Gaussian'};
 alphaVec = [1 10];
@@ -107,7 +107,8 @@ MULTINOMIAL_LL_MAT_IDX = 7;
 CBN_LL_MAT_IDX = 8;
 REF_LL_MAT_IDX = 9;
 
-continuousDistTypeVec = {'Gaussian', 'Uniform', 'Multimodal', 'ThickTailed'};
+% continuousDistTypeVec = {'Gaussian', 'Uniform', 'Multimodal', 'ThickTailed'};
+continuousDistTypeVec = {'ThickTailed'};
 numModelsCompared = 9;
 numMC = numMCSims;
 logFile = logFilename;
@@ -347,7 +348,7 @@ for copulaTypeVecIdx=1:length(copulaTypeVec_2D)
                 elseif(strcmp(continuousDistType, 'Gaussian'))
                     xContinuous = normrnd(2,0.5,2000,1);
                 elseif(strcmp(continuousDistType, 'ThickTailed'))
-                    xContinuous = trnd(1, 2000, 1);
+                    xContinuous = trnd(3, 2000, 1);
                 else
                     error('Unknown X2 Dist Type!');
                 end
@@ -763,7 +764,7 @@ for copulaTypeVecIdx=1:length(copulaTypeVec_3D)
                 elseif(strcmp(continuousDistType, 'Gaussian'))
                     xContinuous = normrnd(2,0.5,2000,1);
                 elseif(strcmp(continuousDistType, 'ThickTailed'))
-                    xContinuous = trnd(1, 2000, 1);
+                    xContinuous = trnd(3, 2000, 1);
                 else
                     error('Unknown X3 Dist Type!');
                 end
@@ -1282,7 +1283,7 @@ for copulaTypeVecIdx=1:length(copulaTypeVec_4D)
                 elseif(strcmp(continuousDistType, 'Gaussian'))
                     xContinuous = normrnd(2,0.5,2000,1);
                 elseif(strcmp(continuousDistType, 'ThickTailed'))
-                    xContinuous = trnd(1, 2000, 1);
+                    xContinuous = trnd(3, 2000, 1);
                 else
                     error('Unknown X4 Dist Type!');
                 end
@@ -1533,7 +1534,7 @@ for cdeCombinationsVecIdx=1:length(CDE_combinations)
                     elseif(strcmpi(marginalDistributionCombinations{ii},'Multimodal'))
                         xx = [normrnd(-2,0.3,empiricalDistSamples/2,1); normrnd(2,0.8,empiricalDistSamples/2,1)];
                     elseif(strcmpi(marginalDistributionCombinations{ii},'ThickTailed'))
-                        xx = trnd(1, empiricalDistSamples, 1);
+                        xx = trnd(3, empiricalDistSamples, 1);
                     end
                     xx = xx(randperm(empiricalDistSamples),:);     % permute for evenness of samples
                     
