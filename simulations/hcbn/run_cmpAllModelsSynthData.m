@@ -24,7 +24,17 @@
 clear;
 clc;
 numMCSims = 25;
-saveDir = 'C:\Users\Kiran\ownCloud\PhD\sim_results';
+if(ispc)
+    saveDir = 'C:\Users\Kiran\ownCloud\PhD\sim_results';
+    logFile = 'C:\Users\Kiran\Desktop\out.log';
+elseif(isunix)
+    saveDir = '/home/kiran/ownCloud/PhD/sim_results';
+    logFile = '/tmp/out.log';
+elseif(ismac)
+    saveDir = '/Users/kiran/ownCloud/PhD/sim_results';
+    logFile = '/tmp/out.log';
+else
+end
 
 %% D=2, CFG=1
 D = 2;
@@ -34,7 +44,7 @@ diary off;
 delete(fullfile(saveDir, 'd2_cfg1_25mc.log')); 
 diary(fullfile(saveDir, 'd2_cfg1_25mc.log')); 
 rng(12345); 
-[llMat, llVarMat, llBiasMat] = cmpAllModelsSynthData(D,numMCSims,cfg,'/tmp/out.log');
+[llMat, llVarMat, llBiasMat] = cmpAllModelsSynthData(D,numMCSims,cfg,logFile);
 % save the results off also
 save(fullfile(saveDir, 'd2_cfg1_25.mat'));
 
@@ -46,7 +56,7 @@ diary off;
 delete(fullfile(saveDir, 'd3_cfg1_25mc.log')); 
 diary(fullfile(saveDir, 'd3_cfg1_25mc.log')); 
 rng(12345); 
-[llMat, llVarMat, llBiasMat] = cmpAllModelsSynthData(D,numMCSims,cfg,'/tmp/out.log');
+[llMat, llVarMat, llBiasMat] = cmpAllModelsSynthData(D,numMCSims,cfg,logFile);
 % save the results off also
 save(fullfile(saveDir, 'd3_cfg1_25.mat'));
 
@@ -58,7 +68,7 @@ diary off;
 delete(fullfile(saveDir, 'd4_cfg1_25mc.log')); 
 diary(fullfile(saveDir, 'd4_cfg1_25mc.log')); 
 rng(12345); 
-[llMat, llVarMat, llBiasMat] = cmpAllModelsSynthData(D,numMCSims,cfg,'C:\Users\Kiran\Desktop\out.log');
+[llMat, llVarMat, llBiasMat] = cmpAllModelsSynthData(D,numMCSims,cfg,logFile);
 % save the results off also
 save(fullfile(saveDir, 'd4_cfg1_25.mat'));
 
@@ -70,6 +80,6 @@ diary off;
 delete(fullfile(saveDir, 'd5_cfg1_25mc.log')); 
 diary(fullfile(saveDir, 'd5_cfg1_25mc.log')); 
 rng(12345); 
-[llMat, llVarMat, llBiasMat] = cmpAllModelsSynthData(D,numMCSims,cfg,'C:\Users\Kiran\Desktop\out.log');
+[llMat, llVarMat, llBiasMat] = cmpAllModelsSynthData(D,numMCSims,cfg,logFile);
 % save the results off also
 save(fullfile(saveDir, 'd5_cfg1_25.mat'));

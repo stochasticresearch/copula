@@ -126,7 +126,7 @@ CDE_combinations{8} = {'Multimodal', 'Gaussian', 'Uniform'};
 
 C1C2C3_combinations = cell(1,2);
 C1C2C3_combinations{1} = {'Gaussian', 'Gaussian', 'Gaussian'};
-C1C2C3_combinations{2} = {'Clayton', 'Gaussian', 'Clayton'};
+C1C2C3_combinations{2} = {'Frank', 'Gaussian', 'Frank'};
 
 dependency_combinations = cell(1,4);
 dependency_combinations{1} = {'Strong', 'Strong', 'Strong'};
