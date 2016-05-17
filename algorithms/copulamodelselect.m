@@ -155,7 +155,9 @@ ADD_PROB = 0.001;
 % Computes the bivariate multinomial signature
 
 edges = ndgrid(linspace(0,1,K));
-multinomialBinnedIdxs = discretize(U, edges);
+% to be compatible w/ R2014b, we use histcounts instead of discretize :(
+% multinomialBinnedIdxs = discretize(U, edges);
+[~,~,multinomialBinnedIdxs] = histcounts(U, edges);
 
 % count how many times each combination occurs
 combos = combvec(1:K-1,1:K-1); combos = combos';
