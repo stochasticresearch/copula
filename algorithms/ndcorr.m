@@ -1,14 +1,17 @@
-function [corrcoef] = ndcorr(X, type)
+function [corrcoef, tieCorrectedCoefMat] = ndcorr(X, type)
 %NDCORR - compute the n-dimensional rank based correlation coefficient
 %based on the standard generalization given by:
 %      Friedrich Schmid and Rafael Schmidt. 
-%      Multivariate exten- sions of spearman?s rho and related statistics. 
+%      Multivariate extensions of Spearman's Rho and Related Statistics. 
 %      Statistics and Probability Letters, 77(4):407 ? 416, 2007.
 % Inputs:
 %  X - an M x D data matrix for which the generalized m-dimensional rank
 %      based correlation coefficient is desired.  M is the # of samples, D
 %      is the dimensionality
 %  type - should be either 'spearman' or 'kendall'
+% Outputs:
+%  corrcoef - the average of all the pair-wise correlations
+%  pairwiseCoeffsVec - a vector of all the pairwise correlations
 %**************************************************************************
 %* 
 %* Copyright (C) 2016  Kiran Karra <kiran.karra@gmail.com>
@@ -29,19 +32,25 @@ function [corrcoef] = ndcorr(X, type)
 %**************************************************************************
 
 [~,D] = size(X);
-% weight = 1/nchoosek(D,2);
-sRhoTieCorrectedVec = zeros(1,nchoosek(D,2));
+numUniquePossibilities = nchoosek(D,2);
+pairwiseCoeffsVec = zeros(1,numUniquePossibilities);
 
+sRhoTieCorrectedVecIdx = 1;
+tieCorrectedCoefMat = eye(D,D);
 if(strcmpi(type,'spearman'))
-    corrcoef = 0;
     for jj=1:D
         for ii=1:D
             if(ii<jj)
                 matrixSlice = [X(:,ii) X(:,jj)];
                 sRho = corr(X(:,ii),X(:,jj),'type','spearman');
                 sRhoTieCorrected = sRho/(12*sqrt(prod(var(matrixSlice))));
-%                 corrcoef = corrcoef + weight*sRhoTieCorrected;
-                sRhoTieCorrectedVec(sRhoTieCorrectedVecIdx) = sRhoTieCorrected;
+                pairwiseCoeffsVec(sRhoTieCorrectedVecIdx) = sRhoTieCorrected;
+                
+                % make a symmetric "correlation" matrix
+                tieCorrectedCoefMat(ii,jj) = sRhoTieCorrected;
+                tieCorrectedCoefMat(jj,ii) = sRhoTieCorrected;
+                
+                sRhoTieCorrectedVecIdx = sRhoTieCorrectedVecIdx + 1;
             end
         end
     end
@@ -51,16 +60,6 @@ else
     error('Unknown type argument specified!');
 end
 
-% if all sRho's are similar in magnitude, we assume that this is a
-% one-parameter archimedean copula so we just average all the
-% sRhoTieCorrected values.  
-% if there are sRho's that are significant then we assume that we have a 
-% multiparameter copula, so we just return the vector as-is in the form of 
-% a correlation matrix. Whether that correlation matrix is then used for a 
-% Gaussian copula, or something else is upto the user!
-
-% TODO: we need a statistically significant test for testing whether the
-% sRho's magnitude differences are significant enough to warrant deeming
-% this a multi-parameter copula rather than a single parameter copula.
+corrcoef = mean(pairwiseCoeffsVec);
 
 end

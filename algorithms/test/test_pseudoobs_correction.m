@@ -90,11 +90,11 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                         end
                         X_hybrid_continued = X_hybrid;
                         X_hybrid_continued(:,1) = continueRv(X_hybrid(:,1));
-
+                        
                         U_hybrid = pobs(X_hybrid);
                         U_hybrid_continued = pobs(X_hybrid_continued);
-                        sRho = ndcorr(U_hybrid, 'spearman');
-                        U_hybrid_continued_corrected = pobs(X_hybrid_continued, 'correction', sRho, correctionFactor);
+                        [~,sRhoMat] = ndcorr(U_hybrid, 'spearman');
+                        U_hybrid_continued_corrected = pobs(X_hybrid_continued, 'correction', sRhoMat, correctionFactor, [1]);
 
                         % estimate the copula w/ U_hybrid and
                         % U_hybrid_corrected
@@ -108,6 +108,7 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                         % TODO: store these
                     end
                     
+                    sRho = sRhoMat(1,2);
                     if(sRho>=0)
                         jamiexx = linspace(0,1,K);
                         jamieyy = sRho*jamiexx;

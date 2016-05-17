@@ -60,11 +60,12 @@ if(nVarargin>0)
         elseif(strcmpi(varargin{ii},'correction'))
             if(nVarargin>=ii+3)
                 correctionFlag = 1;
-                sRho = varargin{ii+1};
+                sRhoMat = varargin{ii+1};
+                sRhoMat
                 alpha = varargin{ii+2};
                 discreteIdxs = varargin{ii+3};
-                if(~isnumeric(sRho) || ~isnumeric(alpha))
-                    error('sRho and alpha must be numeric values!');
+                if(~isnumeric(alpha))
+                    error('alpha must be numeric values!');
                 end
                 ii = ii + 3;        % we gobbled those arguments, so fast-foward
             else
@@ -89,13 +90,35 @@ elseif(strcmpi(method,'ecdf'))
 end
 
 if(correctionFlag)
+    
+%     for jj=1:D
+%         for ii=1:D
+%             if(ii<jj)
+%                 % check which of these indices is discrete (if any)
+%                 pairwiseDiscreteIdxs = intersect( [ii jj], discreteIdxs );
+%                 if(~isempty(pairwiseDiscreteIdxs))
+%                     % get the pairwise correlation for this
+%                     sRho = sRhoMat(ii,jj);
+%                     % appropriately squeeze points
+%                     if(length(pairwiseDiscreteIdxs)==2)
+%                         % for now, we don't perform any squeezing if both
+%                         % the indices are discrete
+%                     else
+%                         
+%                     end
+%                 end
+%                 
+%             end
+%         end
+%     end
+    
     % TODO: generalize below for n-dimensional, right now only 2-d
-    if(sRho>=0)
+    if(sRhoMat(1,2)>=0)
         projectionPoints = repmat(U(:,1), 1, 2);
     else
         projectionPoints = [U(:,1) 1-U(:,1)];
     end
-    U_corrected = U + abs(sRho)*alpha*(projectionPoints-U);
+    U_corrected = U + abs(sRhoMat(1,2))*alpha*(projectionPoints-U);
     U = U_corrected;
 end
 
