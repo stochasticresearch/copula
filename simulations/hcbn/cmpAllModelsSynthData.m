@@ -115,25 +115,19 @@ numMC = numMCSims;
 logFile = logFilename;
 
 % enumerate all the possible combinations for the 5-D test
-CDE_combinations = cell(1,8);
+CDE_combinations = cell(1,4);
 CDE_combinations{1} = {'Gaussian', 'Gaussian', 'Gaussian'};
-CDE_combinations{2} = {'Uniform', 'Uniform', 'Uniform'};
-CDE_combinations{3} = {'Multimodal', 'Multimodal', 'Multimodal'};
-CDE_combinations{4} = {'ThickTailed', 'ThickTailed', 'ThickTailed'};
-CDE_combinations{5} = {'Multimodal', 'Uniform', 'Multimodal'};
-CDE_combinations{6} = {'Gaussian', 'Multimodal', 'Uniform'};
-CDE_combinations{7} = {'Uniform', 'Uniform', 'ThickTailed'};
-CDE_combinations{8} = {'Multimodal', 'Gaussian', 'Uniform'};
+CDE_combinations{2} = {'Multimodal', 'Uniform', 'Multimodal'};
+CDE_combinations{3} = {'Uniform', 'Uniform', 'ThickTailed'};
+CDE_combinations{4} = {'Multimodal', 'Gaussian', 'Uniform'};
 
 C1C2C3_combinations = cell(1,2);
 C1C2C3_combinations{1} = {'Gaussian', 'Gaussian', 'Gaussian'};
 C1C2C3_combinations{2} = {'Frank', 'Gaussian', 'Frank'};
 
-dependency_combinations = cell(1,4);
+dependency_combinations = cell(1,2);
 dependency_combinations{1} = {'Strong', 'Strong', 'Strong'};
-dependency_combinations{2} = {'Strong', 'Weak', 'Strong'};
-dependency_combinations{3} = {'Weak', 'Strong', 'Weak'};
-dependency_combinations{4} = {'Weak', 'Weak', 'Weak'};
+dependency_combinations{2} = {'Weak', 'Weak', 'Weak'};
 
 if(exist(logFile,'file')==2)
     % delete the file
