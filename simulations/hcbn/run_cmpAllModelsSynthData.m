@@ -83,3 +83,27 @@ rng(12345);
 [llMat, llVarMat, llBiasMat] = cmpAllModelsSynthData(D,numMCSims,cfg,logFile);
 % save the results off also
 save(fullfile(saveDir, 'd5_cfg1_25.mat'));
+
+%% D=5, CFG=3
+D = 5;
+cfg = 3;
+
+diary off;
+delete(fullfile(saveDir, 'd5_cfg3_25mc.log')); 
+diary(fullfile(saveDir, 'd5_cfg3_25mc.log')); 
+rng(12345); 
+[llMat, llVarMat, llBiasMat] = cmpAllModelsSynthData(D,numMCSims,cfg,logFile);
+% save the results off also
+save(fullfile(saveDir, 'd5_cfg3_25.mat'));
+
+%% D=5, CFG=5
+D = 5;
+cfg = 5;
+
+diary off;
+delete(fullfile(saveDir, 'd5_cfg5_25mc.log')); 
+diary(fullfile(saveDir, 'd5_cfg5_25mc.log')); 
+rng(12345); 
+[llMat, llVarMat, llBiasMat] = cmpAllModelsSynthData(D,numMCSims,cfg,logFile);
+% save the results off also
+save(fullfile(saveDir, 'd5_cfg5_25.mat'));

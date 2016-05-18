@@ -1,4 +1,4 @@
-function [llMat, llVarMat, llBiasMat] = cmpAllModelsSynthData( D, numMCSims, cfg, logFilename, plotOption )
+function [llMat, llVarMat, llBiasMat, llMCCell] = cmpAllModelsSynthData( D, numMCSims, cfg, logFilename, plotOption )
 %CMPALLMODELSSYNTHDATA - compares all the models for hybrid networks
 % (CLG, HCBN, MTE, [CBN], [MULTINOMIAL]) with synthetic data generated with
 % various different dependencies
@@ -139,68 +139,68 @@ switch D
     case 2
         switch cfg
             case 1
-                [llMat, llVarMat, llBiasMat] = runD2CFG1();
+                [llMat, llVarMat, llBiasMat, llMCCell] = runD2CFG1();
             case 2
-                [llMat, llVarMat, llBiasMat] = runD2CFG2();
+                [llMat, llVarMat, llBiasMat, llMCCell] = runD2CFG2();
             case 3
-                [llMat, llVarMat, llBiasMat] = runD2CFG3();
+                [llMat, llVarMat, llBiasMat, llMCCell] = runD2CFG3();
             case 4
-                [llMat, llVarMat, llBiasMat] = runD2CFG4();
+                [llMat, llVarMat, llBiasMat, llMCCell] = runD2CFG4();
             case 5      % BIAS/VARIANCE TEST CASE
-                [llMat, llVarMat, llBiasMat] = runD2CFG5();
+                [llMat, llVarMat, llBiasMat, llMCCell] = runD2CFG5();
             case 6      % BIAS/VARIANCE TEST CASE
-                [llMat, llVarMat, llBiasMat] = runD2CFG6();
+                [llMat, llVarMat, llBiasMat, llMCCell] = runD2CFG6();
             otherwise
                 error('CFG not valid for D=2!');
         end
     case 3
         switch cfg
             case 1
-                [llMat, llVarMat, llBiasMat] = runD3CFG1();
+                [llMat, llVarMat, llBiasMat, llMCCell] = runD3CFG1();
             case 2
-                [llMat, llVarMat, llBiasMat] = runD3CFG2();
+                [llMat, llVarMat, llBiasMat, llMCCell] = runD3CFG2();
             case 3
-                [llMat, llVarMat, llBiasMat] = runD3CFG3();
+                [llMat, llVarMat, llBiasMat, llMCCell] = runD3CFG3();
             case 4
-                [llMat, llVarMat, llBiasMat] = runD3CFG4();
+                [llMat, llVarMat, llBiasMat, llMCCell] = runD3CFG4();
             case 5      % BIAS/VARIANCE TEST CASE
-                [llMat, llVarMat, llBiasMat] = runD3CFG5();
+                [llMat, llVarMat, llBiasMat, llMCCell] = runD3CFG5();
             case 6      % BIAS/VARIANCE TEST CASE
-                [llMat, llVarMat, llBiasMat] = runD3CFG6();
+                [llMat, llVarMat, llBiasMat, llMCCell] = runD3CFG6();
             otherwise
                 error('CFG not valid for D=3!');
         end
         case 4
             switch cfg
                 case 1
-                    [llMat, llVarMat, llBiasMat] = runD4CFG1();
+                    [llMat, llVarMat, llBiasMat, llMCCell] = runD4CFG1();
                 case 2
-                    [llMat, llVarMat, llBiasMat] = runD4CFG2();
+                    [llMat, llVarMat, llBiasMat, llMCCell] = runD4CFG2();
                 case 3
-                    [llMat, llVarMat, llBiasMat] = runD4CFG3();
+                    [llMat, llVarMat, llBiasMat, llMCCell] = runD4CFG3();
                 case 4
-                    [llMat, llVarMat, llBiasMat] = runD4CFG4();
+                    [llMat, llVarMat, llBiasMat, llMCCell] = runD4CFG4();
                 case 5      % BIAS/VARIANCE TEST CASE
-                    [llMat, llVarMat, llBiasMat] = runD4CFG5();
+                    [llMat, llVarMat, llBiasMat, llMCCell] = runD4CFG5();
                 case 6      % BIAS/VARIANCE TEST CASE
-                    [llMat, llVarMat, llBiasMat] = runD4CFG6();
+                    [llMat, llVarMat, llBiasMat, llMCCell] = runD4CFG6();
                 otherwise
                     error('CFG not valid for D=4!');
             end
     case 5
         switch cfg
             case 1
-                [llMat, llVarMat, llBiasMat] = runD5CFG1();
+                [llMat, llVarMat, llBiasMat, llMCCell] = runD5CFG1();
             case 2
-                [llMat, llVarMat, llBiasMat] = runD5CFG2();
+                [llMat, llVarMat, llBiasMat, llMCCell] = runD5CFG2();
             case 3
-                [llMat, llVarMat, llBiasMat] = runD5CFG3();
+                [llMat, llVarMat, llBiasMat, llMCCell] = runD5CFG3();
             case 4
-                [llMat, llVarMat, llBiasMat] = runD5CFG4();
+                [llMat, llVarMat, llBiasMat, llMCCell] = runD5CFG4();
             case 5      % BIAS/VARIANCE TEST CASE
-                [llMat, llVarMat, llBiasMat] = runD5CFG5();
+                [llMat, llVarMat, llBiasMat, llMCCell] = runD5CFG5();
             case 6      % BIAS/VARIANCE TEST CASE
-                [llMat, llVarMat, llBiasMat] = runD5CFG6();
+                [llMat, llVarMat, llBiasMat, llMCCell] = runD5CFG6();
             otherwise
                 error('CFG not valid for D=5!');
         end
@@ -210,44 +210,44 @@ end
 
 end
 
-function [llMat, llVarMat, llBiasMat] = runD2CFG1()
+function [llMat, llVarMat, llBiasMat, llMCCell] = runD2CFG1()
 % runD2CFG2 - the multinomial probabilities are skewed right
 probs = [0.5 0.5];
-[llMat, llVarMat, llBiasMat] = runD2(probs);
+[llMat, llVarMat, llBiasMat, llMCCell] = runD2(probs);
 end
 
-function [llMat, llVarMat, llBiasMat] = runD2CFG2()
+function [llMat, llVarMat, llBiasMat, llMCCell] = runD2CFG2()
 % runD2CFG2 - the multinomial probabilities are skewed left
 probs = [0.7 0.3];
-[llMat, llVarMat, llBiasMat] = runD2(probs);
+[llMat, llVarMat, llBiasMat, llMCCell] = runD2(probs);
 end
 
-function [llMat, llVarMat, llBiasMat] = runD2CFG3()
+function [llMat, llVarMat, llBiasMat, llMCCell] = runD2CFG3()
 % runD2CFG1 - the multinomial probabilities are evenly distributed
 probs = [0.25 0.25 0.25 0.25];
-[llMat, llVarMat, llBiasMat] = runD2(probs);
+[llMat, llVarMat, llBiasMat, llMCCell] = runD2(probs);
 end
 
-function [llMat, llVarMat, llBiasMat] = runD2CFG4()
+function [llMat, llVarMat, llBiasMat, llMCCell] = runD2CFG4()
 % runD2CFG2 - the multinomial probabilities are skewed left
 probs = [0.5 0.3 0.1 0.1];
-[llMat, llVarMat, llBiasMat] = runD2(probs);
+[llMat, llVarMat, llBiasMat, llMCCell] = runD2(probs);
 end
 
-function [llMat, llVarMat, llBiasMat] = runD2CFG5()
+function [llMat, llVarMat, llBiasMat, llMCCell] = runD2CFG5()
 % runD2CFG2 - the multinomial probabilities are uniformly distributed
 numElem = 10;
 probs = 1/numElem*ones(1,numElem);
-[llMat, llVarMat, llBiasMat] = runD2(probs);
+[llMat, llVarMat, llBiasMat, llMCCell] = runD2(probs);
 end
 
-function [llMat, llVarMat, llBiasMat] = runD2CFG6()
+function [llMat, llVarMat, llBiasMat, llMCCell] = runD2CFG6()
 % runD2CFG2 - the multinomial probabilities are skewed left
 probs = [.25 .2 .15 .1 .05 .05 .05 .05 .05 .05];
-[llMat, llVarMat, llBiasMat] = runD2(probs);
+[llMat, llVarMat, llBiasMat, llMCCell] = runD2(probs);
 end
 
-function [llMat, llVarMat, llBiasMat] = runD2(a_probs)
+function [llMat, llVarMat, llBiasMat, llMCCell] = runD2(a_probs)
 global mVec copulaTypeVec_2D alphaVec RhoVecs_2D continuousDistTypeVec 
 global numModelsCompared numMC bntPath logFile K h
 global plotFlag numTest
@@ -283,6 +283,11 @@ llBiasMat = zeros(length(copulaTypeVec_2D),...
               length(alphaVec),...
               length(mVec),...
               numModelsCompared);
+llMCCell = cell(length(CDE_combinations),...
+              length(C1C2C3_combinations),...
+              length(dependency_combinations),...
+              length(mVec),...
+              1);
           
 fid = fopen(logFile, 'a');
 dispstat('','init'); % One time only initialization
@@ -627,16 +632,18 @@ for copulaTypeVecIdx=1:length(copulaTypeVec_2D)
                         continuousDistTypeVecIdx,...
                         alphaVecIdx,...
                         mVecIdx,:) = meanLLDivMCMat(:);
-                     
                 llVarMat(copulaTypeVecIdx, ...
                          continuousDistTypeVecIdx,...
                          alphaVecIdx,...
                          mVecIdx,:) = varLLDivMCMat(:);
-                     
                 llBiasMat(copulaTypeVecIdx, ...
                           continuousDistTypeVecIdx,...
                           alphaVecIdx,...
-                          mVecIdx,:) = biasLLDivMCMat(:);
+                          mVecIdx,:) = biasLLDivMCMat(:);  
+                llMCCell{cdeCombinationsVecIdx, ...
+                     c1c2c3CombinationsVecIdx,...
+                     dependencyCombinationsVecIdx,...
+                     mVecIdx,1} = llMCMat;
                 %%%%%%%%%%% END OF MAIN SIMULATION CODE %%%%%%%%%%
             end
         end
@@ -648,51 +655,51 @@ fclose(fid);
 
 end
 
-function [llMat, llVarMat, llBiasMat] = runD3CFG1()
+function [llMat, llVarMat, llBiasMat, llMCCell] = runD3CFG1()
 % runD2CFG2 - the multinomial probabilities are skewed right
 probsA = [0.5 0.5];
 probsB = [0.5 0.5];
-[llMat, llVarMat, llBiasMat] = runD3(probsA, probsB);
+[llMat, llVarMat, llBiasMat, llMCCell] = runD3(probsA, probsB);
 end
 
-function [llMat, llVarMat, llBiasMat] = runD3CFG2()
+function [llMat, llVarMat, llBiasMat, llMCCell] = runD3CFG2()
 % runD2CFG2 - the multinomial probabilities are skewed right and left
 % oppositely
 probsA = [0.3 0.7];
 probsB = fliplr([0.3 0.7]);
-[llMat, llVarMat, llBiasMat] = runD3(probsA, probsB);
+[llMat, llVarMat, llBiasMat, llMCCell] = runD3(probsA, probsB);
 end
 
-function [llMat, llVarMat, llBiasMat] = runD3CFG3()
+function [llMat, llVarMat, llBiasMat, llMCCell] = runD3CFG3()
 % runD2CFG1 - the multinomial probabilities are evenly distributed
 probsA = [0.25 0.25 0.25 0.25];
 probsB = [0.25 0.25 0.25 0.25];
-[llMat, llVarMat, llBiasMat] = runD3(probsA, probsB);
+[llMat, llVarMat, llBiasMat, llMCCell] = runD3(probsA, probsB);
 end
 
-function [llMat, llVarMat, llBiasMat] = runD3CFG4()
+function [llMat, llVarMat, llBiasMat, llMCCell] = runD3CFG4()
 % runD2CFG2 - the multinomial probabilities are skewed left and right
 % oppositely
 probsA = [0.5 0.3 0.1 0.1];
 probsB = fliplr([0.5 0.3 0.1 0.1]);
-[llMat, llVarMat, llBiasMat] = runD3(probsA, probsB);
+[llMat, llVarMat, llBiasMat, llMCCell] = runD3(probsA, probsB);
 end
 
-function [llMat, llVarMat, llBiasMat] = runD3CFG5()
+function [llMat, llVarMat, llBiasMat, llMCCell] = runD3CFG5()
 % runD2CFG1 - the multinomial probabilities are evenly distributed
 probsA = .1*ones(1,10);
 probsB = .1*ones(1,10);
-[llMat, llVarMat, llBiasMat] = runD3(probsA, probsB);
+[llMat, llVarMat, llBiasMat, llMCCell] = runD3(probsA, probsB);
 end
 
-function [llMat, llVarMat, llBiasMat] = runD3CFG6()
+function [llMat, llVarMat, llBiasMat, llMCCell] = runD3CFG6()
 % runD2CFG1 - both multinomial probabilities are skewed left & right
 probsA = [.25 .2 .15 .1 .05 .05 .05 .05 .05 .05];
 probsB = fliplr([.25 .2 .15 .1 .05 .05 .05 .05 .05 .05]);
-[llMat, llVarMat, llBiasMat] = runD3(probsA, probsB);
+[llMat, llVarMat, llBiasMat, llMCCell] = runD3(probsA, probsB);
 end
 
-function [llMat, llVarMat, llBiasMat] = runD3(a_probs, b_probs)
+function [llMat, llVarMat, llBiasMat, llMCCell] = runD3(a_probs, b_probs)
 global mVec copulaTypeVec_3D alphaVec RhoVecs_3D continuousDistTypeVec 
 global numModelsCompared numMC bntPath logFile K h plotFlag numTest
 global HCBN_LL_MAT_IDX MTE_LL_MAT_IDX CLG_LL_MAT_IDX REF_LL_MAT_IDX
@@ -729,6 +736,11 @@ llBiasMat = zeros(length(copulaTypeVec_3D),...
               length(alphaVec),...
               length(mVec),...
               numModelsCompared);
+llMCCell = cell(length(CDE_combinations),...
+              length(C1C2C3_combinations),...
+              length(dependency_combinations),...
+              length(mVec),...
+              1);
           
 fid = fopen(logFile, 'a');
 dispstat('','init'); % One time only initialization
@@ -1151,16 +1163,18 @@ for copulaTypeVecIdx=1:length(copulaTypeVec_3D)
                         continuousDistTypeVecIdx,...
                         alphaVecIdx,...
                         mVecIdx,:) = meanLLDivMCMat(:);
-                     
                 llVarMat(copulaTypeVecIdx, ...
                          continuousDistTypeVecIdx,...
                          alphaVecIdx,...
                          mVecIdx,:) = varLLDivMCMat(:);
-                     
                 llBiasMat(copulaTypeVecIdx, ...
                           continuousDistTypeVecIdx,...
                           alphaVecIdx,...
-                          mVecIdx,:) = biasLLDivMCMat(:);
+                          mVecIdx,:) = biasLLDivMCMat(:);  
+                llMCCell{cdeCombinationsVecIdx, ...
+                     c1c2c3CombinationsVecIdx,...
+                     dependencyCombinationsVecIdx,...
+                     mVecIdx,1} = llMCMat;
             end
         end
     end
@@ -1168,55 +1182,55 @@ end
 
 end
 
-function [llMat, llVarMat, llBiasMat] = runD4CFG1()
+function [llMat, llVarMat, llBiasMat, llMCCell] = runD4CFG1()
 % runD2CFG1 - the multinomial probabilities are evenly distributed
 probsA = [0.5 0.5];
 probsB = [0.5 0.5];
 probsC = [0.5 0.5];
-[llMat, llVarMat, llBiasMat] = runD4(probsA, probsB, probsC);
+[llMat, llVarMat, llBiasMat, llMCCell] = runD4(probsA, probsB, probsC);
 end
 
-function [llMat, llVarMat, llBiasMat] = runD4CFG2()
+function [llMat, llVarMat, llBiasMat, llMCCell] = runD4CFG2()
 % runD2CFG1 - the multinomial probabilities are evenly distributed
 probsA = [0.7 0.3];
 probsB = [0.5 0.5];
 probsC = [0.3 0.7];
-[llMat, llVarMat, llBiasMat] = runD4(probsA, probsB, probsC);
+[llMat, llVarMat, llBiasMat, llMCCell] = runD4(probsA, probsB, probsC);
 end
 
-function [llMat, llVarMat, llBiasMat] = runD4CFG3()
+function [llMat, llVarMat, llBiasMat, llMCCell] = runD4CFG3()
 % runD2CFG1 - the multinomial probabilities are evenly distributed
 probsA = [0.25 0.25 0.25 0.25];
 probsB = [0.25 0.25 0.25 0.25];
 probsC = [0.25 0.25 0.25 0.25];
-[llMat, llVarMat, llBiasMat] = runD4(probsA, probsB, probsC);
+[llMat, llVarMat, llBiasMat, llMCCell] = runD4(probsA, probsB, probsC);
 end
 
-function [llMat, llVarMat, llBiasMat] = runD4CFG4()
+function [llMat, llVarMat, llBiasMat, llMCCell] = runD4CFG4()
 % runD2CFG2 - the multinomial probabilities are skewed left
 probsA = [0.5 0.3 0.1 0.1];
 probsB = [0.5 0.3 0.1 0.1];
 probsC = fliplr([0.5 0.3 0.1 0.1]);
-[llMat, llVarMat, llBiasMat] = runD4(probsA, probsB, probsC);
+[llMat, llVarMat, llBiasMat, llMCCell] = runD4(probsA, probsB, probsC);
 end
 
-function [llMat, llVarMat, llBiasMat] = runD4CFG5()
+function [llMat, llVarMat, llBiasMat, llMCCell] = runD4CFG5()
 % runD2CFG1 - the multinomial probabilities are evenly distributed
 probsA = .1*ones(1,10);
 probsB = .1*ones(1,10);
 probsC = .1*ones(1,10);
-[llMat, llVarMat, llBiasMat] = runD4(probsA, probsB, probsC);
+[llMat, llVarMat, llBiasMat, llMCCell] = runD4(probsA, probsB, probsC);
 end
 
-function [llMat, llVarMat, llBiasMat] = runD4CFG6()
+function [llMat, llVarMat, llBiasMat, llMCCell] = runD4CFG6()
 % runD2CFG1 - both multinomial probabilities are skewed left & right
 probsA = [.25 .2 .15 .1 .05 .05 .05 .05 .05 .05];
 probsB = fliplr([.25 .2 .15 .1 .05 .05 .05 .05 .05 .05]);
 probsC = [.25 .2 .15 .1 .05 .05 .05 .05 .05 .05];
-[llMat, llVarMat, llBiasMat] = runD4(probsA, probsB, probsC);
+[llMat, llVarMat, llBiasMat, llMCCell] = runD4(probsA, probsB, probsC);
 end
 
-function [llMat, llVarMat, llBiasMat] = runD4(a_probs, b_probs, c_probs)
+function [llMat, llVarMat, llBiasMat, llMCCell] = runD4(a_probs, b_probs, c_probs)
 global mVec copulaTypeVec_4D alphaVec RhoVecs_4D continuousDistTypeVec 
 global numModelsCompared numMC bntPath logFile K h numTest
 global HCBN_LL_MAT_IDX MTE_LL_MAT_IDX CLG_LL_MAT_IDX REF_LL_MAT_IDX
@@ -1255,6 +1269,11 @@ llBiasMat = zeros(length(copulaTypeVec_4D),...
               length(alphaVec),...
               length(mVec),...
               numModelsCompared);
+llMCCell = cell(length(CDE_combinations),...
+              length(C1C2C3_combinations),...
+              length(dependency_combinations),...
+              length(mVec),...
+              1);
           
 fid = fopen(logFile, 'a');
 dispstat('','init'); % One time only initialization
@@ -1425,16 +1444,18 @@ for copulaTypeVecIdx=1:length(copulaTypeVec_4D)
                         continuousDistTypeVecIdx,...
                         alphaVecIdx,...
                         mVecIdx,:) = meanLLDivMCMat(:);
-                     
                 llVarMat(copulaTypeVecIdx, ...
                          continuousDistTypeVecIdx,...
                          alphaVecIdx,...
                          mVecIdx,:) = varLLDivMCMat(:);
-                     
                 llBiasMat(copulaTypeVecIdx, ...
                           continuousDistTypeVecIdx,...
                           alphaVecIdx,...
-                          mVecIdx,:) = biasLLDivMCMat(:);
+                          mVecIdx,:) = biasLLDivMCMat(:);  
+                llMCCell{cdeCombinationsVecIdx, ...
+                     c1c2c3CombinationsVecIdx,...
+                     dependencyCombinationsVecIdx,...
+                     mVecIdx,1} = llMCMat;
             end
         end
     end
@@ -1442,51 +1463,51 @@ end
 
 end
 
-function [llMat, llVarMat, llBiasMat] = runD5CFG1()
+function [llMat, llVarMat, llBiasMat, llMCCell] = runD5CFG1()
 % runD2CFG2 - the multinomial probabilities are skewed right
 probsA = [0.5 0.5];
 probsB = [0.5 0.5];
-[llMat, llVarMat, llBiasMat] = runD5(probsA, probsB);
+[llMat, llVarMat, llBiasMat, llMCCell] = runD5(probsA, probsB);
 end
 
-function [llMat, llVarMat, llBiasMat] = runD5CFG2()
+function [llMat, llVarMat, llBiasMat, llMCCell] = runD5CFG2()
 % runD2CFG2 - the multinomial probabilities are skewed right and left
 % oppositely
 probsA = [0.3 0.7];
 probsB = fliplr([0.3 0.7]);
-[llMat, llVarMat, llBiasMat] = runD5(probsA, probsB);
+[llMat, llVarMat, llBiasMat, llMCCell] = runD5(probsA, probsB);
 end
 
-function [llMat, llVarMat, llBiasMat] = runD5CFG3()
+function [llMat, llVarMat, llBiasMat, llMCCell] = runD5CFG3()
 % runD2CFG1 - the multinomial probabilities are evenly distributed
 probsA = [0.25 0.25 0.25 0.25];
 probsB = [0.25 0.25 0.25 0.25];
-[llMat, llVarMat, llBiasMat] = runD5(probsA, probsB);
+[llMat, llVarMat, llBiasMat, llMCCell] = runD5(probsA, probsB);
 end
 
-function [llMat, llVarMat, llBiasMat] = runD5CFG4()
+function [llMat, llVarMat, llBiasMat, llMCCell] = runD5CFG4()
 % runD2CFG2 - the multinomial probabilities are skewed left and right
 % oppositely
 probsA = [0.5 0.3 0.1 0.1];
 probsB = fliplr([0.5 0.3 0.1 0.1]);
-[llMat, llVarMat, llBiasMat] = runD5(probsA, probsB);
+[llMat, llVarMat, llBiasMat, llMCCell] = runD5(probsA, probsB);
 end
 
-function [llMat, llVarMat, llBiasMat] = runD5CFG5()
+function [llMat, llVarMat, llBiasMat, llMCCell] = runD5CFG5()
 % runD2CFG1 - the multinomial probabilities are evenly distributed
 probsA = .1*ones(1,10);
 probsB = .1*ones(1,10);
-[llMat, llVarMat, llBiasMat] = runD5(probsA, probsB);
+[llMat, llVarMat, llBiasMat, llMCCell] = runD5(probsA, probsB);
 end
 
-function [llMat, llVarMat, llBiasMat] = runD5CFG6()
+function [llMat, llVarMat, llBiasMat, llMCCell] = runD5CFG6()
 % runD2CFG1 - both multinomial probabilities are skewed left & right
 probsA = [.25 .2 .15 .1 .05 .05 .05 .05 .05 .05];
 probsB = fliplr([.25 .2 .15 .1 .05 .05 .05 .05 .05 .05]);
-[llMat, llVarMat, llBiasMat] = runD5(probsA, probsB);
+[llMat, llVarMat, llBiasMat, llMCCell] = runD5(probsA, probsB);
 end
 
-function [llMat, llVarMat, llBiasMat] = runD5(a_probs, b_probs)
+function [llMat, llVarMat, llBiasMat, llMCCell] = runD5(a_probs, b_probs)
 global mVec
 global numModelsCompared numMC bntPath logFile K h numTest
 global HCBN_LL_MAT_IDX MTE_LL_MAT_IDX CLG_LL_MAT_IDX REF_LL_MAT_IDX
@@ -1524,6 +1545,11 @@ llBiasMat = zeros(length(CDE_combinations),...
               length(dependency_combinations),...
               length(mVec),...
               numModelsCompared);
+llMCCell = cell(length(CDE_combinations),...
+              length(C1C2C3_combinations),...
+              length(dependency_combinations),...
+              length(mVec),...
+              1);
           
 fid = fopen(logFile, 'a');
 dispstat('','init'); % One time only initialization
@@ -1600,9 +1626,9 @@ for cdeCombinationsVecIdx=1:length(CDE_combinations)
                 
                 % compute actual copula's, which will be used for reference
                 % likelihood calculations
-                % compute c1 - either Frank or Clayton copula
-                if(strcmpi(c1c2c3Types{1},'Clayton'))    
-                    c1 = reshape(claytoncopulapdf([U1_2(:) U2_2(:)], dep_C1), K, K);
+                % compute c1 - Frank copula
+                if(strcmpi(c1c2c3Types{1},'Frank'))    
+                    c1 = reshape(frankcopulapdf([U1_2(:) U2_2(:)], dep_C1), K, K);
                 elseif(strcmpi(c1c2c3Types{1},'Gaussian'))
                     c1 = reshape(copulapdf('Gaussian', [U1_2(:) U2_2(:)], dep_C1), K, K);
                 else
@@ -1611,9 +1637,9 @@ for cdeCombinationsVecIdx=1:length(CDE_combinations)
                 % compute c2 - always Gaussian
                 c2 = reshape(copulapdf('Gaussian', [U1_3(:) U2_3(:) U3_3(:)], dep_C2), K, K, K);
                 c2_parents = reshape(copulapdf('Gaussian', [U1_2(:) U2_2(:)], dep_C2(1:2,1:2)), K, K);
-                % compute c3 - either Frank or Clayton copula
-                if(strcmpi(c1c2c3Types{3},'Clayton'))    
-                    c3 = reshape(claytoncopulapdf([U1_2(:) U2_2(:)], dep_C3), K, K);
+                % compute c3 - Frank copula
+                if(strcmpi(c1c2c3Types{3},'Frank'))    
+                    c3 = reshape(frankcopulapdf([U1_2(:) U2_2(:)], dep_C3), K, K);
                 elseif(strcmpi(c1c2c3Types{3},'Gaussian'))
                     c3 = reshape(copulapdf('Gaussian', [U1_2(:) U2_2(:)], dep_C3), K, K);
                 else
@@ -1667,8 +1693,8 @@ for cdeCombinationsVecIdx=1:length(CDE_combinations)
                     % generate U_C1
                     u1 = U_C2(:,1);
                     p = rand(M+numTest,1);
-                    if(strcmpi(c1c2c3Types{1},'Clayton'))    
-                        U_C1_2 = u1.*(p.^(-dep_C1./(1+dep_C1)) - 1 + u1.^dep_C1).^(-1./dep_C1);
+                    if(strcmpi(c1c2c3Types{1},'Frank'))    
+                        U_C1_2 = -log((exp(-dep_C1.*u1).*(1-p)./p + exp(-dep_C1))./(1 + exp(-dep_C1.*u1).*(1-p)./p))./dep_C1;
                     elseif(strcmpi(c1c2c3Types{1},'Gaussian'))
                         x1 = norminv(u1, 0, 1);
                         U = chol(dep_C1,'upper');
@@ -1681,8 +1707,8 @@ for cdeCombinationsVecIdx=1:length(CDE_combinations)
                     % generate U_C3
                     u1 = U_C2(:,2);
                     p = rand(M+numTest,1);
-                    if(strcmpi(c1c2c3Types{3},'Clayton'))
-                        U_C3_2 = u1.*(p.^(-dep_C3./(1+dep_C3)) - 1 + u1.^dep_C3).^(-1./dep_C3);
+                    if(strcmpi(c1c2c3Types{3},'Frank'))
+                        U_C3_2 = -log((exp(-dep_C3.*u1).*(1-p)./p + exp(-dep_C3))./(1 + exp(-dep_C3.*u1).*(1-p)./p))./dep_C3;
                     elseif(strcmpi(c1c2c3Types{3},'Gaussian'))
                         x1 = norminv(u1, 0, 1);
                         U = chol(dep_C3,'upper');
@@ -1844,7 +1870,6 @@ for cdeCombinationsVecIdx=1:length(CDE_combinations)
                      c1c2c3CombinationsVecIdx,...
                      dependencyCombinationsVecIdx,...
                      mVecIdx,:) = meanLLDivMCMat(:);
-                     
                 llVarMat(cdeCombinationsVecIdx, ...
                      c1c2c3CombinationsVecIdx,...
                      dependencyCombinationsVecIdx,...
@@ -1852,7 +1877,11 @@ for cdeCombinationsVecIdx=1:length(CDE_combinations)
                 llBiasMat(cdeCombinationsVecIdx, ...
                      c1c2c3CombinationsVecIdx,...
                      dependencyCombinationsVecIdx,...
-                     mVecIdx,:) = biasLLDivMCMat(:);     
+                     mVecIdx,:) = biasLLDivMCMat(:);  
+                llMCCell{cdeCombinationsVecIdx, ...
+                     c1c2c3CombinationsVecIdx,...
+                     dependencyCombinationsVecIdx,...
+                     mVecIdx,1} = llMCMat;
             end
         end
     end
