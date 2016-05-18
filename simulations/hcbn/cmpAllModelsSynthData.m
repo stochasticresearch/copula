@@ -107,8 +107,7 @@ MULTINOMIAL_LL_MAT_IDX = 7;
 CBN_LL_MAT_IDX = 8;
 REF_LL_MAT_IDX = 9;
 
-% continuousDistTypeVec = {'Gaussian', 'Uniform', 'Multimodal', 'ThickTailed'};
-continuousDistTypeVec = {'ThickTailed'};
+continuousDistTypeVec = {'Gaussian', 'Uniform', 'Multimodal', 'ThickTailed'};
 numModelsCompared = 9;
 numMC = numMCSims;
 logFile = logFilename;
