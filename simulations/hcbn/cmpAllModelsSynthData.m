@@ -63,9 +63,10 @@ global copulaTypeVec_4D RhoVecs_4D
 global numModelsCompared numMC bntPath logFile K h continuousDistTypeVec
 global plotFlag numTest
 global HCBN_LL_MAT_IDX MTE_LL_MAT_IDX CLG_LL_MAT_IDX MULTINOMIAL_LL_MAT_IDX 
-global CBN_LL_MAT_IDX REF_LL_MAT_IDX
+global CBN_LL_MAT_IDX CBN_GAUSSIAN_LL_MAT_IDX REF_LL_MAT_IDX 
 global NUM_DISCRETE_INTERVALS
-global HCBN_DEBUGALL_LL_MAT_IDX HCBN_DEBUGCOPULA_LL_MAT_IDX HCBN_DEBUGEMPINFO_LL_MAT_IDX
+global HCBN_DEBUGALL_LL_MAT_IDX HCBN_DEBUGCOPULA_LL_MAT_IDX 
+global HCBN_DEBUGEMPINFO_LL_MAT_IDX
 global CDE_combinations C1C2C3_combinations dependency_combinations
 
 if(nargin>4)
@@ -105,10 +106,11 @@ MTE_LL_MAT_IDX = 5;
 CLG_LL_MAT_IDX = 6;
 MULTINOMIAL_LL_MAT_IDX = 7;
 CBN_LL_MAT_IDX = 8;
-REF_LL_MAT_IDX = 9;
+CBN_GAUSSIAN_LL_MAT_IDX = 9;
+REF_LL_MAT_IDX = 10;
 
 continuousDistTypeVec = {'Gaussian', 'Uniform', 'Multimodal', 'ThickTailed'};
-numModelsCompared = 9;
+numModelsCompared = 10;
 numMC = numMCSims;
 logFile = logFilename;
 
@@ -257,7 +259,8 @@ global numModelsCompared numMC bntPath logFile K h
 global plotFlag numTest
 global HCBN_LL_MAT_IDX MTE_LL_MAT_IDX CLG_LL_MAT_IDX REF_LL_MAT_IDX
 global MULTINOMIAL_LL_MAT_IDX NUM_DISCRETE_INTERVALS CBN_LL_MAT_IDX
-global HCBN_DEBUGALL_LL_MAT_IDX HCBN_DEBUGCOPULA_LL_MAT_IDX HCBN_DEBUGEMPINFO_LL_MAT_IDX
+global HCBN_DEBUGALL_LL_MAT_IDX HCBN_DEBUGCOPULA_LL_MAT_IDX 
+global CBN_GAUSSIAN_LL_MAT_IDX HCBN_DEBUGEMPINFO_LL_MAT_IDX
 
 a_dist = makedist('Multinomial','Probabilities',a_probs);
 
@@ -398,6 +401,7 @@ for copulaTypeVecIdx=1:length(copulaTypeVec_2D)
                     clgbnObj = clgbn(X_hybrid, discreteNodes, dag);
                     multinomialbnObj = multinomialbn(X_hybrid, discreteNodes, dag, NUM_DISCRETE_INTERVALS);
                     cbnObj = cbn(bntPath, X_hybrid, nodeNames, dag);
+                    cbnGaussianObj = cbn(bntPath, X_hybrid, nodeNames, dag, 1);
 
                     X_hybrid_continued = X_hybrid;
                     X_hybrid_continued(:,1) = continueRv(X_hybrid(:,1));
@@ -574,6 +578,7 @@ for copulaTypeVecIdx=1:length(copulaTypeVec_2D)
                     clgLL = clgbnObj.dataLogLikelihood(X_hybrid_test);
                     multinomialLL = multinomialbnObj.dataLogLikelihood(X_hybrid_test);
                     cbnLL = cbnObj.dataLogLikelihood(X_hybrid_test);
+                    cbnGaussianLL = cbnGaussianObj.dataLogLikelihood(X_hybrid_test);
                     
                     % assign LL values to matrix
                     llMCMat(HCBN_LL_MAT_IDX,mcSimNum) = hcbnLL;
@@ -585,6 +590,7 @@ for copulaTypeVecIdx=1:length(copulaTypeVec_2D)
                     llMCMat(MULTINOMIAL_LL_MAT_IDX,mcSimNum) = multinomialLL;
                     llMCMat(REF_LL_MAT_IDX,mcSimNum) = refLL;
                     llMCMat(CBN_LL_MAT_IDX,mcSimNum) = cbnLL;
+                    llMCMat(CBN_GAUSSIAN_LL_MAT_IDX,mcSimNum) = cbnGaussianLL;
                     
                     progressIdx = progressIdx + 1;
                 end
@@ -606,6 +612,9 @@ for copulaTypeVecIdx=1:length(copulaTypeVec_2D)
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
                 progressStr = sprintf('MEAN{cbn}=%f VAR{cbn}=%f BIAS{cbn}=%f', ...
                     meanLLDivMCMat(CBN_LL_MAT_IDX), varLLDivMCMat(CBN_LL_MAT_IDX), biasLLDivMCMat(CBN_LL_MAT_IDX));
+                dispstat(progressStr,'timestamp','keepthis','timestamp');
+                progressStr = sprintf('MEAN{cbnGaussian}=%f VAR{cbnGaussian}=%f BIAS{cbnGaussian}=%f', ...
+                    meanLLDivMCMat(CBN_GAUSSIAN_LL_MAT_IDX), varLLDivMCMat(CBN_GAUSSIAN_LL_MAT_IDX), biasLLDivMCMat(CBN_GAUSSIAN_LL_MAT_IDX));
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
                 progressStr = sprintf('MEAN{mte}=%f VAR{mte}=%f BIAS{mte}=%f', ...
                     meanLLDivMCMat(MTE_LL_MAT_IDX), varLLDivMCMat(MTE_LL_MAT_IDX), biasLLDivMCMat(MTE_LL_MAT_IDX));
@@ -695,6 +704,7 @@ global numModelsCompared numMC bntPath logFile K h plotFlag numTest
 global HCBN_LL_MAT_IDX MTE_LL_MAT_IDX CLG_LL_MAT_IDX REF_LL_MAT_IDX
 global MULTINOMIAL_LL_MAT_IDX NUM_DISCRETE_INTERVALS CBN_LL_MAT_IDX
 global HCBN_DEBUGALL_LL_MAT_IDX HCBN_DEBUGCOPULA_LL_MAT_IDX HCBN_DEBUGEMPINFO_LL_MAT_IDX
+global CBN_GAUSSIAN_LL_MAT_IDX
 
 a_dist = makedist('Multinomial','Probabilities', a_probs);
 b_dist = makedist('Multinomial','Probabilities', b_probs);
@@ -843,6 +853,7 @@ for copulaTypeVecIdx=1:length(copulaTypeVec_3D)
                     clgbnObj = clgbn(X_hybrid, discreteNodes, dag);
                     multinomialbnObj = multinomialbn(X_hybrid, discreteNodes, dag, NUM_DISCRETE_INTERVALS);
                     cbnObj = cbn(bntPath, X_hybrid, nodeNames, dag);
+                    cbnGaussianObj = cbn(bntPath, X_hybrid, nodeNames, dag, 1);
                     
                     X_hybrid_continued = X_hybrid;
                     X_hybrid_continued(:,1) = continueRv(X_hybrid(:,1));
@@ -1086,6 +1097,7 @@ for copulaTypeVecIdx=1:length(copulaTypeVec_3D)
                     clgLL = clgbnObj.dataLogLikelihood(X_hybrid_test);
                     multinomialLL = multinomialbnObj.dataLogLikelihood(X_hybrid_test);
                     cbnLL = cbnObj.dataLogLikelihood(X_hybrid_test);
+                    cbnGaussianLL = cbnGaussianObj.dataLogLikelihood(X_hybrid_test);
                     
                     if(any(isnan([hcbnLL mteLL clgLL multinomialLL cbnLL])))
                         1;      % interactive debugging
@@ -1100,6 +1112,7 @@ for copulaTypeVecIdx=1:length(copulaTypeVec_3D)
                     llMCMat(CLG_LL_MAT_IDX,mcSimNum) = clgLL;
                     llMCMat(MULTINOMIAL_LL_MAT_IDX,mcSimNum) = multinomialLL;
                     llMCMat(CBN_LL_MAT_IDX,mcSimNum) = cbnLL;
+                    llMCMat(CBN_GAUSSIAN_LL_MAT_IDX,mcSimNum) = cbnGaussianLL;
                     llMCMat(REF_LL_MAT_IDX,mcSimNum) = refLL;
                     
                     progressIdx = progressIdx + 1;
@@ -1123,6 +1136,9 @@ for copulaTypeVecIdx=1:length(copulaTypeVec_3D)
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
                 progressStr = sprintf('MEAN{cbn}=%f VAR{cbn}=%f BIAS{cbn}=%f', ...
                     meanLLDivMCMat(CBN_LL_MAT_IDX), varLLDivMCMat(CBN_LL_MAT_IDX), biasLLDivMCMat(CBN_LL_MAT_IDX));
+                dispstat(progressStr,'timestamp','keepthis','timestamp');
+                progressStr = sprintf('MEAN{cbnGaussian}=%f VAR{cbnGaussian}=%f BIAS{cbnGaussian}=%f', ...
+                    meanLLDivMCMat(CBN_GAUSSIAN_LL_MAT_IDX), varLLDivMCMat(CBN_GAUSSIAN_LL_MAT_IDX), biasLLDivMCMat(CBN_GAUSSIAN_LL_MAT_IDX));
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
                 progressStr = sprintf('MEAN{mte}=%f VAR{mte}=%f BIAS{mte}=%f', ...
                     meanLLDivMCMat(MTE_LL_MAT_IDX), varLLDivMCMat(MTE_LL_MAT_IDX), biasLLDivMCMat(MTE_LL_MAT_IDX));
@@ -1212,6 +1228,7 @@ global numModelsCompared numMC bntPath logFile K h numTest
 global HCBN_LL_MAT_IDX MTE_LL_MAT_IDX CLG_LL_MAT_IDX REF_LL_MAT_IDX
 global MULTINOMIAL_LL_MAT_IDX NUM_DISCRETE_INTERVALS CBN_LL_MAT_IDX
 global HCBN_DEBUGALL_LL_MAT_IDX HCBN_DEBUGCOPULA_LL_MAT_IDX HCBN_DEBUGEMPINFO_LL_MAT_IDX
+global CBN_GAUSSIAN_LL_MAT_IDX
 
 a_dist = makedist('Multinomial','Probabilities', a_probs);
 b_dist = makedist('Multinomial','Probabilities', b_probs);
@@ -1340,6 +1357,7 @@ for copulaTypeVecIdx=1:length(copulaTypeVec_4D)
                     clgbnObj = clgbn(X_hybrid, discreteNodes, dag);
                     multinomialbnObj = multinomialbn(X_hybrid, discreteNodes, dag, NUM_DISCRETE_INTERVALS);
                     cbnObj = cbn(bntPath, X_hybrid, nodeNames, dag);
+                    cbnGaussianObj = cbn(bntPath, X_hybrid, nodeNames, dag, 1);
                     
                     %%%%%%%%%%%%%%%%%%%%%%%
                     
@@ -1352,6 +1370,7 @@ for copulaTypeVecIdx=1:length(copulaTypeVec_4D)
                     clgLL = clgbnObj.dataLogLikelihood(X_hybrid_test);
                     multinomialLL = multinomialbnObj.dataLogLikelihood(X_hybrid_test);
                     cbnLL = cbnObj.dataLogLikelihood(X_hybrid_test);
+                    cbnGaussianLL = cbnGaussianObj.dataLogLikelihood(X_hybrid_test);
                     
                     if(any(isnan([hcbnLL mteLL clgLL multinomialLL cbnLL])))
                         1;      % interactive debugging
@@ -1366,6 +1385,7 @@ for copulaTypeVecIdx=1:length(copulaTypeVec_4D)
                     llMCMat(CLG_LL_MAT_IDX,mcSimNum) = clgLL;
                     llMCMat(MULTINOMIAL_LL_MAT_IDX,mcSimNum) = multinomialLL;
                     llMCMat(CBN_LL_MAT_IDX,mcSimNum) = cbnLL;
+                    llMCMat(CBN_GAUSSIAN_LL_MAT_IDX,mcSimNum) = cbnGaussianLL;
                     llMCMat(REF_LL_MAT_IDX,mcSimNum) = hcbnDebugAllLL;      % WARNING -- we are using HCBN_DEBUG as REFERENCE!
                                                                             % ENSURE SANITY OF RESULTS BY HAND
                     
@@ -1391,6 +1411,9 @@ for copulaTypeVecIdx=1:length(copulaTypeVec_4D)
                 progressStr = sprintf('MEAN{cbn}=%f VAR{cbn}=%f BIAS{cbn}=%f', ...
                     meanLLDivMCMat(CBN_LL_MAT_IDX), varLLDivMCMat(CBN_LL_MAT_IDX), biasLLDivMCMat(CBN_LL_MAT_IDX));
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
+                progressStr = sprintf('MEAN{cbnGaussian}=%f VAR{cbnGaussian}=%f BIAS{cbnGaussian}=%f', ...
+                    meanLLDivMCMat(CBN_GAUSSIAN_LL_MAT_IDX), varLLDivMCMat(CBN_GAUSSIAN_LL_MAT_IDX), biasLLDivMCMat(CBN_GAUSSIAN_LL_MAT_IDX));
+                dispstat(progressStr,'timestamp','keepthis','timestamp');
                 progressStr = sprintf('MEAN{mte}=%f VAR{mte}=%f BIAS{mte}=%f', ...
                     meanLLDivMCMat(MTE_LL_MAT_IDX), varLLDivMCMat(MTE_LL_MAT_IDX), biasLLDivMCMat(MTE_LL_MAT_IDX));
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
@@ -1399,6 +1422,9 @@ for copulaTypeVecIdx=1:length(copulaTypeVec_4D)
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
                 progressStr = sprintf('MEAN{multinomial}=%f VAR{multinomial}=%f BIAS{multinomial}=%f', ...
                     meanLLDivMCMat(MULTINOMIAL_LL_MAT_IDX), varLLDivMCMat(MULTINOMIAL_LL_MAT_IDX), biasLLDivMCMat(MULTINOMIAL_LL_MAT_IDX));
+                dispstat(progressStr,'timestamp','keepthis','timestamp');
+                progressStr = sprintf('mean{hcbnDebug}==mean{ref}=%d\n', ...
+                    abs(meanLLDivMCMat(HCBN_DEBUGALL_LL_MAT_IDX)-meanLLDivMCMat(REF_LL_MAT_IDX)) < .1 );
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
                 
                 llMat(copulaTypeVecIdx, ...
@@ -1473,6 +1499,7 @@ global HCBN_LL_MAT_IDX MTE_LL_MAT_IDX CLG_LL_MAT_IDX REF_LL_MAT_IDX
 global MULTINOMIAL_LL_MAT_IDX NUM_DISCRETE_INTERVALS CBN_LL_MAT_IDX
 global CDE_combinations C1C2C3_combinations dependency_combinations
 global HCBN_DEBUGALL_LL_MAT_IDX HCBN_DEBUGCOPULA_LL_MAT_IDX HCBN_DEBUGEMPINFO_LL_MAT_IDX
+global CBN_GAUSSIAN_LL_MAT_IDX
 
 a_dist = makedist('Multinomial','Probabilities', a_probs);
 b_dist = makedist('Multinomial','Probabilities', b_probs);
@@ -1701,6 +1728,7 @@ for cdeCombinationsVecIdx=1:length(CDE_combinations)
                     clgbnObj = clgbn(X_hybrid, discreteNodes, dag);
                     multinomialbnObj = multinomialbn(X_hybrid, discreteNodes, dag, NUM_DISCRETE_INTERVALS);
                     cbnObj = cbn(bntPath, X_hybrid, nodeNames, dag);
+                    cbnGaussianObj = cbn(bntPath, X_hybrid, nodeNames, dag, 1);
                     
                     % compute the reference likelihood
                     refLL = 0;
@@ -1765,6 +1793,7 @@ for cdeCombinationsVecIdx=1:length(CDE_combinations)
                     clgLL = clgbnObj.dataLogLikelihood(X_hybrid_test);
                     multinomialLL = multinomialbnObj.dataLogLikelihood(X_hybrid_test);
                     cbnLL = cbnObj.dataLogLikelihood(X_hybrid_test);
+                    cbnGaussianLL = cbnGaussianObj.dataLogLikelihood(X_hybrid_test);
                     
                     % assign LL values to matrix
                     llMCMat(HCBN_LL_MAT_IDX,mcSimNum) = hcbnLL;
@@ -1775,6 +1804,7 @@ for cdeCombinationsVecIdx=1:length(CDE_combinations)
                     llMCMat(CLG_LL_MAT_IDX,mcSimNum) = clgLL;
                     llMCMat(MULTINOMIAL_LL_MAT_IDX,mcSimNum) = multinomialLL;
                     llMCMat(CBN_LL_MAT_IDX,mcSimNum) = cbnLL;
+                    llMCMat(CBN_GAUSSIAN_LL_MAT_IDX,mcSimNum) = cbnGaussianLL;
                     llMCMat(REF_LL_MAT_IDX,mcSimNum) = refLL;
                     
                     progressIdx = progressIdx + 1;
@@ -1799,6 +1829,9 @@ for cdeCombinationsVecIdx=1:length(CDE_combinations)
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
                 progressStr = sprintf('MEAN{cbn}=%f VAR{cbn}=%f BIAS{cbn}=%f', ...
                     meanLLDivMCMat(CBN_LL_MAT_IDX), varLLDivMCMat(CBN_LL_MAT_IDX), biasLLDivMCMat(CBN_LL_MAT_IDX));
+                dispstat(progressStr,'timestamp','keepthis','timestamp');
+                progressStr = sprintf('MEAN{cbnGaussian}=%f VAR{cbnGaussian}=%f BIAS{cbnGaussian}=%f', ...
+                    meanLLDivMCMat(CBN_GAUSSIAN_LL_MAT_IDX), varLLDivMCMat(CBN_GAUSSIAN_LL_MAT_IDX), biasLLDivMCMat(CBN_GAUSSIAN_LL_MAT_IDX));
                 dispstat(progressStr,'timestamp','keepthis','timestamp');
                 progressStr = sprintf('MEAN{mte}=%f VAR{mte}=%f BIAS{mte}=%f', ...
                     meanLLDivMCMat(MTE_LL_MAT_IDX), varLLDivMCMat(MTE_LL_MAT_IDX), biasLLDivMCMat(MTE_LL_MAT_IDX));

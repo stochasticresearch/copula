@@ -42,6 +42,8 @@ classdef cbn < handle
                         % with nodeNames{nodeVals{i}}
         X;          % an M x D matrix of the observable data.  This can be
                     % considered the "training" data.
+        disableModelSelectFlag;  % Forces only Gaussian copula's to be used
+                                 % by disabling copula model selection
                     
         LOG_CUTOFF;
         PSEUDO_OBS_CALC_METHOD;     % should be either RANK or ECDF
@@ -91,6 +93,9 @@ classdef cbn < handle
                     error('Specified DAG is not acyclic!\n');
                 end
                 obj.setDag(candidateDag);
+            end
+            if(nVarargs>1)
+                obj.disableModelSelectFlag = varargin{2};
             end
         end
         
@@ -184,7 +189,7 @@ classdef cbn < handle
                     U_parents = U_in(:,2:end);
                     
                     % estimate the best copula for the family
-                    if(size(U_in,2)>2)
+                    if(obj.disableModelSelectFlag || size(U_in,2)>2)
                         % force the Gaussian Copula here, b/c it is the
                         % only parametric model we have for situations
                         % where D>2
