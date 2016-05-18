@@ -85,6 +85,7 @@ classdef cbn < handle
             obj.X = X;
             
             obj.calcEmpInfo();
+            obj.disableModelSelectFlag = 0;
             
             nVarargs = length(varargin);
             if(nVarargs>0)
@@ -189,7 +190,7 @@ classdef cbn < handle
                     U_parents = U_in(:,2:end);
                     
                     % estimate the best copula for the family
-                    if(obj.disableModelSelectFlag || size(U_in,2)>2)
+                    if(obj.disableModelSelectFlag || (size(U_in,2)>2))
                         % force the Gaussian Copula here, b/c it is the
                         % only parametric model we have for situations
                         % where D>2
