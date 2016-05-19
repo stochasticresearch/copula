@@ -41,96 +41,93 @@ D = 2;
 cfg = 1;
 
 diary off;
-delete(fullfile(saveDir, 'd2_cfg1_25mc.log')); 
-diary(fullfile(saveDir, 'd2_cfg1_25mc.log')); 
+delete(fullfile(saveDir, 'd2_cfg1_25mc_K25.log')); 
+diary(fullfile(saveDir, 'd2_cfg1_25mc_K25.log')); 
 rng(12345); 
 [llMat, llVarMat, llBiasMat, llMCCell] = cmpAllModelsSynthData(D,numMCSims,cfg,logFile);
 % save the results off also
-save(fullfile(saveDir, 'd2_cfg1_25.mat'));
+save(fullfile(saveDir, 'd2_cfg1_25mc_K25.mat'));
 
 %% D=2, CFG=3
 D = 2;
 cfg = 3;
 
 diary off;
-delete(fullfile(saveDir, 'd2_cfg3_25mc.log')); 
-diary(fullfile(saveDir, 'd2_cfg3_25mc.log')); 
+delete(fullfile(saveDir, 'd2_cfg3_25mc_K25.log')); 
+diary(fullfile(saveDir, 'd2_cfg3_25mc_K25.log')); 
 rng(12345); 
 [llMat, llVarMat, llBiasMat, llMCCell] = cmpAllModelsSynthData(D,numMCSims,cfg,logFile);
 % save the results off also
-save(fullfile(saveDir, 'd2_cfg3_25.mat'));
+save(fullfile(saveDir, 'd2_cfg3_25mc_K25.mat'));
 
 %% D=2, CFG=7
 D = 2;
 cfg = 7;
 
 diary off;
-delete(fullfile(saveDir, 'd2_cfg7_25mc.log')); 
-diary(fullfile(saveDir, 'd2_cfg7_25mc.log')); 
+delete(fullfile(saveDir, 'd2_cfg7_25mc_K25.log')); 
+diary(fullfile(saveDir, 'd2_cfg7_25mc_K25.log')); 
 rng(12345); 
 
 % WARNING - use K=50 for cfg=7!
 
 [llMat, llVarMat, llBiasMat, llMCCell] = cmpAllModelsSynthData(D,numMCSims,cfg,logFile, 0, 250);
 % save the results off also
-save(fullfile(saveDir, 'd2_cfg7_25.mat'));
+save(fullfile(saveDir, 'd2_cfg7_25mc_K50.mat'));
 
 %% D=3, CFG=1
 D = 3;
 cfg = 1;
 
 diary off;
-delete(fullfile(saveDir, 'd3_cfg1_25mc.log')); 
-diary(fullfile(saveDir, 'd3_cfg1_25mc.log')); 
+delete(fullfile(saveDir, 'd3_cfg1_25mc_K25.log')); 
+diary(fullfile(saveDir, 'd3_cfg1_25mc_K25.log')); 
 rng(12345); 
 [llMat, llVarMat, llBiasMat, llMCCell] = cmpAllModelsSynthData(D,numMCSims,cfg,logFile);
 % save the results off also
-save(fullfile(saveDir, 'd3_cfg1_25.mat'));
+save(fullfile(saveDir, 'd3_cfg1_25mc_K25.mat'));
 
 %% D=4, CFG=1
 D = 4;
 cfg = 1;
 
 diary off;
-delete(fullfile(saveDir, 'd4_cfg1_25mc.log')); 
-diary(fullfile(saveDir, 'd4_cfg1_25mc.log')); 
+delete(fullfile(saveDir, 'd4_cfg1_25mc_K25.log')); 
+diary(fullfile(saveDir, 'd4_cfg1_25mc_K25.log')); 
 rng(12345); 
 [llMat, llVarMat, llBiasMat, llMCCell] = cmpAllModelsSynthData(D,numMCSims,cfg,logFile);
 % save the results off also
-save(fullfile(saveDir, 'd4_cfg1_25.mat'));
+save(fullfile(saveDir, 'd4_cfg1_25mc_K25.mat'));
 
 %% D=5, CFG=1
 D = 5;
 cfg = 1;
 
 diary off;
-delete(fullfile(saveDir, 'd5_cfg1_25mc.log')); 
-diary(fullfile(saveDir, 'd5_cfg1_25mc.log')); 
+delete(fullfile(saveDir, 'd5_cfg1_25mc_K25.log')); 
+diary(fullfile(saveDir, 'd5_cfg1_25mc_K25.log')); 
 rng(12345); 
 [llMat, llVarMat, llBiasMat, llMCCell] = cmpAllModelsSynthData(D,numMCSims,cfg,logFile);
 % save the results off also
-save(fullfile(saveDir, 'd5_cfg1_25.mat'));
+save(fullfile(saveDir, 'd5_cfg1_25mc_K25.mat'));
 
 %% D=5, CFG=3
 D = 5;
 cfg = 3;
 
 diary off;
-delete(fullfile(saveDir, 'd5_cfg3_25mc.log')); 
-diary(fullfile(saveDir, 'd5_cfg3_25mc.log')); 
+delete(fullfile(saveDir, 'd5_cfg3_25mc_K25.log')); 
+diary(fullfile(saveDir, 'd5_cfg3_25mc_K25.log')); 
 rng(12345); 
 [llMat, llVarMat, llBiasMat, llMCCell] = cmpAllModelsSynthData(D,numMCSims,cfg,logFile);
 % save the results off also
-save(fullfile(saveDir, 'd5_cfg3_25.mat'));
+save(fullfile(saveDir, 'd5_cfg3_25mc_K25.mat'));
 
 %% D=5, CFG=5
 D = 5;
 cfg = 5;
 
 diary off;
-delete(fullfile(saveDir, 'd5_cfg5_25mc.log')); 
-diary(fullfile(saveDir, 'd5_cfg5_25mc.log')); 
 rng(12345); 
 [llMat, llVarMat, llBiasMat, llMCCell] = cmpAllModelsSynthData(D,numMCSims,cfg,logFile);
 % save the results off also
-save(fullfile(saveDir, 'd5_cfg5_25.mat'));
