@@ -56,7 +56,7 @@ diary off;
 delete(fullfile(saveDir, 'd2_cfg7_25mc.log')); 
 diary(fullfile(saveDir, 'd2_cfg7_25mc.log')); 
 rng(12345); 
-[llMat, llVarMat, llBiasMat, llMCCell] = cmpAllModelsSynthData(D,numMCSims,cfg,logFile);
+[llMat, llVarMat, llBiasMat, llMCCell] = cmpAllModelsSynthData(D,numMCSims,cfg,logFile, 0, 250);
 % save the results off also
 save(fullfile(saveDir, 'd2_cfg7_25.mat'));
 
