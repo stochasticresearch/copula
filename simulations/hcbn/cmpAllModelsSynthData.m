@@ -81,7 +81,7 @@ else
 end
 
 
-K = 25; h = 0.05;      % beta kernel estimation parameters
+K = 50; h = 0.05;      % beta kernel estimation parameters
 NUM_DISCRETE_INTERVALS = 10;
 bntPath = '../bnt'; addpath(genpath(bntPath));
 
@@ -90,8 +90,8 @@ copulaTypeVec_3D = {'Gaussian'};
 copulaTypeVec_4D = {'Gaussian'};
 alphaVec = [1 10];
 RhoVecs_2D = cell(1,length(alphaVec)); 
-RhoVecs_2D{1} = [1 -0.9; -0.9 1]; RhoVecs_2D{2} = [1 -0.65; -0.65 1];
-RhoVecs_2D{3} = [1 0.35; 0.35 1]; RhoVecs_2D{4} = [1 0.1; 0.1 1];
+RhoVecs_2D{1} = [1 0.1; 0.1 1]; RhoVecs_2D{2} = [1 -0.9; -0.9 1]; 
+RhoVecs_2D{3} = [1 0.35; 0.35 1]; RhoVecs_2D{4} = [1 -0.65; -0.65 1];
 RhoVecs_3D = cell(1,length(alphaVec));
 RhoVecs_3D{1} = [1 0 .2; 0 1 -.8; .2 -.8 1];
 RhoVecs_3D{2} = [1 0 .3; 0 1 -.6; .3 -.6 1];

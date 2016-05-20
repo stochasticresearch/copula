@@ -65,8 +65,8 @@ D = 2;
 cfg = 7;
 
 diary off;
-delete(fullfile(saveDir, 'd2_cfg7_25mc_K25.log')); 
-diary(fullfile(saveDir, 'd2_cfg7_25mc_K25.log')); 
+delete(fullfile(saveDir, 'd2_cfg7_25mc_K50.log')); 
+diary(fullfile(saveDir, 'd2_cfg7_25mc_K50.log')); 
 rng(12345); 
 
 % WARNING - use K=50 for cfg=7!

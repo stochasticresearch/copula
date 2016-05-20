@@ -50,37 +50,122 @@ CBN_GAUSSIAN_LL_MAT_IDX = 9;
 REF_LL_MAT_IDX = 10;
 
 %% Pathological Variance Case D=2
-load(fullfile(saveDir, 'd2_cfg7_25.mat'));
+load(fullfile(saveDir, 'd2_cfg7_25mc_K50.mat'));
 
 absBias = abs(llBiasMat);
 
 copulaTypeVec_2D = {'Frank', 'Gaussian'};
 alphaVec = [1 10];
-continuousDistTypeVec = {'Gaussian', 'Uniform', 'Multimodal', 'ThickTailed'};
-mVec = 250;
 
 % we have too much data to present effectively :(, we will suffice by
 % averaging over different classes and presenting those results :(
+absBias = squeeze(mean(absBias,2));     % idx2 = continuous dist type, 
+                                        % so we are averaging over all 
+                                        % different types of distributions 
+                                        % for X2
+                                        % the squeeze takes out the M
+                                        % dimension, which is singular for
+                                        % the pathological test case we
+                                        % present
+stdDevBias = squeeze(mean(sqrt(llVarMat),2));
 
-
-
-x = 1:length(copulaTypeVec_2D)*length(alphaVec)*length(continuousDistTypeVec)*length(mVec);
-y = [];
+x = 1:length(copulaTypeVec_2D)*length(alphaVec);
+y_bias = [];
+y_stddev = [];
 for copulaTypeVecIdx=1:length(copulaTypeVec_2D)
-    for continuousDistTypeVecIdx=1:length(continuousDistTypeVec)
-        for alphaVecIdx=1:length(alphaVec)
-            for mVecIdx=1:length(mVec)
-                copulaType = copulaTypeVec_2D{copulaTypeVecIdx};
-                continuousDistType = continuousDistTypeVec{continuousDistTypeVecIdx};
-                M = mVec(mVecIdx);
-                
-                y_tmp = [absBias(copulaTypeVecIdx,continuousDistTypeVecIdx,alphaVecIdx,mVecIdx,HCBN_LL_MAT_IDX), ...
-                         absBias(copulaTypeVecIdx,continuousDistTypeVecIdx,alphaVecIdx,mVecIdx,MTE_LL_MAT_IDX), ...
-                         absBias(copulaTypeVecIdx,continuousDistTypeVecIdx,alphaVecIdx,mVecIdx,CLG_LL_MAT_IDX), ...
-                         absBias(copulaTypeVecIdx,continuousDistTypeVecIdx,alphaVecIdx,mVecIdx,MULTINOMIAL_LL_MAT_IDX), ...
-                         absBias(copulaTypeVecIdx,continuousDistTypeVecIdx,alphaVecIdx,mVecIdx,CBN_LL_MAT_IDX) ];
-                y = [y; y_tmp];
-            end
-        end
+    for alphaVecIdx=1:length(alphaVec)
+            y_tmp_bias = [absBias(copulaTypeVecIdx,alphaVecIdx,HCBN_LL_MAT_IDX), ...
+                          absBias(copulaTypeVecIdx,alphaVecIdx,MTE_LL_MAT_IDX), ...
+                          absBias(copulaTypeVecIdx,alphaVecIdx,CLG_LL_MAT_IDX), ...
+                          absBias(copulaTypeVecIdx,alphaVecIdx,MULTINOMIAL_LL_MAT_IDX), ...
+                          absBias(copulaTypeVecIdx,alphaVecIdx,CBN_LL_MAT_IDX) ];
+            y_tmp_stddev =  [stdDevBias(copulaTypeVecIdx,alphaVecIdx,HCBN_LL_MAT_IDX), ...
+                          stdDevBias(copulaTypeVecIdx,alphaVecIdx,MTE_LL_MAT_IDX), ...
+                          stdDevBias(copulaTypeVecIdx,alphaVecIdx,CLG_LL_MAT_IDX), ...
+                          stdDevBias(copulaTypeVecIdx,alphaVecIdx,MULTINOMIAL_LL_MAT_IDX), ...
+                          stdDevBias(copulaTypeVecIdx,alphaVecIdx,CBN_LL_MAT_IDX) ];
+                      
+            y_bias = [y_bias; y_tmp_bias];
+            y_stddev  = [y_stddev;  y_tmp_stddev];
     end
 end
+
+% generate the plot
+width = 1;
+groupnames = {'NonLinear Weak Dependency', 'NonLinear Strong Dependency', ...
+              'Linear Weak Dependency', 'Linear Strong Dependency'};
+bw_title = '2-D Pathological Case';
+bw_xlabel = [];
+bw_ylabel = 'Bias';
+bw_colormap = [];
+gridstatus = 'xy';
+bw_legend = {'HCBN', 'MTE', 'CLG', 'Multinomial', 'CBN'};
+error_sides = 2;        % change to 1 if you want 1-sided error-bars, but doesn't seem to work properly
+legend_type = 'plot';
+barweb(y_bias,y_stddev,width,groupnames,bw_title, bw_xlabel, bw_ylabel, ...
+       bw_colormap, gridstatus, bw_legend, error_sides, legend_type);
+   
+%% Make plots for D=5, CFG1
+
+%% Make Plots for D=5, CFG3
+load(fullfile(saveDir, 'd5_cfg3_25mc_K25.mat'));
+numCDECombinations = 4;
+numC1C2C3Combinations = 2;
+numDependencyCombinations = 2;
+numMVec = 4;
+
+absBias = abs(llBiasMat);
+absBias = squeeze(mean(absBias,1));     % average over all C/D/E combinations
+stddevBias = squeeze(mean(sqrt(llVarMat),1));
+
+y_bias = cell(1,numC1C2C3Combinations*numDependencyCombinations);
+y_stddev = cell(1,numC1C2C3Combinations*numDependencyCombinations);
+
+y_tmp_idx = 1;
+for ii=1:numC1C2C3Combinations
+    for jj=1:numDependencyCombinations
+        y_tmp_bias = zeros(numMVec,5);       % we will compare 4 models
+        y_tmp_stddev  = zeros(numMVec,5);       % we will compare 4 models
+        for kk=1:numMVec
+            y_tmp_bias(kk,:) = [absBias(ii,jj,kk,HCBN_LL_MAT_IDX), ...
+                                       absBias(ii,jj,kk,MTE_LL_MAT_IDX), ...
+                                       absBias(ii,jj,kk,CLG_LL_MAT_IDX), ...
+                                       absBias(ii,jj,kk,MULTINOMIAL_LL_MAT_IDX), ...
+                                       absBias(ii,jj,kk,CBN_LL_MAT_IDX)];
+            y_tmp_stddev(kk,:)  = [stddevBias(ii,jj,kk,HCBN_LL_MAT_IDX), ...
+                                   stddevBias(ii,jj,kk,MTE_LL_MAT_IDX), ...
+                                   stddevBias(ii,jj,kk,CLG_LL_MAT_IDX), ...
+                                   stddevBias(ii,jj,kk,MULTINOMIAL_LL_MAT_IDX), ...
+                                   stddevBias(ii,jj,kk,CBN_LL_MAT_IDX)];
+                                   
+        end
+        y_bias{y_tmp_idx} = y_tmp_bias;
+        y_stddev{y_tmp_idx}  = y_tmp_stddev;
+        y_tmp_idx = y_tmp_idx + 1;
+    end
+end
+
+% define plot options
+width = 1;
+groupnames = {'M=250', 'M=500', 'M=750', 'M=1000'};
+bw_title = [];
+bw_xlabel = [];
+bw_ylabel = 'Bias';
+bw_colormap = parula;
+gridstatus = 'xy';
+bw_legend = {'HCBN', 'MTE', 'CLG', 'Multinomial', 'CBN'};
+error_sides = 2;        % change to 1 if you want 1-sided error-bars, but doesn't seem to work properly
+legend_type = 'plot';
+dependencyCombos = {'Strong Linear Dependency', 'Weak Linear Dependency', ...
+                    'Strong Non-Linear Dependency', 'Weak Non-Linear Dependency'};
+for kk=1:numC1C2C3Combinations*numDependencyCombinations
+    subplot(2,2,kk);
+    bw_title = sprintf('%s',dependencyCombos{kk});
+    barweb(y_bias{kk},y_stddev{kk},width,groupnames,bw_title, bw_xlabel, bw_ylabel, ...
+       bw_colormap, gridstatus, bw_legend, error_sides, legend_type);
+    
+end
+
+%% Make Plots for D=5, CFG5
+
+%% Plots for D=5, CFG 1/3/5 combined
