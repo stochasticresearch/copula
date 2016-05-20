@@ -1,4 +1,7 @@
-function handles = barweb(barvalues, errors, width, groupnames, bw_title, bw_xlabel, bw_ylabel, bw_colormap, gridstatus, bw_legend, error_sides, legend_type)
+function handles = barweb(barvalues, errors, width, groupnames, ...
+                          bw_title, bw_xlabel, bw_ylabel, bw_colormap, ...
+                          gridstatus, bw_legend, error_sides, legend_type, ...
+                          legendTextSize, labelTextSize, groupTextSize)
 
 %
 % Usage: handles = barweb(barvalues, errors, width, groupnames, bw_title, bw_xlabel, bw_ylabel, bw_colormap, gridstatus, bw_legend, error_sides, legend_type)
@@ -39,6 +42,8 @@ function handles = barweb(barvalues, errors, width, groupnames, bw_title, bw_xla
 % Created: October 18, 2005 (ver 1.0)
 % Updated: Dec 07, 2006 (ver 2.1)
 % Updated: July 21, 2008 (ver 2.3)
+
+fprintf('nargin=%d\n', nargin);
 
 % Get function arguments
 if nargin < 2
@@ -108,7 +113,17 @@ elseif nargin == 10
 	legend_type = 'plot';
 elseif nargin == 11
 	legend_type = 'plot';
+elseif nargin == 12
+    legendTextSize = 12;
+    labelTextSize = 14;
+    groupTextSize = 12;
+elseif nargin==13
+    labelTextSize = 14;
+    groupTextSize = 12;
+elseif nargin==14
+    groupTextSize = 12;
 end
+
 
 change_axis = 0;
 ymax = 0;
@@ -173,23 +188,23 @@ else
 		for i = 1:numbars
 			xdata = get(handles.errors(i),'xdata');
 			for j = 1:length(xdata)
-				text(xdata(j),  -0.03*ymax*1.1, bw_legend(i), 'Rotation', 60, 'fontsize', 12, 'HorizontalAlignment', 'right');
+				text(xdata(j),  -0.03*ymax*1.1, bw_legend(i), 'Rotation', 60, 'fontsize', legendTextSize, 'HorizontalAlignment', 'right');
 			end
 		end
 		set(gca,'xaxislocation','top');
 	end
 	
 	if ~isempty(bw_title)
-		title(bw_title, 'fontsize',14);
+		title(bw_title, 'fontsize',labelTextSize);
 	end
 	if ~isempty(bw_xlabel)
-		xlabel(bw_xlabel, 'fontsize',14);
+		xlabel(bw_xlabel, 'fontsize',labelTextSize);
 	end
 	if ~isempty(bw_ylabel)
-		ylabel(bw_ylabel, 'fontsize',14);
+		ylabel(bw_ylabel, 'fontsize',labelTextSize);
 	end
 	
-	set(gca, 'xticklabel', groupnames, 'box', 'off', 'ticklength', [0 0], 'fontsize', 12, 'xtick',1:numgroups, 'linewidth', 2,'xgrid','off','ygrid','off');
+	set(gca, 'xticklabel', groupnames, 'box', 'off', 'ticklength', [0 0], 'fontsize', groupTextSize, 'xtick',1:numgroups, 'linewidth', 2,'xgrid','off','ygrid','off');
 	if ~isempty(gridstatus) && any(gridstatus == 'x')
 		set(gca,'xgrid','on');
 	end

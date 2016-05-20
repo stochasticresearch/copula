@@ -29,11 +29,11 @@ clc;
 if(ispc)
     saveDir = 'C:\Users\Kiran\ownCloud\PhD\sim_results';
     logFile = 'C:\Users\Kiran\Desktop\out.log';
-elseif(isunix)
-    saveDir = '/home/kiran/ownCloud/PhD/sim_results';
-    logFile = '/tmp/out.log';
 elseif(ismac)
     saveDir = '/Users/kiran/ownCloud/PhD/sim_results';
+    logFile = '/tmp/out.log';
+elseif(isunix)
+    saveDir = '/home/kiran/ownCloud/PhD/sim_results';
     logFile = '/tmp/out.log';
 else
 end
@@ -153,16 +153,21 @@ bw_xlabel = [];
 bw_ylabel = 'Bias';
 bw_colormap = parula;
 gridstatus = 'xy';
-bw_legend = {'HCBN', 'MTE', 'CLG', 'Multinomial', 'CBN'};
+% bw_legend = {'HCBN', 'MTE', 'CLG', 'Multinomial', 'CBN'};
+bw_legend = [];     % we make a separate legend and add it to picture for clarity and conciseness
 error_sides = 2;        % change to 1 if you want 1-sided error-bars, but doesn't seem to work properly
 legend_type = 'plot';
 dependencyCombos = {'Strong Linear Dependency', 'Weak Linear Dependency', ...
                     'Strong Non-Linear Dependency', 'Weak Non-Linear Dependency'};
+legendTextSize = 12;
+labelTextSize = 32;
+groupTextSize = 32;
 for kk=1:numC1C2C3Combinations*numDependencyCombinations
     subplot(2,2,kk);
     bw_title = sprintf('%s',dependencyCombos{kk});
     barweb(y_bias{kk},y_stddev{kk},width,groupnames,bw_title, bw_xlabel, bw_ylabel, ...
-       bw_colormap, gridstatus, bw_legend, error_sides, legend_type);
+       bw_colormap, gridstatus, bw_legend, error_sides, legend_type, ...
+       legendTextSize, labelTextSize, groupTextSize);
     
 end
 
