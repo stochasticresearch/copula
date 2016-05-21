@@ -106,6 +106,68 @@ barweb(y_bias,y_stddev,width,groupnames,bw_title, bw_xlabel, bw_ylabel, ...
        bw_colormap, gridstatus, bw_legend, error_sides, legend_type);
    
 %% Make plots for D=5, CFG1
+load(fullfile(saveDir, 'd5_cfg1_25.mat'));
+numCDECombinations = 4;
+numC1C2C3Combinations = 2;
+numDependencyCombinations = 2;
+numMVec = 4;
+
+absBias = abs(llBiasMat);
+absBias = squeeze(mean(absBias,1));     % average over all C/D/E combinations
+stddevBias = squeeze(mean(sqrt(llVarMat),1));
+
+y_bias = cell(1,numC1C2C3Combinations*numDependencyCombinations);
+y_stddev = cell(1,numC1C2C3Combinations*numDependencyCombinations);
+
+y_tmp_idx = 1;
+for ii=1:numC1C2C3Combinations
+    for jj=1:numDependencyCombinations
+        y_tmp_bias = zeros(numMVec,5);       % we will compare 4 models
+        y_tmp_stddev  = zeros(numMVec,5);       % we will compare 4 models
+        for kk=1:numMVec
+            y_tmp_bias(kk,:) = [absBias(ii,jj,kk,HCBN_LL_MAT_IDX), ...
+                                       absBias(ii,jj,kk,MTE_LL_MAT_IDX), ...
+                                       absBias(ii,jj,kk,CLG_LL_MAT_IDX), ...
+                                       absBias(ii,jj,kk,MULTINOMIAL_LL_MAT_IDX), ...
+                                       absBias(ii,jj,kk,CBN_LL_MAT_IDX)];
+            y_tmp_stddev(kk,:)  = [stddevBias(ii,jj,kk,HCBN_LL_MAT_IDX), ...
+                                   stddevBias(ii,jj,kk,MTE_LL_MAT_IDX), ...
+                                   stddevBias(ii,jj,kk,CLG_LL_MAT_IDX), ...
+                                   stddevBias(ii,jj,kk,MULTINOMIAL_LL_MAT_IDX), ...
+                                   stddevBias(ii,jj,kk,CBN_LL_MAT_IDX)];
+                                   
+        end
+        y_bias{y_tmp_idx} = y_tmp_bias;
+        y_stddev{y_tmp_idx}  = y_tmp_stddev;
+        y_tmp_idx = y_tmp_idx + 1;
+    end
+end
+
+% define plot options
+width = 1;
+groupnames = {'M=250', 'M=500', 'M=750', 'M=1000'};
+bw_title = [];
+bw_xlabel = [];
+bw_ylabel = 'Bias';
+bw_colormap = parula;
+gridstatus = 'xy';
+% bw_legend = {'HCBN', 'MTE', 'CLG', 'Multinomial', 'CBN'};
+bw_legend = [];     % we make a separate legend and add it to picture for clarity and conciseness
+error_sides = 2;        % change to 1 if you want 1-sided error-bars, but doesn't seem to work properly
+legend_type = 'plot';
+dependencyCombos = {'Strong Linear Dependency', 'Weak Linear Dependency', ...
+                    'Strong Non-Linear Dependency', 'Weak Non-Linear Dependency'};
+legendTextSize = 12;
+labelTextSize = 32;
+groupTextSize = 32;
+for kk=1:numC1C2C3Combinations*numDependencyCombinations
+    subplot(2,2,kk);
+    bw_title = sprintf('%s',dependencyCombos{kk});
+    barweb(y_bias{kk},y_stddev{kk},width,groupnames,bw_title, bw_xlabel, bw_ylabel, ...
+       bw_colormap, gridstatus, bw_legend, error_sides, legend_type, ...
+       legendTextSize, labelTextSize, groupTextSize);
+end
+mtit('CFG=1')
 
 %% Make Plots for D=5, CFG3
 load(fullfile(saveDir, 'd5_cfg3_25mc_K25.mat'));
@@ -168,9 +230,117 @@ for kk=1:numC1C2C3Combinations*numDependencyCombinations
     barweb(y_bias{kk},y_stddev{kk},width,groupnames,bw_title, bw_xlabel, bw_ylabel, ...
        bw_colormap, gridstatus, bw_legend, error_sides, legend_type, ...
        legendTextSize, labelTextSize, groupTextSize);
-    
 end
+mtit('CFG=3')
 
 %% Make Plots for D=5, CFG5
 
 %% Plots for D=5, CFG 1/3/5 combined
+
+% load cfg1 and store
+load(fullfile(saveDir, 'd5_cfg1_25.mat'));
+cfg1_llBiasMat = llBiasMat;
+cfg1_llVarMat = llVarMat;
+
+% we have to reset the save dir between these runs because saveDir is a
+% variable that is loaded, possibly from a different OS :0
+if(ispc)
+    saveDir = 'C:\Users\Kiran\ownCloud\PhD\sim_results';
+    logFile = 'C:\Users\Kiran\Desktop\out.log';
+elseif(ismac)
+    saveDir = '/Users/kiran/ownCloud/PhD/sim_results';
+    logFile = '/tmp/out.log';
+elseif(isunix)
+    saveDir = '/home/kiran/ownCloud/PhD/sim_results';
+    logFile = '/tmp/out.log';
+else
+end
+
+% load cfg3 and store
+load(fullfile(saveDir, 'd5_cfg3_25mc_K25.mat'));
+cfg3_llBiasMat = llBiasMat;
+cfg3_llVarMat = llVarMat;
+
+if(ispc)
+    saveDir = 'C:\Users\Kiran\ownCloud\PhD\sim_results';
+    logFile = 'C:\Users\Kiran\Desktop\out.log';
+elseif(ismac)
+    saveDir = '/Users/kiran/ownCloud/PhD/sim_results';
+    logFile = '/tmp/out.log';
+elseif(isunix)
+    saveDir = '/home/kiran/ownCloud/PhD/sim_results';
+    logFile = '/tmp/out.log';
+else
+end
+
+% load cfg5 and store
+% TODO! - once results are finished
+
+% average cfg1,cfg3,cfg5
+llBiasMat = (cfg1_llBiasMat + cfg3_llBiasMat)/2;        % TODO; add CFG5
+llVarMat  = (cfg1_llVarMat  + cfg3_llVarMat)/2;         % TODO: add CFG5
+
+% generate the plot for the averaged CFG1/3/5 scenarios
+numCDECombinations = 4;
+numC1C2C3Combinations = 2;
+numDependencyCombinations = 2;
+numMVec = 4;
+
+absBias = abs(llBiasMat);
+absBias = squeeze(mean(absBias,1));     % average over all C/D/E combinations
+stddevBias = squeeze(mean(sqrt(llVarMat),1));
+
+y_bias = cell(1,numC1C2C3Combinations*numDependencyCombinations);
+y_stddev = cell(1,numC1C2C3Combinations*numDependencyCombinations);
+
+y_tmp_idx = 1;
+for ii=1:numC1C2C3Combinations
+    for jj=1:numDependencyCombinations
+        y_tmp_bias = zeros(numMVec,5);       % we will compare 4 models
+        y_tmp_stddev  = zeros(numMVec,5);       % we will compare 4 models
+        for kk=1:numMVec
+            y_tmp_bias(kk,:) = [absBias(ii,jj,kk,HCBN_LL_MAT_IDX), ...
+                                       absBias(ii,jj,kk,MTE_LL_MAT_IDX), ...
+                                       absBias(ii,jj,kk,CLG_LL_MAT_IDX), ...
+                                       absBias(ii,jj,kk,MULTINOMIAL_LL_MAT_IDX), ...
+                                       absBias(ii,jj,kk,CBN_LL_MAT_IDX)];
+            y_tmp_stddev(kk,:)  = [stddevBias(ii,jj,kk,HCBN_LL_MAT_IDX), ...
+                                   stddevBias(ii,jj,kk,MTE_LL_MAT_IDX), ...
+                                   stddevBias(ii,jj,kk,CLG_LL_MAT_IDX), ...
+                                   stddevBias(ii,jj,kk,MULTINOMIAL_LL_MAT_IDX), ...
+                                   stddevBias(ii,jj,kk,CBN_LL_MAT_IDX)];
+                                   
+        end
+        y_bias{y_tmp_idx} = y_tmp_bias;
+        y_stddev{y_tmp_idx}  = y_tmp_stddev;
+        y_tmp_idx = y_tmp_idx + 1;
+    end
+end
+
+% define plot options
+width = 1;
+groupnames = {'M=250', 'M=500', 'M=750', 'M=1000'};
+bw_title = [];
+bw_xlabel = [];
+bw_ylabel = 'Bias';
+bw_colormap = parula;
+gridstatus = 'xy';
+bw_legend = {'HCBN', 'MTE', 'CLG', 'Multinomial', 'CBN'};
+% bw_legend = [];     % we make a separate legend and add it to picture for clarity and conciseness
+error_sides = 2;        % change to 1 if you want 1-sided error-bars, but doesn't seem to work properly
+legend_type = 'plot';
+dependencyCombos = {'Strong Linear Dependency', 'Weak Linear Dependency', ...
+                    'Strong Non-Linear Dependency', 'Weak Non-Linear Dependency'};
+legendTextSize = 32;
+labelTextSize = 32;
+groupTextSize = 32;
+for kk=1:numC1C2C3Combinations*numDependencyCombinations
+    subplot(2,2,kk);
+    bw_title = sprintf('%s',dependencyCombos{kk});
+    if(kk>1)
+        bw_legend = [];
+    end
+    barweb(y_bias{kk},y_stddev{kk},width,groupnames,bw_title, bw_xlabel, bw_ylabel, ...
+       bw_colormap, gridstatus, bw_legend, error_sides, legend_type, ...
+       legendTextSize, labelTextSize, groupTextSize);
+end

@@ -43,8 +43,6 @@ function handles = barweb(barvalues, errors, width, groupnames, ...
 % Updated: Dec 07, 2006 (ver 2.1)
 % Updated: July 21, 2008 (ver 2.3)
 
-fprintf('nargin=%d\n', nargin);
-
 % Get function arguments
 if nargin < 2
 	error('Must have at least the first two arguments:  barweb(barvalues, errors, width, groupnames, bw_title, bw_xlabel, bw_ylabel, bw_colormap, gridstatus, bw_legend, barwebtype)');
@@ -155,7 +153,7 @@ else
 		colormap(jet);
 	end
 	if ~isempty(bw_legend) && ~strcmp(legend_type, 'axis')
-		handles.legend = legend(bw_legend, 'location', 'best', 'fontsize',12);
+		handles.legend = legend(bw_legend, 'location', 'best', 'fontsize',legendTextSize);
 		legend boxoff;
 	else
 		handles.legend = [];
@@ -173,7 +171,7 @@ else
     % https://www.mathworks.com/matlabcentral/fileexchange/10803-barweb--bargraph-with-error-bars-
     for i = 1:numbars 
         x = bsxfun(@plus, handles.bars(i).XData, [handles.bars(i).XOffset]'); 
-        handles.errors(i) = errorbar(x, barvalues(:,i), errors(:,i), 'k', 'linestyle', 'none', 'linewidth', 1); 
+        handles.errors(i) = errorbar(x, barvalues(:,i), errors(:,i), 'k', 'linestyle', 'none', 'linewidth', 2); 
         ymax = max([ymax; barvalues(:,i)+errors(:,i)]); 
     end
 	
