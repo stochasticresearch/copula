@@ -104,12 +104,12 @@ D = 5;
 cfg = 1;
 
 diary off;
-delete(fullfile(saveDir, 'd5_cfg1_25mc_K25.log')); 
-diary(fullfile(saveDir, 'd5_cfg1_25mc_K25.log')); 
+delete(fullfile(saveDir, 'd5_cfg1_25mc_K50.log')); 
+diary(fullfile(saveDir, 'd5_cfg1_25mc_K50.log')); 
 rng(12345); 
 [llMat, llVarMat, llBiasMat, llMCCell] = cmpAllModelsSynthData(D,numMCSims,cfg,logFile);
 % save the results off also
-save(fullfile(saveDir, 'd5_cfg1_25mc_K25.mat'));
+save(fullfile(saveDir, 'd5_cfg1_25mc_K50.mat'));
 
 %% D=5, CFG=3
 D = 5;
