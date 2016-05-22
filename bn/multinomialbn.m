@@ -126,7 +126,7 @@ classdef multinomialbn < handle
                     [F,x] = empcdf(X_univariate, isdiscrete);
                     f = emppdf(X_univariate, isdiscrete);
 
-                    empInfoObj = rvEmpiricalInfo(x,f,F);
+                    empInfoObj = rvEmpiricalInfo(x,f,F,isdiscrete);
                     obj.bnParams{node} = empInfoObj;
                 else
                     % compute all the combinations for the parent nodes
@@ -165,7 +165,7 @@ classdef multinomialbn < handle
                             F = xi/10;
                             f = .1*ones(1,10);
                         end
-                        empInfo = rvEmpiricalInfo(xi, f, F);
+                        empInfo = rvEmpiricalInfo(xi, f, F,isdiscrete);
                         
                         tmp = struct;
                         tmp.combo = combo;

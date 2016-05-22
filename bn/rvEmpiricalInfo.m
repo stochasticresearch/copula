@@ -23,6 +23,7 @@ classdef rvEmpiricalInfo
         domain;
         density;
         distribution;
+        isdiscrete;
     end
     
     methods(Static)
@@ -38,10 +39,11 @@ classdef rvEmpiricalInfo
     end
     
     methods
-        function obj = rvEmpiricalInfo(domain, density, distribution)
+        function obj = rvEmpiricalInfo(domain, density, distribution, isdiscrete)
             obj.domain = domain;
             obj.density = density;
             obj.distribution = distribution;
+            obj.isdiscrete = isdiscrete;
         end
         
         function [idx, domainVal] = findClosestDomainVal(obj, q)
@@ -54,9 +56,12 @@ classdef rvEmpiricalInfo
             if(q > obj.domain(end))
                 domainVal = obj.domain(end);
                 idx = length(obj.domain);
-            elseif(q < obj.domain(1))
+            elseif(~obj.isdiscrete && q < obj.domain(1))
                 domainVal = obj.domain(1);
                 idx = 1;
+            elseif(obj.isdiscrete && q < obj.domain(2))
+                domainVal = obj.domain(2);
+                idx = 2;
             else
                 tmp = abs(obj.domain-q);
                 [~, idx] = min(tmp); %index of closest value
@@ -83,9 +88,13 @@ classdef rvEmpiricalInfo
             if(q > obj.distribution(end))
                 distributionVal = obj.distribution(end);
                 idx = length(obj.distribution);
-            elseif(q < obj.distribution(1))
+            elseif(~obj.isdiscrete && q < obj.distribution(1))
                 distributionVal = obj.distribution(1);
                 idx = 1;
+            elseif(obj.isdiscrete && q < obj.distribution(2))
+                % we do idx=2 b/c we keep the 0 entry for discrete also
+                distributionVal = obj.distribution(2);
+                idx = 2;
             else
                 tmp = abs(obj.distribution-q);
                 [~, idx] = min(tmp); %index of closest value

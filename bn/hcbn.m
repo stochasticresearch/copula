@@ -351,7 +351,7 @@ classdef hcbn < handle
                 end
                 [F,x] = empcdf(obj.X(:,ii), isdiscrete);
                 f = emppdf(obj.X(:,ii), isdiscrete);
-                empInfoObj = rvEmpiricalInfo(x, f, F);
+                empInfoObj = rvEmpiricalInfo(x, f, F, isdiscrete);
                 obj.empInfo{ii} = empInfoObj;
             end
         end

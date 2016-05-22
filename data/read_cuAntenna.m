@@ -1,17 +1,12 @@
 clear;
 clc;
 
-clear;
-clc;
-
 if(ispc)
     datafileDir = 'C:\Users\Kiran\Desktop\datasets\cu-antenna-data-200905';
 elseif(ismac)
     datafileDir = '/Users/kiran/Desktop/datasets/cu-antenna-data-200905';
-    saveDir = 'Users/kiran/stochasticresearch/copula/data';
 elseif(isunix)
     datafileDir = '/home/kiran/Desktop/datasets/cu-antenna-data-200905';
-    saveDir = '/home/kiran/stochasticresearch/copula/data';
 else
 end
 
@@ -50,6 +45,22 @@ for ii=1:length(tag)
 end
 
 % save the data so we don't have to process the raw data everytime
-save(fullfile(saveDir, 'cu_antenna_200905'));
+save(fullfile(datafileDir, 'cu_antenna_200905'), 'antennaTypes', 'antennaOrdinal', ...
+    'tagTypes', 'tagOrdinal', 'rss', 'rssDiff', 'azimuthAngle', '-v7.3');
 
 %% Do fun stuff w/ the pre-processed data :D
+
+load(fullfile(datafileDir, 'cu_antenna_200905'));
+
+X = [antennaOrdinal azimuthAngle rssDiff];
+
+nodeNames = {'antennaType', 'azimuthAngle', 'rssDiff'};
+bntPath = '../bnt';
+discreteNodeNames = {nodeNames{1}};
+D = length(nodeNames);
+
+dag = zeros(D,D);
+dag(1,3) = 1;
+dag(2,3) = 1;
+
+hcbnObj = hcbn(bntPath, 

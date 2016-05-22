@@ -314,10 +314,11 @@ linkprop([h1,h2,h1],{'CameraPosition','CameraUpVector'}); rotate3d on;
 % c(u1,u2) = f(x1,x2)/[ f(x1) * f(x2) ]
 
 [FX_in1, domain1] = ecdf(X1); FX_in1 = FX_in1(2:end); domain1 = domain1(2:end);
-empInfoObj1 = rvEmpiricalInfo(domain1, [], FX_in1);
+isdiscrete = 1;
+empInfoObj1 = rvEmpiricalInfo(domain1, [], FX_in1, isdiscrete);
 
 [FX_in2, domain2] = ecdf(X2); FX_in2 = FX_in2(2:end); domain2 = domain2(2:end);
-empInfoObj2 = rvEmpiricalInfo(domain2, [], FX_in2);
+empInfoObj2 = rvEmpiricalInfo(domain2, [], FX_in2, isdiscrete);
 
 for x1=1:5
     for x2=1:5

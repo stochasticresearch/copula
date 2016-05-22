@@ -67,6 +67,8 @@ for ii=1:numDataPts
     end
 end
 
+X = X(randperm(size(X,1)),:);
+
 X_train = X(1:3000,:);
 X_test = X(10000:11000,:);
 fprintf('Generating HCBN model\n');
@@ -91,20 +93,22 @@ idx2 = 6;
 dag(continuousIdx,idx1) = 1; dag(continuousIdx,idx2) = 1;
 
 % instantiate hcbn object
-hcbnObj = hcbn(bntPath, X_train, nodeNames, discreteNodeNames, dag);
+K = 200;
+h = 0.01;
+hcbnObj = hcbn(bntPath, X_train, nodeNames, discreteNodeNames, K, h, dag);
 
 fprintf('Generating samples from model\n');
 tvec1 = hcbnObj.genFamilySamples('fnlwgt', 1000);
 tvec2 = hcbnObj.genFamilySamples('martial-status', 1000);
 
 h1 = subplot(2,2,1); 
-scatter(X_test(:,continuousIdx),X_test(:,idx1)); grid on; xlabel('Age'); ylabel('FNLWGT'); title('True Data')
+scatter(X_test(:,continuousIdx),X_test(:,idx1)); set(gca,'FontSize',24); grid on; xlabel('Age', 'FontSize',24); ylabel('FNLWGT', 'FontSize',24); title('True Data', 'FontSize', 32)
 h2 = subplot(2,2,2); 
-scatter(tvec1(:,2),tvec1(:,1)); grid on; xlabel('Age'); ylabel('FNLWGT'); title('HCBN Generative Model')
+scatter(tvec1(:,2),tvec1(:,1)); set(gca,'FontSize',24);  grid on; xlabel('Age', 'FontSize',24); ylabel('FNLWGT', 'FontSize',24); title('HCBN Generative Model', 'FontSize', 32)
 h3 = subplot(2,2,3); 
-scatter(X_test(:,continuousIdx),X_test(:,idx2)); grid on; xlabel('Age'); ylabel('Martial-Status'); title('True Data')
+scatter(X_test(:,continuousIdx),X_test(:,idx2)); set(gca,'FontSize',24);  grid on; xlabel('Age', 'FontSize',24); ylabel('Martial-Status', 'FontSize',24); title('True Data', 'FontSize', 32)
 h4 = subplot(2,2,4); 
-scatter(tvec2(:,2),tvec2(:,1)); grid on; xlabel('Age'); ylabel('Martial-Status'); title('HCBN Generative Model')
+scatter(tvec2(:,2),tvec2(:,1)); set(gca,'FontSize',24);  grid on; xlabel('Age', 'FontSize',24); ylabel('Martial-Status', 'FontSize',24); title('HCBN Generative Model', 'FontSize', 32)
 
 linkaxes([h1,h2],'xy')
 linkaxes([h3,h4],'xy')

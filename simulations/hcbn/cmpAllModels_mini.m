@@ -51,7 +51,7 @@ xContinuous = [normrnd(-2,0.3,M/2,1); normrnd(2,0.8,M/2,1)];
 xContinuous = xContinuous(randperm(M),:);
 [fContinous,xiContinuous] = emppdf(xContinuous,0);
 FContinuous = empcdf(xContinuous,0);
-continuousDistInfo = rvEmpiricalInfo(xiContinuous,fContinous,FContinuous);
+continuousDistInfo = rvEmpiricalInfo(xiContinuous,fContinous,FContinuous,0);
 X_hybrid(:,1) = a_dist.icdf(U(:,1));
 for ii=1:M
     X_hybrid(ii,2) = continuousDistInfo.icdf(U(ii,2));
@@ -85,12 +85,12 @@ C_actual_discreteIntegrate = cumtrapz(u,c_actual,1);
 isdiscrete = 0;
 [f_y2_est, xi_y2] = emppdf(X_hybrid(:,2),isdiscrete);
 F_y2_est = empcdf(X_hybrid(:,2),isdiscrete);
-disty2Est = rvEmpiricalInfo(xi_y2,f_y2_est,F_y2_est);
+disty2Est = rvEmpiricalInfo(xi_y2,f_y2_est,F_y2_est,isdiscrete);
 
 isdiscrete = 1;
 [f_y1_est, xi_y1] = emppdf(X_hybrid(:,1),isdiscrete);
 F_y1_est = empcdf(X_hybrid(:,1),isdiscrete);
-disty1Est = rvEmpiricalInfo(xi_y1,f_y1_est,F_y1_est);
+disty1Est = rvEmpiricalInfo(xi_y1,f_y1_est,F_y1_est,isdiscrete);
 
 mteObj = mtebn(X_hybrid, discreteNodes, dag);
 clgObj = clgbn(X_hybrid, discreteNodes, dag);
@@ -115,7 +115,7 @@ for y1=1:4
     isdiscrete = 0;
     [f_kde,xi_kde] = emppdf(X_continuous_subset, isdiscrete);
     F_kde = empcdf(X_continuous_subset, isdiscrete);
-    conditionalKDE = rvEmpiricalInfo(xi_kde, f_kde, F_kde);
+    conditionalKDE = rvEmpiricalInfo(xi_kde, f_kde, F_kde, isdiscrete);
         
     for xi_idx=1:length(xi_y2)
         xi = xi_y2(xi_idx);

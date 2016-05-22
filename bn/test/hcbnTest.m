@@ -437,7 +437,8 @@ classdef hcbnTest < matlab.unittest.TestCase
             F = F(2:end);
             x = x(2:end);
             f = ksdensity(X,x);
-            empInfoObj = rvEmpiricalInfo(x, f, F);
+            isdiscrete = 0;
+            empInfoObj = rvEmpiricalInfo(x, f, F, isdiscrete);
             
             for m=1:M
                 f_expect = normpdf(X(m));

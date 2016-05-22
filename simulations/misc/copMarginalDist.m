@@ -25,7 +25,7 @@ x2 = x2(randperm(M),:);
 
 [f2,xi2] = emppdf(x2,0);
 F2 = empcdf(x2,0);
-continuousDistInfo = rvEmpiricalInfo(xi2,f2,F2);
+continuousDistInfo = rvEmpiricalInfo(xi2,f2,F2,0);
 
 numPtsToTest = [1e2 1e3 1e4 1e5];
 for numPtToTest=numPtsToTest
@@ -126,7 +126,7 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
 
                     [f2,xi2] = emppdf(x2,0);
                     F2 = empcdf(x2,0);
-                    continuousDistInfo = rvEmpiricalInfo(xi2,f2,F2);
+                    continuousDistInfo = rvEmpiricalInfo(xi2,f2,F2,0);
                     X_hybrid(:,1) = a_dist.icdf(U(:,1));
                     for ii=1:M
                         X_hybrid(ii,2) = continuousDistInfo.icdf(U(ii,2));
@@ -134,10 +134,10 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
 
                     [f1est,x1est] = emppdf(X_hybrid(:,1),1);
                     F1est = empcdf(X_hybrid(:,1),1);
-                    discreteEstDistInfo = rvEmpiricalInfo(x1est,f1est,F1est);
+                    discreteEstDistInfo = rvEmpiricalInfo(x1est,f1est,F1est,1);
 
                     [f2est,x2est] = emppdf(X_hybrid(:,2),0); F2est = empcdf(X_hybrid(:,2),0);
-                    continuousEstDistInfo = rvEmpiricalInfo(x2est,f2est,F2est);
+                    continuousEstDistInfo = rvEmpiricalInfo(x2est,f2est,F2est,0);
 
                     hcbnObj = hcbn(bntPath, X_hybrid, nodeNames, discreteNodeNames, dag); 
                     mteObj = mtebn(X_hybrid, discreteNodes, dag);
@@ -168,7 +168,7 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                         isdiscrete = 0;
                         [f_kde,xi_kde] = emppdf(X_continuous_subset, isdiscrete);
                         F_kde = empcdf(X_continuous_subset, isdiscrete);
-                        conditionalKDE = rvEmpiricalInfo(xi_kde, f_kde, F_kde);
+                        conditionalKDE = rvEmpiricalInfo(xi_kde, f_kde, F_kde, isdiscrete);
 
                         fx2_givenx1_copula = zeros(1,length(xi2));
                         fx2_givenx1_copulaestf2est = zeros(1,length(xi2));

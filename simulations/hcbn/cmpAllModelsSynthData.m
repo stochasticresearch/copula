@@ -370,9 +370,10 @@ for copulaTypeVecIdx=1:length(copulaTypeVec_2D)
                 end
                 xContinuous = xContinuous(randperm(2000),:);     % permute for evenness of samples
 
-                [fContinous,xiContinuous] = emppdf(xContinuous,0);
-                FContinuous = empcdf(xContinuous,0);
-                continuousDistInfo = rvEmpiricalInfo(xiContinuous,fContinous,FContinuous);
+                isdiscrete = 0;
+                [fContinous,xiContinuous] = emppdf(xContinuous,isdiscrete);
+                FContinuous = empcdf(xContinuous,isdiscrete);
+                continuousDistInfo = rvEmpiricalInfo(xiContinuous,fContinous,FContinuous,isdiscrete);
                 
                 copulaFamilies = cell(1,2);
                 copulaFamilies{1} = [];
@@ -400,12 +401,14 @@ for copulaTypeVecIdx=1:length(copulaTypeVec_2D)
                     X_hybrid_test = X_hybrid(M+1:end,:);
                     X_hybrid = X_hybrid(1:M,:);
                     
-                    [fAest,xAest] = emppdf(X_hybrid(:,1),1);
-                    FAest = empcdf(X_hybrid(:,1),1);
-                    distAEst = rvEmpiricalInfo(xAest,fAest,FAest);
+                    isdiscrete = 1;
+                    [fAest,xAest] = emppdf(X_hybrid(:,1),isdiscrete);
+                    FAest = empcdf(X_hybrid(:,1),isdiscrete);
+                    distAEst = rvEmpiricalInfo(xAest,fAest,FAest,isdiscrete);
 
-                    [fBest,xBest] = emppdf(X_hybrid(:,2),0); FBest = empcdf(X_hybrid(:,2),0);
-                    distBEst = rvEmpiricalInfo(xBest,fBest,FBest);
+                    isdiscrete = 0;
+                    [fBest,xBest] = emppdf(X_hybrid(:,2),isdiscrete); FBest = empcdf(X_hybrid(:,2),isdiscrete);
+                    distBEst = rvEmpiricalInfo(xBest,fBest,FBest,isdiscrete);
 
                     hcbnObj = hcbn(bntPath, X_hybrid, nodeNames, discreteNodeNames, K, h, dag); 
                     hcbnDebugAllObj = hcbn(bntPath, X_hybrid, nodeNames, discreteNodeNames, K, h, dag, 'copulaFamilyInput', copulaFamilies, 'empInfoInput', empInfo); 
@@ -440,7 +443,7 @@ for copulaTypeVecIdx=1:length(copulaTypeVec_2D)
                             isdiscrete = 0;
                             [f_kde,xi_kde] = emppdf(X_continuous_subset, isdiscrete);
                             F_kde = empcdf(X_continuous_subset, isdiscrete);
-                            conditionalKDE = rvEmpiricalInfo(xi_kde, f_kde, F_kde);
+                            conditionalKDE = rvEmpiricalInfo(xi_kde, f_kde, F_kde,isdiscrete);
 
                             fx2_givenx1_generative = zeros(1,length(xiContinuous));
                             fx2_givenx1_copulaestf2est = zeros(1,length(xiContinuous));
@@ -800,9 +803,10 @@ for copulaTypeVecIdx=1:length(copulaTypeVec_3D)
                 end
                 xContinuous = xContinuous(randperm(2000),:);     % permute for evenness of samples
 
-                [fContinous,xiContinuous] = emppdf(xContinuous,0);
-                FContinuous = empcdf(xContinuous,0);
-                continuousDistInfo = rvEmpiricalInfo(xiContinuous,fContinous,FContinuous);
+                isdiscrete = 0;
+                [fContinous,xiContinuous] = emppdf(xContinuous,isdiscrete);
+                FContinuous = empcdf(xContinuous,isdiscrete);
+                continuousDistInfo = rvEmpiricalInfo(xiContinuous,fContinous,FContinuous,isdiscrete);
                 
                 copulaFamilies = cell(1,3);
                 copulaFamilies{1} = [];
@@ -855,16 +859,16 @@ for copulaTypeVecIdx=1:length(copulaTypeVec_3D)
                     isdiscrete = 1;
                     [fAest,xAest] = emppdf(X_hybrid(:,1),isdiscrete);
                     FAest = empcdf(X_hybrid(:,1),isdiscrete);
-                    distAEst = rvEmpiricalInfo(xAest,fAest,FAest);
+                    distAEst = rvEmpiricalInfo(xAest,fAest,FAest,isdiscrete);
                     
                     [fBest,xBest] = emppdf(X_hybrid(:,2),isdiscrete);
                     FBest = empcdf(X_hybrid(:,2),isdiscrete);
-                    distBEst = rvEmpiricalInfo(xBest,fBest,FBest);
+                    distBEst = rvEmpiricalInfo(xBest,fBest,FBest,isdiscrete);
                     
                     isdiscrete = 0;
                     [fCest,xCest] = emppdf(X_hybrid(:,3),isdiscrete); 
                     FCest = empcdf(X_hybrid(:,3),isdiscrete);
-                    distCEst = rvEmpiricalInfo(xCest,fCest,FCest);
+                    distCEst = rvEmpiricalInfo(xCest,fCest,FCest,isdiscrete);
                     
                     hcbnObj = hcbn(bntPath, X_hybrid, nodeNames, discreteNodeNames, K, h, dag);  
                     hcbnDebugAllObj = hcbn(bntPath, X_hybrid, nodeNames, discreteNodeNames, K, h, dag, 'copulaFamilyInput', copulaFamilies, 'empInfoInput', empInfo);  
@@ -909,7 +913,7 @@ for copulaTypeVecIdx=1:length(copulaTypeVec_3D)
                                 isdiscrete = 0;
                                 [f_kde,xi_kde] = emppdf(X_continuous_subset, isdiscrete);
                                 F_kde = empcdf(X_continuous_subset, isdiscrete);
-                                conditionalKDE = rvEmpiricalInfo(xi_kde, f_kde, F_kde);
+                                conditionalKDE = rvEmpiricalInfo(xi_kde, f_kde, F_kde,isdiscrete);
 
                                 fx3_givenx1x2_copula = zeros(1,length(xiContinuous));
                                 fx3_givenx1x2_copulaestf3est = zeros(1,length(xiContinuous));
@@ -1333,9 +1337,10 @@ for copulaTypeVecIdx=1:length(copulaTypeVec_4D)
                 end
                 xContinuous = xContinuous(randperm(2000),:);     % permute for evenness of samples
 
-                [fContinous,xiContinuous] = emppdf(xContinuous,0);
-                FContinuous = empcdf(xContinuous,0);
-                continuousDistInfo = rvEmpiricalInfo(xiContinuous,fContinous,FContinuous);
+                isdiscrete = 0;
+                [fContinous,xiContinuous] = emppdf(xContinuous,isdiscrete);
+                FContinuous = empcdf(xContinuous,isdiscrete);
+                continuousDistInfo = rvEmpiricalInfo(xiContinuous,fContinous,FContinuous,isdiscrete);
                 
                 copulaFamilies = cell(1,4);
                 copulaFamilies{1} = [];
@@ -1602,7 +1607,7 @@ for cdeCombinationsVecIdx=1:length(CDE_combinations)
                     isdiscrete = 0;
                     [fContinous,xiContinuous] = emppdf(xx,isdiscrete);
                     FContinuous = empcdf(xx,isdiscrete);
-                    tmp = rvEmpiricalInfo(xiContinuous,fContinous,FContinuous);
+                    tmp = rvEmpiricalInfo(xiContinuous,fContinous,FContinuous,isdiscrete);
                     continuousEmpiricalDists{ii} = tmp;
                 end
                 

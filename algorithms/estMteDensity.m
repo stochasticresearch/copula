@@ -64,8 +64,9 @@ if(D==1)
         mte_pdf_estimate = mte_pdf_estimate + abs(min(mte_pdf_estimate));
     end
     % normalize to integrate to 1
+    isdiscrete = 0;
     mte_pdf_estimate = mte_pdf_estimate/trapz(xi,mte_pdf_estimate);
-    mte_info = rvEmpiricalInfo(xi, mte_pdf_estimate, []);
+    mte_info = rvEmpiricalInfo(xi, mte_pdf_estimate, [], isdiscrete);
 else
     error('Currently unsupported!\n');
 end

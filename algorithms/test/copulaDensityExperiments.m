@@ -216,7 +216,8 @@ for jj=1:length(x1)
     f1(idx) = sum(X(:,1)==x1(jj))/M;
     idx = idx + 1;
 end
-empInfoX1 = rvEmpiricalInfo(x1,f1,F1);
+isdiscrete = 1;
+empInfoX1 = rvEmpiricalInfo(x1,f1,F1,isdiscrete);
 
 [F2,x2] = ecdf(X(:,2));
 F2 = F2(2:end);
@@ -227,7 +228,7 @@ for jj=1:length(x2)
     f2(idx) = sum(X(:,2)==x2(jj))/M;
     idx = idx + 1;
 end
-empInfoX2 = rvEmpiricalInfo(x2,f2,F2);
+empInfoX2 = rvEmpiricalInfo(x2,f2,F2,isdiscrete);
 
 
 % Estimate copula density w/ empcoupla, and smoothing
@@ -409,7 +410,8 @@ for jj=1:length(x1)
     f1(idx) = sum(X(:,1)==x1(jj))/M;
     idx = idx + 1;
 end
-empInfoX1 = rvEmpiricalInfo(x1,f1,F1);
+isdiscrete = 1;
+empInfoX1 = rvEmpiricalInfo(x1,f1,F1,isdiscrete);
 
 [F2,x2] = ecdf(X(:,2));
 F2 = F2(2:end);
@@ -420,7 +422,7 @@ for jj=1:length(x2)
     f2(idx) = sum(X(:,2)==x2(jj))/M;
     idx = idx + 1;
 end
-empInfoX2 = rvEmpiricalInfo(x2,f2,F2);
+empInfoX2 = rvEmpiricalInfo(x2,f2,F2,isdiscrete);
 
 [F3,x3] = ecdf(X(:,3));
 F3 = F3(2:end);
@@ -431,7 +433,7 @@ for jj=1:length(x3)
     f3(idx) = sum(X(:,3)==x3(jj))/M;
     idx = idx + 1;
 end
-empInfoX3 = rvEmpiricalInfo(x3,f3,F3);
+empInfoX3 = rvEmpiricalInfo(x3,f3,F3,isdiscrete);
 
 % for K=[100,200,250,500]
 for K=[25]

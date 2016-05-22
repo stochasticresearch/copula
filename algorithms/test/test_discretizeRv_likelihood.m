@@ -49,7 +49,7 @@ X_test_discretized = edges(testDiscretizedIdxs);
 isdiscrete = 1;
 [f,xi] = emppdf(X_test_discretized', isdiscrete);
 F = empcdf(X_test_discretized, isdiscrete);
-discreteEmpInfo = rvEmpiricalInfo(xi, f, F);
+discreteEmpInfo = rvEmpiricalInfo(xi, f, F, isdiscrete);
 
 % compute negative log-likelihood manually for continuous and discretized
 % versions

@@ -125,7 +125,7 @@ classdef mtebn < handle
                         [F,x] = empcdf(X_univariate, isdiscrete);
                         f = emppdf(X_univariate, isdiscrete);
                         
-                        empInfoObj = rvEmpiricalInfo(x,f,F);
+                        empInfoObj = rvEmpiricalInfo(x,f,F,isdiscrete);
                         obj.bnParams{node} = empInfoObj;
                     else
                         % node is continuous, estimate as Mixture of

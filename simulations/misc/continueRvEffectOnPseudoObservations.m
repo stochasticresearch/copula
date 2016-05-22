@@ -120,7 +120,7 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                 xContinuous = xContinuous(randperm(M),:);     % permute for evenness of samples
                 [fContinous,xiContinuous] = emppdf(xContinuous,0);
                 FContinuous = empcdf(xContinuous,0);
-                continuousDistInfo = rvEmpiricalInfo(xiContinuous,fContinous,FContinuous);
+                continuousDistInfo = rvEmpiricalInfo(xiContinuous,fContinous,FContinuous,0);
 
                 % manual toggling between uniform and skewed
                 if(discreteDistCfg==1)
@@ -468,7 +468,7 @@ for copulaTypeVecIdx=1:length(copulaTypeVec)
                     xContinuous = xContinuous(randperm(M),:);     % permute for evenness of samples
                     [fContinous,xiContinuous] = emppdf(xContinuous,0);
                     FContinuous = empcdf(xContinuous,0);
-                    continuousDistInfo = rvEmpiricalInfo(xiContinuous,fContinous,FContinuous);
+                    continuousDistInfo = rvEmpiricalInfo(xiContinuous,fContinous,FContinuous,0);
                     for ii=1:M
                         X_hybrid(ii,2) = continuousDistInfo.icdf(U(ii,2));
                     end

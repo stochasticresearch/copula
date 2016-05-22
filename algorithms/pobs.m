@@ -80,9 +80,10 @@ if(strcmpi(method,'rank'))
 elseif(strcmpi(method,'ecdf'))
     U = zeros(size(X));
     for nn=1:D
+        isdiscrete = 0;     % TODO: this is suspect?
         domain = linspace(min(X(:,nn)),max(X(:,nn)),numEcdfPts);
         FX = ksdensity(X(:,nn), domain, 'function', 'cdf')';
-        empInfoObj = rvEmpiricalInfo(domain, [], FX);
+        empInfoObj = rvEmpiricalInfo(domain, [], FX, isdiscrete);
         for mm=1:M
             U(mm,nn) = empInfoObj.cdf(X(mm,nn));
         end

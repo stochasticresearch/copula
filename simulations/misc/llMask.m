@@ -97,18 +97,18 @@ for numTrain=numTrainVec
             isdiscrete = 0;
             [f,xi] = emppdf(X_continuous_subset, isdiscrete);
             F = empcdf(X_continuous_subset, isdiscrete);
-            trueConditionalDistribution{combo} = rvEmpiricalInfo(xi, f, F);
+            trueConditionalDistribution{combo} = rvEmpiricalInfo(xi, f, F, isdiscrete);
         end
         
         isdiscrete = 0;
         [f,xi] = emppdf(X_train(:,2), isdiscrete);
         F = empcdf(X_train(:,2), isdiscrete);
-        continuousDistInfo = rvEmpiricalInfo(xi,f,F);
+        continuousDistInfo = rvEmpiricalInfo(xi,f,F,isdiscrete);
         
         isdiscrete = 1;
         [f,xi] = emppdf(X_train(:,1), isdiscrete);
         F = empcdf(X_train(:,1), isdiscrete);
-        discreteDistInfo = rvEmpiricalInfo(xi,f, F);
+        discreteDistInfo = rvEmpiricalInfo(xi,f, F,isdiscrete);
         
         trueDistConditionalLL = 0; clgConditionalLL = 0; mteConditionalLL = 0;
         trueDistLL = 0; clgLL = 0; mteLL = 0; 

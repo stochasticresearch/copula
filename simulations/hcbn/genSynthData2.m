@@ -60,7 +60,7 @@ else
     x = [normrnd(-2,0.3,M/2,1); normrnd(2,0.5,M/2,1)];
     [f,xi] = emppdf(x,0);
     F = empcdf(x,0);
-    myObj = rvEmpiricalInfo(xi,f,F);
+    myObj = rvEmpiricalInfo(xi,f,F,0);
     X3 = zeros(M,1);
     for ii=1:M
         X3(ii) = myObj.icdf(U(ii,3));
