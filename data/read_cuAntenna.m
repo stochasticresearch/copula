@@ -1,10 +1,24 @@
 clear;
 clc;
 
+clear;
+clc;
+
+if(ispc)
+    datafileDir = 'C:\Users\Kiran\Desktop\datasets\cu-antenna-data-200905';
+elseif(ismac)
+    datafileDir = '/Users/kiran/Desktop/datasets/cu-antenna-data-200905';
+    saveDir = 'Users/kiran/stochasticresearch/copula/data';
+elseif(isunix)
+    datafileDir = '/home/kiran/Desktop/datasets/cu-antenna-data-200905';
+    saveDir = '/home/kiran/stochasticresearch/copula/data';
+else
+end
+
 %% Pre-Process CRAWDAD Antenna Dataset
 
 % read in the crawdad cu antenna observations dataset into Matlab
-filename = '/Users/kiran/Desktop/datasets/cu-antenna-data-200905/packets.txt';
+filename = fullfile(datafileDir, 'packets.txt');
 fid = fopen(filename,'r');
 format = '%s %d %s %d %s %f %f';
 pktsData = textscan(fid, format);
@@ -28,11 +42,14 @@ end
 % convert the tag to ordinal data
 tagTypes = unique(tag);
 valueSet = 1:length(tagTypes);
-mapObjTag = contains.Map(tagTypes,valueSet);
+mapObjTag = containers.Map(tagTypes,valueSet);
 
 tagOrdinal = zeros(size(tag));
 for ii=1:length(tag)
     tagOrdinal(ii) = mapObjTag(tag{ii});
 end
+
+% save the data so we don't have to process the raw data everytime
+save(fullfile(saveDir, 'cu_antenna_200905'));
 
 %% Do fun stuff w/ the pre-processed data :D

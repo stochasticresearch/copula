@@ -238,7 +238,7 @@ mtit('CFG=3')
 %% Plots for D=5, CFG 1/3/5 combined
 
 % load cfg1 and store
-load(fullfile(saveDir, 'd5_cfg1_25.mat'));
+load(fullfile(saveDir, 'd5_cfg1_25mc_K25.mat'));
 cfg1_llBiasMat = llBiasMat;
 cfg1_llVarMat = llVarMat;
 
