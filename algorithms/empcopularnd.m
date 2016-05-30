@@ -1,3 +1,15 @@
+function [ U ] = empcopularnd( c, M, varargin )
+%EMPCOPULARND Sample from any given copula density.
+%
+% Inputs:
+%  c - The copula density, provided as a [K x K x ... x K] matrix, where
+%      the dimensions are [u_1,u_2, ..., u_D]
+%  M - The number of samples to generate from this copula
+%
+% Outputs
+%  U - an M x D vector of samples from the copula, given by the integral
+%      of the provided copula density.
+%
 %**************************************************************************
 %*                                                                        *
 %* Copyright (C) 2016  Kiran Karra <kiran.karra@gmail.com>                *
@@ -16,18 +28,6 @@
 %* along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
 %*                                                                        *
 %**************************************************************************
-
-function [ U ] = empcopularnd( c, M, varargin )
-%EMPCOPULARND Sample from any given copula density.
-%
-% Inputs:
-%  c - The copula density, provided as a [K x K x ... x K] matrix, where
-%      the dimensions are [u_1,u_2, ..., u_D]
-%  M - The number of samples to generate from this copula
-%
-% Outputs
-%  U - an M x D vector of samples from the copula, given by the integral
-%      of the provided copula density.
 
 K = size(c,1);
 uu = linspace(0,1,K);

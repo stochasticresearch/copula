@@ -1,3 +1,7 @@
+function [ U ] = depcopularnd( c, U_parents )
+%DEPCOPULARND Aids in the generation of generating random numbers from
+%graphical models with common parents.
+%
 %**************************************************************************
 %*                                                                        *
 %* Copyright (C) 2016  Kiran Karra <kiran.karra@gmail.com>                *
@@ -16,10 +20,6 @@
 %* along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
 %*                                                                        *
 %**************************************************************************
-
-function [ U ] = depcopularnd( c, U_parents )
-%DEPCOPULARND Aids in the generation of generating random numbers from
-%graphical models with common parents.
 
 M = size(U_parents,1);
 U = empcopularnd(c, M, U_parents);

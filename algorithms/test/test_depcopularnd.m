@@ -42,11 +42,11 @@ rho_Y_Z_hat_vec   = zeros(1,numMCsims);
 rho_Z1_Z2_hat_vec = zeros(1,numMCsims);
 
 lastMsgLen = 0;
+dispstat('','init'); % One time only initialization
+dispstat(sprintf('Begining the simulation...'),'keepthis','timestamp');
 for simnum=1:numMCsims
-    fprintf(repmat('\b',1,lastMsgLen));
-    msg = sprintf('Percentage Complete=%0.2f\n', simnum/numMCsims*100);
-    lastMsgLen = length(msg);
-    fprintf(msg);
+    msg = sprintf('Percentage Complete=%0.2f', simnum/numMCsims*100);
+    dispstat(msg,'timestamp');
     
     
     U_init = copularnd('Gaussian', Rho1, M);        % generates [Z X]
@@ -101,11 +101,12 @@ srho_Y_Z_hat_vec   = zeros(1,numMCsims);
 srho_Z1_Z2_hat_vec = zeros(1,numMCsims);
 
 lastMsgLen = 0;
+dispstat('','init'); % One time only initialization
+dispstat(sprintf('Begining the simulation...'),'keepthis','timestamp');
 for simnum=1:numMCsims
-    fprintf(repmat('\b',1,lastMsgLen));
     msg = sprintf('Percentage Complete=%0.2f\n', simnum/numMCsims*100);
-    lastMsgLen = length(msg);
-    fprintf(msg);
+    dispstat(msg,'timestamp');
+
     
     [U_init] = claytoncopularnd(M, N, alpha);
     Z1 = U_init(:,1); X = U_init(:,2);
@@ -159,11 +160,11 @@ srho_Y_Z_hat_vec   = zeros(1,numMCsims);
 srho_Z1_Z2_hat_vec = zeros(1,numMCsims);
 
 lastMsgLen = 0;
+dispstat('','init'); % One time only initialization
+dispstat(sprintf('Begining the simulation...'),'keepthis','timestamp');
 for simnum=1:numMCsims
-    fprintf(repmat('\b',1,lastMsgLen));
     msg = sprintf('Percentage Complete=%0.02f\n', simnum/numMCsims*100);
-    lastMsgLen = length(msg);
-    fprintf(msg);
+    dispstat(msg,'timestamp');
     
     [U_init] = frankcopularnd(M, N, alpha);
     Z1 = U_init(:,1); X = U_init(:,2);
@@ -217,12 +218,12 @@ srho_Y_Z_hat_vec   = zeros(1,numMCsims);
 srho_Z1_Z2_hat_vec = zeros(1,numMCsims);
 
 lastMsgLen = 0;
+dispstat('','init'); % One time only initialization
+dispstat(sprintf('Begining the simulation...'),'keepthis','timestamp');
 for simnum=1:numMCsims
-    fprintf(repmat('\b',1,lastMsgLen));
     msg = sprintf('Percentage Complete=%0.02f\n', simnum/numMCsims*100);
-    lastMsgLen = length(msg);
-    fprintf(msg);
-    
+    dispstat(msg,'timestamp');
+
     [U_init] = gumbelcopularnd(M, N, alpha);
     Z1 = U_init(:,1); X = U_init(:,2);
     U_dep = depcopularnd(c, Z1);
@@ -296,11 +297,11 @@ c = copulapdf('Gaussian', [U1(:) U2(:) U3(:)], Rho2);
 c = reshape(c,K,K,K);
 
 lastMsgLen = 0;
+dispstat('','init'); % One time only initialization
+dispstat(sprintf('Begining the simulation...'),'keepthis','timestamp');
 for simnum=1:numMCsims
-    fprintf(repmat('\b',1,lastMsgLen));
     msg = sprintf('Percentage Complete=%0.02f\n', simnum/numMCsims*100);
-    lastMsgLen = length(msg);
-    fprintf(msg);
+    dispstat(msg,'timestamp');
     
     U_init = copularnd('Gaussian', Rho1, M);        % generates [Z1 Z2 X]
     
@@ -377,11 +378,11 @@ c = copulapdf('Gaussian', [U1(:) U2(:) U3(:)], Rho2);
 c = reshape(c,K,K,K);
 
 lastMsgLen = 0;
+dispstat('','init'); % One time only initialization
+dispstat(sprintf('Begining the simulation...'),'keepthis','timestamp');
 for simnum=1:numMCsims
-    fprintf(repmat('\b',1,lastMsgLen));
     msg = sprintf('Percentage Complete=%0.02f\n', simnum/numMCsims*100);
-    lastMsgLen = length(msg);
-    fprintf(msg);
+    dispstat(msg,'timestamp');
     
     U_init = copularnd('Gaussian', Rho1, M);        % generates [Z1 Z2 X]
     
@@ -450,11 +451,11 @@ srho_X_Y_given_Z1_hat_vec = zeros(1,numMCsims);
 srho_X_Y_given_Z2_hat_vec = zeros(1,numMCsims);
 
 lastMsgLen = 0;
+dispstat('','init'); % One time only initialization
+dispstat(sprintf('Begining the simulation...'),'keepthis','timestamp');
 for simnum=1:numMCsims
-    fprintf(repmat('\b',1,lastMsgLen));
     msg = sprintf('Percentage Complete=%0.2f\n', simnum/numMCsims*100);
-    lastMsgLen = length(msg);
-    fprintf(msg);
+    dispstat(msg,'timestamp');
     
     [U_init] = claytoncopularnd(M, N, alpha);
     Z1Z2_1 = U_init(:,1:2); X = U_init(:,3);
@@ -538,11 +539,11 @@ srho_X_Y_given_Z1_hat_vec = zeros(1,numMCsims);
 srho_X_Y_given_Z2_hat_vec = zeros(1,numMCsims);
 
 lastMsgLen = 0;
+dispstat('','init'); % One time only initialization
+dispstat(sprintf('Begining the simulation...'),'keepthis','timestamp');
 for simnum=1:numMCsims
-    fprintf(repmat('\b',1,lastMsgLen));
     msg = sprintf('Percentage Complete=%0.2f\n', simnum/numMCsims*100);
-    lastMsgLen = length(msg);
-    fprintf(msg);
+    dispstat(msg,'timestamp');
     
     [U_init] = frankcopularnd(M, N, alpha);
     Z1Z2_1 = U_init(:,1:2); X = U_init(:,3);
@@ -626,11 +627,11 @@ srho_X_Y_given_Z1_hat_vec = zeros(1,numMCsims);
 srho_X_Y_given_Z2_hat_vec = zeros(1,numMCsims);
 
 lastMsgLen = 0;
+dispstat('','init'); % One time only initialization
+dispstat(sprintf('Begining the simulation...'),'keepthis','timestamp');
 for simnum=1:numMCsims
-    fprintf(repmat('\b',1,lastMsgLen));
     msg = sprintf('Percentage Complete=%0.2f\n', simnum/numMCsims*100);
-    lastMsgLen = length(msg);
-    fprintf(msg);
+    dispstat(msg,'timestamp');
     
     [U_init] = gumbelcopularnd(M, N, alpha);
     Z1Z2_1 = U_init(:,1:2); X = U_init(:,3);
