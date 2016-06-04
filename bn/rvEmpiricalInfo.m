@@ -24,6 +24,10 @@ classdef rvEmpiricalInfo
         density;
         distribution;
         isdiscrete;
+        
+        % properties that are calculated internally
+        mean;
+        variance;
     end
     
     methods(Static)
@@ -44,6 +48,10 @@ classdef rvEmpiricalInfo
             obj.density = density;
             obj.distribution = distribution;
             obj.isdiscrete = isdiscrete;
+            
+            % calculate the mean and variance
+            obj.mean = trapz(obj.domain,obj.density.*obj.domain);
+            obj.variance = trapz(obj.domain,obj.density.*((obj.domain).^2))-(trapz(obj.domain,obj.density.*obj.domain))^2;
         end
         
         function [idx, domainVal] = findClosestDomainVal(obj, q)
