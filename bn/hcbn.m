@@ -625,5 +625,61 @@ classdef hcbn < handle
             end
         end
         
+        function [ll_val] = copulaLogLikelihood(obj, X)
+            % WARNING - this method should *ONLY* be used if you are
+            % dealing w/ all continuous nodes (i.e. using the hcbn as a
+            % non-parametric CBN)
+            M = size(X,1);
+            if(size(X,2)~=obj.D)
+                error('Input data for LL calculation must be the same dimensions as the BN!');
+            end      
+            ll_val = 0;
+            for mm=1:M
+                for dd=1:obj.D
+                    R_ci = obj.computeCopulaRatio(dd, X(mm,:));
+                    
+                    if(isinf(R_ci) || isnan(R_ci))
+                        error('R_ci is inf/nan!');
+                    end
+                    
+                    if(R_ci < obj.LOG_CUTOFF)
+                        R_ci = obj.LOG_CUTOFF;
+                    end
+                    
+                    ll_val = ll_val + log(R_ci);
+                    if(~isreal(ll_val))
+                        error('LL Value imaginary!');
+                    end
+                end
+            end
+        end
+        
+        function [rcVal] = computeCopulaRatio(obj, nodeIdx, x)
+            % WARNING - this method should *ONLY* be used if you are
+            % dealing w/ all continuous nodes (i.e. using the hcbn as a
+            % non-parametric CBN)
+            copFam = obj.copulaFamilies{nodeIdx};
+            if(isempty(copFam))
+                rcVal = 1;
+            else
+                idxs_all = [nodeIdx copFam.parentNodeIdxs];
+                x_all = x(idxs_all);                
+                u_all = zeros(1,length(x_all));
+                % convert to pseudo-observations via ECDF
+                for ii=1:length(x_all)
+                    u_all(ii) = obj.empInfo{idxs_all(ii)}.cdf(x_all(ii));
+                end                
+                u_parents = u_all(2:end);
+                
+                Rc_num = empcopulaval(copFam.c, u_all);
+                if(length(u_parents)==1)
+                    Rc_den = 1;
+                else
+                    Rc_den = empcopulaval(copFam.c_parents, u_parents);
+                end
+                rcVal = Rc_num/Rc_den;
+            end
+        end
+        
     end
 end

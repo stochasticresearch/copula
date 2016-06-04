@@ -240,7 +240,33 @@ classdef cbn < handle
                     
                     ll_val = ll_val + log(f_Xi) + log(R_ci);
                     if(~isreal(ll_val))
-                        1;
+                        error('LL Value imaginary!');
+                    end
+                end
+            end
+        end
+        
+        function [ll_val] = copulaLogLikelihood(obj, X)
+            M = size(X,1);
+            if(size(X,2)~=obj.D)
+                error('Input data for LL calculation must be the same dimensions as the BN!');
+            end      
+            ll_val = 0;
+            for mm=1:M
+                for dd=1:obj.D
+                    R_ci = obj.computeCopulaRatio(dd, X(mm,:));
+                    
+                    if(isinf(R_ci) || isnan(R_ci))
+                        error('R_ci is inf/nan!');
+                    end
+                    
+                    if(R_ci < obj.LOG_CUTOFF)
+                        R_ci = obj.LOG_CUTOFF;
+                    end
+                    
+                    ll_val = ll_val + log(R_ci);
+                    if(~isreal(ll_val))
+                        error('LL Value imaginary!');
                     end
                 end
             end
