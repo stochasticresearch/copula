@@ -46,6 +46,7 @@ end
 U = rand(M,D);
 genStartIdx = 2;
 D_parents = 1;
+
 if(~isempty(varargin))
     U_parents = varargin{1};
     if(size(U_parents,1)~=M)
@@ -77,6 +78,9 @@ for ii=1:M
         idxVec(jj) = findClosest(uu,u_j);
     end
 end
+
+% avoid putting values very close to the edges of the unit hypercube
+U = fixU(U,.001);       % TODO: allow this tolerance to be user adjustable
 
 end
 

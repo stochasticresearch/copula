@@ -93,10 +93,87 @@ classdef cbn < handle
                 if(~acyclic(candidateDag))
                     error('Specified DAG is not acyclic!\n');
                 end
-                obj.setDag(candidateDag);
+                if(nVarargs>4)
+                    opt1 = varargin{2};
+                    if(strcmpi(opt1,'copulaFamilyInput'))
+                        obj.setDag(candidateDag, 0);    % do NOT compute estimated copula families
+                                                        % b/c they were provided as debugging
+                                                        % input
+                        copulaFamiliesInput = varargin{3};
+                        obj.inflateCopulaInformation(copulaFamiliesInput);
+                    elseif(strcmpi(opt1,'empInfoInput'))
+                        % overwrite the empirical info w/ the provided
+                        % debugging empirical info
+                        empInfoInput = varargin{3};
+                        obj.inflateEmpInfo(empInfoInput);
+                    else
+                        error('Unrecognized var-input!');
+                    end
+                    opt2 = varargin{4};
+                    if(strcmpi(opt2,'copulaFamilyInput'))
+                        obj.setDag(candidateDag, 0);    % do NOT compute estimated copula families
+                                                        % b/c they were provided as debugging
+                                                        % input
+                        copulaFamiliesInput = varargin{5};
+                        obj.inflateCopulaInformation(copulaFamiliesInput);
+                    elseif(strcmpi(opt2,'empInfoInput'))
+                        % overwrite the empirical info w/ the provided
+                        % debugging empirical info
+                        empInfoInput = varargin{5};
+                        obj.inflateEmpInfo(empInfoInput);
+                    else
+                        error('Unrecognized var-input');
+                    end
+                elseif(nVarargs>2)
+                    opt1 = varargin{2};
+                    if(strcmpi(opt1,'copulaFamilyInput'))
+                        obj.setDag(candidateDag, 0);    % do NOT compute estimated copula families
+                                                        % b/c they were provided as debugging
+                                                        % input
+                        copulaFamiliesInput = varargin{3};
+                        obj.inflateCopulaInformation(copulaFamiliesInput);
+                    elseif(strcmpi(opt1,'empInfoInput'))
+                        % overwrite the empirical info w/ the provided
+                        % debugging empirical info
+                        empInfoInput = varargin{3};
+                        obj.inflateEmpInfo(empInfoInput);
+                        obj.setDag(candidateDag);
+                    else
+                        error('Unrecognized var-input!');
+                    end
+                else
+                    obj.setDag(candidateDag);       % estimate the copula families
+                end
             end
             if(nVarargs>1)
                 obj.disableModelSelectFlag = varargin{2};
+                obj.setDag(candidateDag);
+            end
+        end
+        
+        function [] = inflateCopulaInformation(obj, copulaFamiliesInput)
+            for dd=1:obj.D
+                if(isempty(copulaFamiliesInput{dd}))
+                    obj.copulaFamilies{dd} = [];
+                else
+                    node = obj.nodeNames{dd};
+                    nodeIdx = obj.nodeVals(dd);
+                    [parentIdxs, parentNames] = obj.getParents(nodeIdx);
+                    C_all = copulaFamiliesInput{dd}{1};
+                    C_all_params = copulaFamiliesInput{dd}{2};
+                    C_parents = copulaFamiliesInput{dd}{3};
+                    C_parents_params = copulaFamiliesInput{dd}{4};
+                    
+                    copFam = cbnfamily(node, nodeIdx, parentNames, parentIdxs, ...
+                        C_all, C_all_params, C_parents, C_parents_params);
+                    obj.copulaFamilies{nodeIdx} = copFam;
+                end
+            end
+        end
+        
+        function [] = inflateEmpInfo(obj, empInfoInput)
+            for dd=1:obj.D
+                obj.empInfo{dd} = empInfoInput{dd};
             end
         end
         
@@ -246,15 +323,17 @@ classdef cbn < handle
             end
         end
         
-        function [ll_val] = copulaLogLikelihood(obj, X)
+        function [ll_val, R_ci_mat] = copulaLogLikelihood(obj, X, pobsFlag)
             M = size(X,1);
             if(size(X,2)~=obj.D)
                 error('Input data for LL calculation must be the same dimensions as the BN!');
             end      
             ll_val = 0;
+            R_ci_mat = zeros(M,obj.D);
             for mm=1:M
                 for dd=1:obj.D
-                    R_ci = obj.computeCopulaRatio(dd, X(mm,:));
+                    R_ci = obj.computeCopulaRatio(dd, X(mm,:), pobsFlag);
+                    R_ci_mat(mm,dd) = R_ci;
                     
                     if(isinf(R_ci) || isnan(R_ci))
                         error('R_ci is inf/nan!');
@@ -272,7 +351,7 @@ classdef cbn < handle
             end
         end
         
-        function [rcVal] = computeCopulaRatio(obj, nodeIdx, x)
+        function [rcVal] = computeCopulaRatio(obj, nodeIdx, x, pobsFlag)
             %COMPUTECOPULARATIO - computes the copula ratio as defined by
             %Elidan in Copula Bayesian Networks
             % Inputs:
@@ -292,10 +371,14 @@ classdef cbn < handle
             else
                 idxs_all = [nodeIdx copFam.parentNodeIdxs];
                 x_all = x(idxs_all);
-                u_all = zeros(1,length(x_all));
-                % convert to pseudo-observations via ECDF
-                for ii=1:length(x_all)
-                    u_all(ii) = obj.empInfo{idxs_all(ii)}.cdf(x_all(ii));
+                if(pobsFlag)
+                    u_all = x_all;
+                else
+                    u_all = zeros(1,length(x_all));
+                    % convert to pseudo-observations via ECDF
+                    for ii=1:length(x_all)
+                        u_all(ii) = obj.empInfo{idxs_all(ii)}.cdf(x_all(ii));
+                    end
                 end
                 
                 u_parents = u_all(2:end);
