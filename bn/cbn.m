@@ -390,23 +390,29 @@ classdef cbn < handle
                         rcDenVal = 1;
                     end
                 elseif(strcmpi(copFam.C, 'Frank'))
-                    rcNumVal = frankcopulapdf(u_all, copFam.C_param);
+%                     rcNumVal = frankcopulapdf(u_all, copFam.C_param);
+                    rcNumVal = copulapdf('Frank', u_all, copFam.C_param);
                     if(length(u_parents)>1)
-                        rcDenVal = frankcopulapdf(u_parents, copFam.C_parents_param);
+%                         rcDenVal = frankcopulapdf(u_parents, copFam.C_parents_param);
+                        rcDenVal = copulapdf('Frank', u_parents, copFam.C_parents_param);
                     else
                         rcDenVal = 1;
                     end
                 elseif(strcmpi(copFam.C, 'Gumbel'))
-                    rcNumVal = gumbelcopulapdf(u_all, copFam.C_param);
+%                     rcNumVal = gumbelcopulapdf(u_all, copFam.C_param);
+                    rcNumVal = copulapdf('Gumbel', u_all, copFam.C_param);
                     if(length(u_parents)>1)
-                        rcDenVal = gumbelcopulapdf(u_parents, copFam.C_parents_param);
+%                         rcDenVal = gumbelcopulapdf(u_parents, copFam.C_parents_param);
+                        rcDenVal = copulapdf('Gumbel', u_parents, copFam.C_parents_param);
                     else
                         rcDenVal = 1;
                     end
                 elseif(strcmpi(copFam.C, 'Clayton'))
-                    rcNumVal = claytoncopulapdf(u_all, copFam.C_param);
+%                     rcNumVal = claytoncopulapdf(u_all, copFam.C_param);
+                    rcNumVal = copulapdf('Clayton', u_all, copFam.C_param);
                     if(length(u_parents)>1)
-                        rcDenVal = claytoncopulapdf(u_parents, copFam.C_parents_param);
+%                         rcDenVal = claytoncopulapdf(u_parents, copFam.C_parents_param);
+                        rcDenVal = copulapdf('Clayton', u_parents, copFam.C_parents_param);
                     else
                         rcDenVal = 1;
                     end
