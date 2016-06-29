@@ -80,8 +80,8 @@ function varargout = peakfinder(x0, sel, thresh, extrema, includeEndpoints, inte
 % Copyright Nathanael C. Yoder 2015 (nyoder@gmail.com)
 
 % Perform error checking and set defaults if not passed in
-error(nargchk(1,6,nargin,'struct'));
-error(nargoutchk(0,2,nargout,'struct'));
+narginchk(1,6);
+nargoutchk(0,2);
 
 s = size(x0);
 flipData =  s(1) < s(2);
