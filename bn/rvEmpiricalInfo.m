@@ -50,8 +50,15 @@ classdef rvEmpiricalInfo
             obj.isdiscrete = isdiscrete;
             
             % calculate the mean and variance
-            obj.mean = trapz(obj.domain,obj.density.*obj.domain);
-            obj.variance = trapz(obj.domain,obj.density.*((obj.domain).^2))-(trapz(obj.domain,obj.density.*obj.domain))^2;
+            if(~isempty(density))
+                vecCalc = obj.density;
+            elseif(~isempty(distribution))
+                vecCalc = obj.distribution;
+            else
+                error('Need to specify atleast a density or distribution!');
+            end
+            obj.mean = trapz(obj.domain,vecCalc.*obj.domain);
+            obj.variance = trapz(obj.domain,vecCalc.*((obj.domain).^2))-(trapz(obj.domain,vecCalc.*obj.domain))^2;
         end
         
         function [idx, domainVal] = findClosestDomainVal(obj, q)
