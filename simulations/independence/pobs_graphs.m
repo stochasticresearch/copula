@@ -31,6 +31,27 @@ subplot(4,4,15); scatter(pobs(x)*(M+1)/M,pobs(y7)*(M+1)/M, 'r'); grid on; xlabel
 subplot(4,4,12); scatter(x,y8); grid on; title('Step'); xlabel('x'); ylabel('y');
 subplot(4,4,16); scatter(pobs(x)*(M+1)/M,pobs(y8)*(M+1)/M, 'r'); grid on; xlabel('u'); ylabel('v');
 
+%% Make a plot to explain the proof better (functional w/ no constant sections)
+
+M = 2000;
+x = rand(M,1)*3-1;
+y = 4*(x).^2;
+
+figure;
+subplot(2,1,1); scatter(x,y); grid on; xlabel('x'); ylabel('y');
+subplot(2,1,2); scatter(pobs(x)*(M+1)/M, pobs(y)*(M+1)/M, 'r'); 
+grid on; xlabel('F_X(x)'); ylabel('F_Y(y)');
+
+%% Make a plot to explain the proof better (functional w/ constant sections)
+
+M = 2000;
+x = rand(M,1)*3-1;
+y = 4*(x).^2.*(x<=1.5) + 4*(1.5).^2.*(x>1.5);
+
+figure;
+subplot(2,1,1); scatter(x,y); grid on; title('Skewed Parabola'); xlabel('x'); ylabel('y');
+subplot(2,1,2); scatter(pobs(x)*(M+1)/M, pobs(y)*(M+1)/M, 'r'); 
+grid on; xlabel('u'); ylabel('v'); title('F_Y(y) vs. F_X(x)');
 
 %% 
 figure;
