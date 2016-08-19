@@ -19,6 +19,7 @@ addpath('./simulations/betakernel');
 addpath('./simulations/cos');
 addpath('./simulations/hcbn');
 addpath('./simulations/misc');
+addpath('./simulations/independence');
 
 addpath('./testfiles');
 
