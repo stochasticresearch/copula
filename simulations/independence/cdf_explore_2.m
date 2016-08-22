@@ -1,8 +1,11 @@
 function [] = cdf_explore_2()
 
+global constVal;
+constVal = 2;
+
 M = 5000;
 X = rand(M,1)*3-1;
-Y = (4*(X).^2).*(X<=1) + 4*(X>1);
+Y = (4*(X).^2).*(X<=1) + constVal*(X>1);
 
 X1_idx = find(X<=0);
 X2_idx = find(X>0 & X<=1);
@@ -39,27 +42,39 @@ for y_idx=1:length(y_vec)
                            1/3*(empInfoX3(fun_g3_inv(y)));
 end
 
-x = linspace(min(X),max(X),100);
+x = linspace(min(X),max(X),250);
+% for x_idx=1:length(x)
+%     xx = x(x_idx);
+%     FX_x(x_idx) = empInfoX.cdf(xx);
+%     FY_y(x_idx) = 1/3*(1-empInfoX1.cdf(fun_g1_inv(fun_g1(xx)))) + ...
+%            1/3*(empInfoX2.cdf(fun_g2_inv(fun_g2(xx)))) + ...
+%            1/3*(empInfoX3(fun_g3_inv(fun_g3(xx))));
+% end
 
+y = (4*(x).^2).*(x<=1) + constVal*(x>1);
 for x_idx=1:length(x)
     xx = x(x_idx);
+    yy = y(x_idx);
     FX_x(x_idx) = empInfoX.cdf(xx);
-    FY_y(x_idx) = 1/3*(1-empInfoX1.cdf(fun_g1_inv(fun_g1(xx)))) + ...
-           1/3*(empInfoX2.cdf(fun_g2_inv(fun_g2(xx)))) + ...
-           1/3*(empInfoX3(fun_g3_inv(fun_g3(xx)))) - 1/3;
-
+    FY_y(x_idx) = 1/3*(1-empInfoX1.cdf(fun_g1_inv(yy))) + ...
+                  1/3*(empInfoX2.cdf(fun_g2_inv(yy))) + ...
+                  1/3*(empInfoX3(fun_g3_inv(yy)));
 end
+
 
 
 subplot(3,2,1); scatter(X,Y); xlabel('X'); ylabel('Y'); grid on;
 
+%%%%%%%% OBSOLETE %%%%%%%%
 % instead of using pobs directly, we do the sort for Y b/c it has duplicate
 % values ...
-pobsX = pobs(X);
-data_sorted = sort(Y);
-[~, pobsY] = ismember(Y,data_sorted);
-pobsY = pobsY/length(Y);
+% data_sorted = sort(Y);
+% [~, pobsY] = ismember(Y,data_sorted);
+% pobsY = pobsY/length(Y);
+%%%%%%%% OBSOLETE %%%%%%%%
 
+pobsX = pobs(X);
+pobsY = pobs(Y);
 subplot(3,2,2); scatter(pobsX, pobsY); xlabel('u'); ylabel('v'); grid on;
 subplot(3,2,3); plot(domainX, FX); xlabel('x'); ylabel('F_X(x)'); grid on;
 
@@ -69,13 +84,15 @@ hold on;
 plot(y_vec, FY_calculated, 'o');
 
 subplot(3,2,[5 6])
-plot(FX_x,FY_y); grid on; xlabel('F_X(x)'); ylabel('F_Y(y)');
+plot(FX_x,FY_y, 'o'); grid on; xlabel('F_X(x)'); ylabel('F_Y(y)');
 
 end
 
 function [g3_inv_val] = fun_g3_inv(y)
 
-if(y>=4)
+global constVal;
+
+if(y>=constVal)
     g3_inv_val = 1;
 else
     g3_inv_val = 0;
@@ -100,8 +117,8 @@ g2_val = 4*(x).^2;
 end
 
 function [g3_val] = fun_g3(x)
-
-g3_val = 4;
+global constVal;
+g3_val = constVal;
 
 end
 

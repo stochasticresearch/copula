@@ -157,7 +157,6 @@ FX_x = empInfoX.cdf(x);
 FY_y = 0.25-0.25*(empInfoX1.cdf(fun_g1_inv(fun_g1(x)))) + ...
             0.75*(empInfoX2.cdf(fun_g2_inv(fun_g2(x))));
 
-
 plot(FX_x,FY_y);
 
 end
