@@ -16,7 +16,7 @@
 %* along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
 %*                                                                        *
 %**************************************************************************
-
+%%
 % A simple test to see how discretization affects likelihood
 
 clear;
@@ -91,3 +91,27 @@ clc;
 
 x = [1 2 3 4];
 [y, edges]= discretizeRv(x,4)
+
+%% Discretize a functional relationship 
+clear;
+clc;
+
+M = 1000;
+x = rand(M,1);
+y = (x-0.5).^2;
+
+yy = discretizeRv(y,10);
+xx = discretizeRv(x,10);
+yyy = (xx-0.5).^2;
+
+subplot(2,2,1);
+scatter(x,y); grid on;
+
+subplot(2,2,2);
+scatter(x,yy); grid on;
+
+subplot(2,2,3);
+scatter(xx,y); grid on;
+
+subplot(2,2,4);
+scatter(xx,yyy), grid on;

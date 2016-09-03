@@ -1,4 +1,4 @@
-function [ taucj ] = ktaucj( X, Y, numXbin, numYbin )
+function [ taucj ] = ktaucj( X, Y )
 %ktaucj - computes a rescaled version of Kendall's tau that preserves
 %         the definition of Kendall's tau, but assures that in the 
 %         scenario of perfect concordance or discordance for discrete
@@ -39,19 +39,11 @@ function [ taucj ] = ktaucj( X, Y, numXbin, numYbin )
 %* 
 %**************************************************************************
 
-
-if(nargin<4)
-    numYbin = 0;
-end
-if(nargin<3)
-    numXbin = 0;
-end
-
 % compute the normal kendall's tau
 ktau = corr(X,Y,'type','kendall');
 
-% compute the contingency table
-h_XY = gencontingencytable( X, Y, numXbin, numYbin );
+% compute the pmf
+h_XY = calcpmf( [X Y] );
 
 % compute the Carley bounds
 [ tau_C_plus, tau_C_minus ] = carleybounds( h_XY );

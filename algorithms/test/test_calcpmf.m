@@ -19,7 +19,7 @@
 
 % Script which tests the gencontingencytable function
 
-%% Test 1 -- all discrete
+%% Test 1 -- simple all discrete
 clear;
 clc;
 
@@ -41,6 +41,28 @@ X(:,2) = X(:,2)/3;
 [h, mapping] = calcpmf( X );
 h
 celldisp(mapping)
+
+%% Test 1 - functional discrete
+clear;
+clc;
+
+M = 500;
+
+numDiscreteIntervals = 10;
+% Strictly monotonic
+x = rand(M,1);
+y = x.^3;
+xx = discretizeRv(x,numDiscreteIntervals)';
+yy = discretizeRv(y,numDiscreteIntervals)';
+yyy = xx.^3;        % both x and y are discrete here
+
+X = [xx yyy];
+[h, mapping] = calcpmf( X );
+h
+mapping{h~=0}
+[tau_plus, tau_minus] = carleybounds(h);
+scatter(xx, yyy); grid on;
+title(sprintf('\\tau_{-}=%0.02f \\tau_{+}=%0.02f', tau_plus, tau_minus));
 
 %% Test 2 -- discrete and continuous
 
