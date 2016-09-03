@@ -75,3 +75,12 @@ for mm=1:M
 end
 
 fprintf('Matlab=%f Continuous=%f Discretized=%f\n', -1*nlogL, nLLVal_continuous, nLLVal_discrete);
+
+%% See the shape discretization produces
+
+clear;
+clc;
+
+M = 1000;
+X = randn(M*2,1);
+[X_discretized, edges] = discretizeRv(X, 10);
