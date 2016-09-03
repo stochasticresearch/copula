@@ -42,3 +42,4 @@ function [ y, edges ] = discretizeRv( x, N, varargin )
 
 [~,edges,y] = histcounts(x, N, 'Normalization', 'pdf');
 y = edges(y);
+edges = edges(1:end-1);

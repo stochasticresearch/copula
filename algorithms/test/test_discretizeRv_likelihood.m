@@ -84,3 +84,10 @@ clc;
 M = 1000;
 X = randn(M*2,1);
 [X_discretized, edges] = discretizeRv(X, 10);
+
+%% Test how discretizeRv behaves when we give it discrete data to begin with
+clear;
+clc;
+
+x = [1 2 3 4];
+[y, edges]= discretizeRv(x,4)

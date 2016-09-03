@@ -1,16 +1,17 @@
 function [ h, mapping, prob, combos ] = calcpmf( X )
-%CALCPMF - computes the empirical discrete probability
-%of occurance of each of the possible outcomes in a multivariate discrete
-%probability distribution
+%CALCPMF - computes the empirical discrete probability of occurance of each 
+% of the possible outcomes in a multivariate discrete probability 
+% distribution.  If the distribution is continuous, then it gets
+% discretized according to the number of bins 
 % Inputs:
-%  X - input M x N matrix, with N being the dimensionality of the discrete
+%  X - input M x D matrix, with D being the dimensionality of the discrete
 %      distribution, and M being the number of samples.  It is assumed that
-%      the data in each colum (i.e. each dimension) is a subset of the
-%      natural numbers (i.e. 1, 2, ...) starting with 1, and ending with
-%      some value.  The maximum value of each column will be used to
-%      determine the the domain of the random variable .  The domain for
-%      each marginal distribution will be 1:max(X(:,i)) for the ith
-%      marginal distribution, represented by the i^th column of data in X
+%      each dimesion of X is discrete.  If this is not the case, use
+%      discretizeRv to discretize the appropriate dimensions before using
+%      this function!!!
+%  Optional:
+%   MAX_NUM_BINS - the maximum number of bins for which the contingency
+%                  table should be generated
 % Outputs
 %  h - the contingency table generated from the data.  The dimensions of
 %      this matrix are determined by the number of unique values in each
@@ -23,7 +24,6 @@ function [ h, mapping, prob, combos ] = calcpmf( X )
 %  combo - the combo for which the probability was calculated
 %
 %**************************************************************************
-%* 
 %* Copyright (C) 2016  Kiran Karra <kiran.karra@gmail.com>
 %*
 %* This program is free software: you can redistribute it and/or modify
@@ -40,25 +40,26 @@ function [ h, mapping, prob, combos ] = calcpmf( X )
 %* along with this program.  If not, see <http://www.gnu.org/licenses/>.
 %**************************************************************************
 
-[M,N] = size(X);
-
-if(N==1)
-    numUniqueVals = length(unique(X));
-    combos = 1:numUniqueVals;
-    hSize = [numUniqueVals 1];
-else
-    % store the number of unique values for each dimension of the discrete
-    % distribution
-    hSize = zeros(1,N);
-    for nn=1:N
-        hSize(nn) = max(X(:,nn));
-    end
-
-    combos = combvec(1:hSize(1),1:hSize(2));
-    for nn=3:N
-        combos = combvec(combos, 1:hSize(nn));
-    end
+[M,D] = size(X);
+if(D==1)
+    error('D must be >= 2!');
 end
+
+% store the number of unique values for each dimension of the discrete
+% distribution
+hSize = zeros(1,D);
+uniqueCell = cell(1,D);
+for dd=1:D
+    uniqueVals = unique(X(:,dd));
+    hSize(dd) = length(uniqueVals);
+    uniqueCell{dd} = uniqueVals;
+end
+
+combos = combvec(1:hSize(1),1:hSize(2));
+for dd=3:D
+    combos = combvec(combos, 1:hSize(dd));
+end
+
 h = zeros(hSize);
 mapping = cell(hSize);
 
@@ -69,9 +70,18 @@ prob = zeros(size(combos,1),1);
 
 for ii=1:size(combos,1)
     combo = combos(ii,:);
+    mapVec = zeros(1,D);
+    for dd=1:D
+        unq = uniqueCell{dd};
+        mapVec(dd) = unq(combo(dd));
+    end
 
     % count the number of times this combo appears in the data set
-    cnt = sum(ismember(X,combo,'rows'));
+    % WARNING: there may be some issues here b/c we are potentially
+    % comparing double array's ..., not sure how ismember handles this?
+    % the following test case works, but that doesn't mean all will ...
+    %  ismember(1.111111111,1.111111111) --> 1
+    cnt = sum(ismember(X,mapVec,'rows'));
     
     % compute probability
     probVal = cnt/M;
@@ -80,7 +90,9 @@ for ii=1:size(combos,1)
     % store into the h matrix
     cellJ = num2cell(combo);
     h(cellJ{:}) = probVal;
-    mapping{cellJ{:}} = combo;
+    
+    % store the mapping
+    mapping{cellJ{:}} = mapVec;
 end
 
 end
