@@ -1,20 +1,3 @@
-%**************************************************************************
-%* 
-%* Copyright (C) 2016  Kiran Karra <kiran.karra@gmail.com>
-%*
-%* This program is free software: you can redistribute it and/or modify
-%* it under the terms of the GNU General Public License as published by
-%* the Free Software Foundation, either version 3 of the License, or
-%* (at your option) any later version.
-%*
-%* This program is distributed in the hope that it will be useful,
-%* but WITHOUT ANY WARRANTY; without even the implied warranty of
-%* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-%* GNU General Public License for more details.
-%*
-%* You should have received a copy of the GNU General Public License
-%* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 function [ prob, combos ] = computeEmpiricalDiscreteProb( X )
 %COMPUTEEMPIRICALDISCRETEPROB - computes the empirical discrete probability
 %of occurance of each of the possible outcomes in a multivariate discrete
@@ -32,6 +15,24 @@ function [ prob, combos ] = computeEmpiricalDiscreteProb( X )
 %  prob - a vector containing the probabilities for each of the
 %         combinations, referenced in the combo vector
 %  combo - the combo for which the probability was calculated
+%
+%**************************************************************************
+%* 
+%* Copyright (C) 2016  Kiran Karra <kiran.karra@gmail.com>
+%*
+%* This program is free software: you can redistribute it and/or modify
+%* it under the terms of the GNU General Public License as published by
+%* the Free Software Foundation, either version 3 of the License, or
+%* (at your option) any later version.
+%*
+%* This program is distributed in the hope that it will be useful,
+%* but WITHOUT ANY WARRANTY; without even the implied warranty of
+%* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%* GNU General Public License for more details.
+%*
+%* You should have received a copy of the GNU General Public License
+%* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+%**************************************************************************
 
 [M,N] = size(X);
 
@@ -61,6 +62,7 @@ for ii=1:size(combos,1)
     combo = combos(ii,:);
 
     % count the number of times this combo appears in the data set
+    % TODO: speed this up with idx matching
     cnt = 0;
     for mm=1:M
         if(isequal(combo,X(mm,:)))

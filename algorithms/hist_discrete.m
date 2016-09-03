@@ -1,3 +1,6 @@
+function [ pdf, combos ] = hist_discrete( X )
+%An empirical histogram for N-dimensional discrete distributions
+% TODO: currently only supports D=2 or D=3 and is very slow :(
 %**************************************************************************
 %* 
 %* Copyright (C) 2016  Kiran Karra <kiran.karra@gmail.com>
@@ -14,10 +17,10 @@
 %*
 %* You should have received a copy of the GNU General Public License
 %* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+%**************************************************************************
+%
+% TODO: merge with gencontingencytable
 
-function [ pdf, combos ] = hist_discrete( X )
-%An empirical histogram for N-dimensional discrete distributions
-% TODO: currently only supports D=2 or D=3 and is very slow :(
 
 M = size(X,1);
 D = size(X,2);

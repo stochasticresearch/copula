@@ -1,24 +1,3 @@
-function [ y, edges ] = discretizeRv( x, N, varargin )
-%DISCRETIZERV Discretizes a random variable using a specified method
-% Inputs:
-%  x - a vector of samples from a continuous random variable to be
-%  discretized
-%  N - the number of discrete intervals
-%
-% Optional Inputs:
-%  varargin{1} - if 0, then compute pdf directly, 
-%                else, compute log of pdf at specified value
-% Outputs:
-%  y - the discretized binned data
-%  edges - 
-%
-% Acknowledgements:
-% This file was inspired by the following research paper:
-%  METHODS FOR DISCRETIZING CONTINUOUS VARIABLES WITHIN THE FRAMEWORK 
-%  OF BAYESIAN NETWORKS
-%  Mihaela-Daciana Craciun, Violeta Chis¸ and Cristina Bala 
-%  ACTA UNIVERSITATIS APULENSIS - Special Issue
-%
 %**************************************************************************
 %*                                                                        *
 %* Copyright (C) 2016  Kiran Karra <kiran.karra@gmail.com>                *
@@ -38,7 +17,22 @@ function [ y, edges ] = discretizeRv( x, N, varargin )
 %*                                                                        *
 %**************************************************************************
 
-% TODO: implement the varargin option!
+%% 
+clear;
+clc;
 
-[~,edges,y] = histcounts(x, N, 'Normalization', 'pdf');
-y = edges(y);
+M = 1000;
+
+x = rand(M,1);
+y = x;
+
+% x = rand(M,1);
+% y = sin(2*pi*x);
+
+% x = rand(M,1)*2-1;
+% y = x.^2;
+
+% x = rand(M,1);
+% y=(2*binornd(1,0.5,M,1)-1).* (sqrt(1 - (2*x - 1).^2));
+
+[rsdmMetric, rsdmResidual, residAssocIdxs, rsdmRectangleCfg] = rsdm(x,y);
