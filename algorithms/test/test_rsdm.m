@@ -44,15 +44,12 @@ clc;
 M = 500;
 
 numDiscreteIntervals = 10;
-discreteApproxCarley = 100;
 
 % Strictly monotonic
 x = rand(M,1);
 y = x.^3;
 xx = discretizeRv(x,numDiscreteIntervals)';
-xx_carley = discretizeRv(x,discreteApproxCarley);
 yy = discretizeRv(y,numDiscreteIntervals)';
-yy_carley = discretizeRv(y,discreteApproxCarley);
 yyy = xx.^3;        % both x and y are discrete here
 
 % some required but not used configuration parameters
@@ -71,32 +68,91 @@ taus_xD_yD = zeros(1,3);
 taus_xC_yC(1) = tau;
 
 [taub, tau] = ktaub([x yy], alpha_dontCare, wantplot_dontCare);
-% TODO: TauCJ --> build the interface so that it will accept continuous and
-% discrete inputs, and compute the scaling factor automatically
-taus_xC_yD(1:2) = [tau taub];
+taucj = ktaucj(x, yy);
+taus_xC_yD(1:3) = [tau taub taucj];
 
 [taub, tau] = ktaub([xx y], alpha_dontCare, wantplot_dontCare);
-taus_xD_yC(1:2) = [tau taub];
+taucj = ktaucj(xx, y);
+taus_xD_yC(1:3) = [tau taub taucj];
 
 [taub, tau] = ktaub([xx yyy], alpha_dontCare, wantplot_dontCare);
-taus_xD_yD(1:2) = [tau taub];
+taucj = ktaucj(xx, yyy);
+taus_xD_yD(1:3) = [tau taub taucj];
 
+figure;
 subplot(2,2,1);
 scatter(x,y); grid on;
 title(sprintf('\\tau=%0.02f', taus_xC_yC(1)) );
 
 subplot(2,2,2);
 scatter(x,yy); grid on;
-title(sprintf('\\tau=%0.02f \\tau_b=%0.02f', taus_xC_yD(1), taus_xC_yD(2)));
+title(sprintf('\\tau=%0.02f \\tau_b=%0.02f \\tau_{cj}=%0.02f', ...
+    taus_xC_yD(1), taus_xC_yD(2), taus_xC_yD(3) ));
 
 subplot(2,2,3);
 scatter(xx,y); grid on;
-title(sprintf('\\tau=%0.02f \\tau_b=%0.02f', taus_xD_yC(1), taus_xD_yC(2)));
+title(sprintf('\\tau=%0.02f \\tau_b=%0.02f \\tau_{cj}=%0.02f', ...
+    taus_xD_yC(1), taus_xD_yC(2), taus_xD_yC(3) ));
 
 subplot(2,2,4);
 scatter(xx,yyy); grid on;
-title(sprintf('\\tau=%0.02f \\tau_b=%0.02f', taus_xD_yD(1), taus_xD_yD(2)));
+title(sprintf('\\tau=%0.02f \\tau_b=%0.02f \\tau_{cj}=%0.02f', ...
+    taus_xD_yD(1), taus_xD_yD(2), taus_xD_yD(3) ));
+
 % Strictly counter-monotonic
+% Strictly monotonic
+x = rand(M,1);
+y = -x.^3;
+xx = discretizeRv(x,numDiscreteIntervals)';
+yy = discretizeRv(y,numDiscreteIntervals)';
+yyy = -xx.^3;        % both x and y are discrete here
+
+% some required but not used configuration parameters
+alpha_dontCare = 0.05;
+wantplot_dontCare = 0;
+
+% calculate the different kind's of tau for each of these
+% continuous/discrete/hybrid scenarios
+% we have 3 measures -- tau, tau_b, tau_cj
+taus_xC_yC = zeros(1,3);
+taus_xC_yD = zeros(1,3);
+taus_xD_yC = zeros(1,3);
+taus_xD_yD = zeros(1,3);
+
+[~, tau] = ktaub([x y], alpha_dontCare, wantplot_dontCare);
+taus_xC_yC(1) = tau;
+
+[taub, tau] = ktaub([x yy], alpha_dontCare, wantplot_dontCare);
+taucj = ktaucj(x, yy);
+taus_xC_yD(1:3) = [tau taub taucj];
+
+[taub, tau] = ktaub([xx y], alpha_dontCare, wantplot_dontCare);
+taucj = ktaucj(xx, y);
+taus_xD_yC(1:3) = [tau taub taucj];
+
+[taub, tau] = ktaub([xx yyy], alpha_dontCare, wantplot_dontCare);
+taucj = ktaucj(xx, yyy);
+taus_xD_yD(1:3) = [tau taub taucj];
+
+figure;
+subplot(2,2,1);
+scatter(x,y); grid on;
+title(sprintf('\\tau=%0.02f', taus_xC_yC(1)) );
+
+subplot(2,2,2);
+scatter(x,yy); grid on;
+title(sprintf('\\tau=%0.02f \\tau_b=%0.02f \\tau_{cj}=%0.02f', ...
+    taus_xC_yD(1), taus_xC_yD(2), taus_xC_yD(3) ));
+
+subplot(2,2,3);
+scatter(xx,y); grid on;
+title(sprintf('\\tau=%0.02f \\tau_b=%0.02f \\tau_{cj}=%0.02f', ...
+    taus_xD_yC(1), taus_xD_yC(2), taus_xD_yC(3) ));
+
+subplot(2,2,4);
+scatter(xx,yyy); grid on;
+title(sprintf('\\tau=%0.02f \\tau_b=%0.02f \\tau_{cj}=%0.02f', ...
+    taus_xD_yD(1), taus_xD_yD(2), taus_xD_yD(3) ));
 
 
 %% Understand how RSDM works w/ discrete function dependencies (TODO)
