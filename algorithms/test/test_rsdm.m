@@ -40,17 +40,30 @@ y = x;
 %% Understand how different tau's work w/ discrete and hybrid functional dependencies
 clear;
 clc;
+close all;
+
+% rng(12345);
 
 M = 500;
 
-numDiscreteIntervals = 10;
+numDiscreteIntervals = 2;
+
+% optimal parameters for MICe
+mine_c = 15;
+mine_alpha = 0.6;
+
+% Optimal parameters for RDC
+rdc_k = 20;
+rdc_s = 1/6;
 
 % Strictly monotonic
 x = rand(M,1);
-y = x.^3;
+% y = x.^3;
+y = x;
 xx = discretizeRv(x,numDiscreteIntervals)';
 yy = discretizeRv(y,numDiscreteIntervals)';
-yyy = xx.^3;        % both x and y are discrete here
+% yyy = xx.^3;        % both x and y are discrete here
+yyy = xx;
 
 % some required but not used configuration parameters
 alpha_dontCare = 0.05;
@@ -58,54 +71,70 @@ wantplot_dontCare = 0;
 
 % calculate the different kind's of tau for each of these
 % continuous/discrete/hybrid scenarios
-% we have 3 measures -- tau, tau_b, tau_cj
-taus_xC_yC = zeros(1,3);
-taus_xC_yD = zeros(1,3);
-taus_xD_yC = zeros(1,3);
-taus_xD_yD = zeros(1,3);
+% we have 5 measures -- tau, tau_b, tau_cj, mic_e, rdc
+dep_xC_yC = zeros(1,5);
+dep_xC_yD = zeros(1,5);
+dep_xD_yC = zeros(1,5);
+dep_xD_yD = zeros(1,5);
 
-[~, tau] = ktaub([x y], alpha_dontCare, wantplot_dontCare);
-taus_xC_yC(1) = tau;
+tau = corr(x,y,'type','kendall');
+taub = ktaub([x y], alpha_dontCare, wantplot_dontCare);
+taucj = ktaucj(x, y);
+minestats = mine(x',y',mine_alpha,mine_c,'mic_e');
+rdcVal = rdc(x,y,rdc_k,rdc_s);
+dep_xC_yC(1:5) = [tau taub taucj minestats.mic rdcVal];
 
-[taub, tau] = ktaub([x yy], alpha_dontCare, wantplot_dontCare);
+tau = corr(x,yy,'type','kendall');
+taub = ktaub([x yy], alpha_dontCare, wantplot_dontCare);
 taucj = ktaucj(x, yy);
-taus_xC_yD(1:3) = [tau taub taucj];
+minestats = mine(x',yy',mine_alpha,mine_c,'mic_e');
+rdcVal = rdc(x,yy,rdc_k,rdc_s);
+dep_xC_yD(1:5) = [tau taub taucj minestats.mic rdcVal];
 
-[taub, tau] = ktaub([xx y], alpha_dontCare, wantplot_dontCare);
+tau = corr(xx,y,'type','kendall');
+taub = ktaub([xx y], alpha_dontCare, wantplot_dontCare);
 taucj = ktaucj(xx, y);
-taus_xD_yC(1:3) = [tau taub taucj];
+minestats = mine(xx',y',mine_alpha,mine_c,'mic_e');
+rdcVal = rdc(xx,y,rdc_k,rdc_s);
+dep_xD_yC(1:5) = [tau taub taucj minestats.mic rdcVal];
 
-[taub, tau] = ktaub([xx yyy], alpha_dontCare, wantplot_dontCare);
+tau = corr(xx,yyy,'type','kendall');
+taub = ktaub([xx yyy], alpha_dontCare, wantplot_dontCare);
 taucj = ktaucj(xx, yyy);
-taus_xD_yD(1:3) = [tau taub taucj];
+minestats = mine(xx',yyy',mine_alpha,mine_c,'mic_e');
+rdcVal = rdc(xx,yyy,rdc_k,rdc_s);
+dep_xD_yD(1:5) = [tau taub taucj minestats.mic rdcVal];
 
 figure;
 subplot(2,2,1);
 scatter(x,y); grid on;
-title(sprintf('\\tau=%0.02f', taus_xC_yC(1)) );
+title(sprintf('\\tau=%0.02f \\tau_b=%0.02f \\tau_{cj}=%0.02f MIC_e=%0.02f RDC=%0.02f', ...
+    dep_xC_yC(1), dep_xC_yC(2), dep_xC_yC(3), dep_xC_yC(4), dep_xC_yC(5) ));
 
 subplot(2,2,2);
 scatter(x,yy); grid on;
-title(sprintf('\\tau=%0.02f \\tau_b=%0.02f \\tau_{cj}=%0.02f', ...
-    taus_xC_yD(1), taus_xC_yD(2), taus_xC_yD(3) ));
+title(sprintf('\\tau=%0.02f \\tau_b=%0.02f \\tau_{cj}=%0.02f MIC_e=%0.02f RDC=%0.02f', ...
+    dep_xC_yD(1), dep_xC_yD(2), dep_xC_yD(3), dep_xC_yD(4), dep_xC_yD(5) ));
 
 subplot(2,2,3);
 scatter(xx,y); grid on;
-title(sprintf('\\tau=%0.02f \\tau_b=%0.02f \\tau_{cj}=%0.02f', ...
-    taus_xD_yC(1), taus_xD_yC(2), taus_xD_yC(3) ));
+title(sprintf('\\tau=%0.02f \\tau_b=%0.02f \\tau_{cj}=%0.02f MIC_e=%0.02f RDC=%0.02f', ...
+    dep_xD_yC(1), dep_xD_yC(2), dep_xD_yC(3), dep_xD_yC(4), dep_xD_yC(5) ));
 
 subplot(2,2,4);
 scatter(xx,yyy); grid on;
-title(sprintf('\\tau=%0.02f \\tau_b=%0.02f \\tau_{cj}=%0.02f', ...
-    taus_xD_yD(1), taus_xD_yD(2), taus_xD_yD(3) ));
+title(sprintf('\\tau=%0.02f \\tau_b=%0.02f \\tau_{cj}=%0.02f MIC_e=%0.02f RDC=%0.02f', ...
+    dep_xD_yD(1), dep_xD_yD(2), dep_xD_yD(3), dep_xD_yD(4), dep_xD_yD(5) ));
 
 % Strictly counter-monotonic
 % Strictly monotonic
 x = rand(M,1);
-y = -x.^3;
+% y = -x.^3;
+y = -x;
 xx = discretizeRv(x,numDiscreteIntervals)';
 yy = discretizeRv(y,numDiscreteIntervals)';
-yyy = -xx.^3;        % both x and y are discrete here
+% yyy = -xx.^3;        % both x and y are discrete here
+yyy = -xx;
 
 % some required but not used configuration parameters
 alpha_dontCare = 0.05;
@@ -113,46 +142,60 @@ wantplot_dontCare = 0;
 
 % calculate the different kind's of tau for each of these
 % continuous/discrete/hybrid scenarios
-% we have 3 measures -- tau, tau_b, tau_cj
-taus_xC_yC = zeros(1,3);
-taus_xC_yD = zeros(1,3);
-taus_xD_yC = zeros(1,3);
-taus_xD_yD = zeros(1,3);
+% we have 5 measures -- tau, tau_b, tau_cj, mic_e, rdc
+dep_xC_yC = zeros(1,5);
+dep_xC_yD = zeros(1,5);
+dep_xD_yC = zeros(1,5);
+dep_xD_yD = zeros(1,5);
 
-[~, tau] = ktaub([x y], alpha_dontCare, wantplot_dontCare);
-taus_xC_yC(1) = tau;
+tau = corr(x,y,'type','kendall');
+taub = ktaub([x y], alpha_dontCare, wantplot_dontCare);
+taucj = ktaucj(x, y);
+minestats = mine(x',y',mine_alpha,mine_c,'mic_e');
+rdcVal = rdc(x,y,rdc_k,rdc_s);
+dep_xC_yC(1:5) = [tau taub taucj minestats.mic rdcVal];
 
-[taub, tau] = ktaub([x yy], alpha_dontCare, wantplot_dontCare);
+tau = corr(x,yy,'type','kendall');
+taub = ktaub([x yy], alpha_dontCare, wantplot_dontCare);
 taucj = ktaucj(x, yy);
-taus_xC_yD(1:3) = [tau taub taucj];
+minestats = mine(x',yy',mine_alpha,mine_c,'mic_e');
+rdcVal = rdc(x,yy,rdc_k,rdc_s);
+dep_xC_yD(1:5) = [tau taub taucj minestats.mic rdcVal];
 
-[taub, tau] = ktaub([xx y], alpha_dontCare, wantplot_dontCare);
+tau = corr(xx,y,'type','kendall');
+taub = ktaub([xx y], alpha_dontCare, wantplot_dontCare);
 taucj = ktaucj(xx, y);
-taus_xD_yC(1:3) = [tau taub taucj];
+minestats = mine(xx',y',mine_alpha,mine_c,'mic_e');
+rdcVal = rdc(xx,y,rdc_k,rdc_s);
+dep_xD_yC(1:5) = [tau taub taucj minestats.mic rdcVal];
 
-[taub, tau] = ktaub([xx yyy], alpha_dontCare, wantplot_dontCare);
+tau = corr(xx,yyy,'type','kendall');
+taub = ktaub([xx yyy], alpha_dontCare, wantplot_dontCare);
 taucj = ktaucj(xx, yyy);
-taus_xD_yD(1:3) = [tau taub taucj];
+minestats = mine(xx',yyy',mine_alpha,mine_c,'mic_e');
+rdcVal = rdc(xx,yyy,rdc_k,rdc_s);
+dep_xD_yD(1:5) = [tau taub taucj minestats.mic rdcVal];
 
 figure;
 subplot(2,2,1);
 scatter(x,y); grid on;
-title(sprintf('\\tau=%0.02f', taus_xC_yC(1)) );
+title(sprintf('\\tau=%0.02f \\tau_b=%0.02f \\tau_{cj}=%0.02f MIC_e=%0.02f RDC=%0.02f', ...
+    dep_xC_yC(1), dep_xC_yC(2), dep_xC_yC(3), dep_xC_yC(4), dep_xC_yC(5) ));
 
 subplot(2,2,2);
 scatter(x,yy); grid on;
-title(sprintf('\\tau=%0.02f \\tau_b=%0.02f \\tau_{cj}=%0.02f', ...
-    taus_xC_yD(1), taus_xC_yD(2), taus_xC_yD(3) ));
+title(sprintf('\\tau=%0.02f \\tau_b=%0.02f \\tau_{cj}=%0.02f MIC_e=%0.02f RDC=%0.02f', ...
+    dep_xC_yD(1), dep_xC_yD(2), dep_xC_yD(3), dep_xC_yD(4), dep_xC_yD(5) ));
 
 subplot(2,2,3);
 scatter(xx,y); grid on;
-title(sprintf('\\tau=%0.02f \\tau_b=%0.02f \\tau_{cj}=%0.02f', ...
-    taus_xD_yC(1), taus_xD_yC(2), taus_xD_yC(3) ));
+title(sprintf('\\tau=%0.02f \\tau_b=%0.02f \\tau_{cj}=%0.02f MIC_e=%0.02f RDC=%0.02f', ...
+    dep_xD_yC(1), dep_xD_yC(2), dep_xD_yC(3), dep_xD_yC(4), dep_xD_yC(5) ));
 
 subplot(2,2,4);
 scatter(xx,yyy); grid on;
-title(sprintf('\\tau=%0.02f \\tau_b=%0.02f \\tau_{cj}=%0.02f', ...
-    taus_xD_yD(1), taus_xD_yD(2), taus_xD_yD(3) ));
+title(sprintf('\\tau=%0.02f \\tau_b=%0.02f \\tau_{cj}=%0.02f MIC_e=%0.02f RDC=%0.02f', ...
+    dep_xD_yD(1), dep_xD_yD(2), dep_xD_yD(3), dep_xD_yD(4), dep_xD_yD(5) ));
 
 
 %% Understand how RSDM works w/ discrete function dependencies (TODO)

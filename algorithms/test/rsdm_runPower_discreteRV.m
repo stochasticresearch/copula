@@ -36,9 +36,10 @@ nsim_alt  = 500;   % Number of alternative datasets we use to estimate our power
 num_noise = 30;                    % The number of different noise levels used
 noise = 3;                         % A constant to determine the amount of noise
 
-M = 100;                % number of samples
+M = 500;                % number of samples
 numDepTests = 8;        % the number of different dependency tests we will conduct
                         % TODO: add copula dependencies as well
+numDiscreteIntervals = 4;
 
 % Vectors holding the null "correlations" (for pearson, dcor and mic respectively) 
 % for each of the nsim null datasets at a given noise level
@@ -128,6 +129,9 @@ for l=num_noise_test_min:num_noise_test_max
             % resimulate x so we have null scenario
             x = rand(M,1)*(xMax-xMin)+xMin;
             
+            x = discretizeRv(x, numDiscreteIntervals)';
+            y = discretizeRv(y, numDiscreteIntervals)';
+            
             % calculate the metrics
             rsdmNull(ii) = rsdm(x, y, rsdm_minscanincr, rsdm_diffthresh, rsdm_alpha);
             dcorrNull(ii) = dcorr(x, y);
@@ -180,6 +184,9 @@ for l=num_noise_test_min:num_noise_test_max
                     error('unknown dep type!');
             end
             
+            x = discretizeRv(x, numDiscreteIntervals)';
+            y = discretizeRv(y, numDiscreteIntervals)';
+            
             % calculate the metrics
             rsdmAlt(ii) = rsdm(x, y, rsdm_minscanincr, rsdm_diffthresh, rsdm_alpha);
             dcorrAlt(ii) = dcorr(x, y);
@@ -203,9 +210,9 @@ end
 
 % save the data
 if(ispc)
-    save(sprintf('C:\\Users\\Kiran\\ownCloud\\PhD\\sim_results\\independence\\rsdmPower_M_%d.mat', M));
+    save(sprintf('C:\\Users\\Kiran\\ownCloud\\PhD\\sim_results\\independence\\rsdmPowerDiscrete_M_%d.mat', M));
 else
-    save(sprintf('/home/kiran/ownCloud/PhD/sim_results/independence/rsdmPower_M_%d.mat', M));
+    save(sprintf('/home/kiran/ownCloud/PhD/sim_results/independence/rsdmPowerDiscrete_M_%d.mat', M));
 end
 
 % inlet plot configuration
@@ -228,6 +235,8 @@ loc_inset = [h1.Position(1)+inset_bufX h1.Position(2)+inset_bufY inset_width ins
 ax1 = axes('Position',loc_inset);
 tmp1 = linspace(0,1,M_inlet);
 tmp2 = tmp1;
+tmp1 = discretizeRv(tmp1, numDiscreteIntervals)';
+tmp2 = discretizeRv(tmp2, numDiscreteIntervals)';
 plot(tmp1,tmp2, 'k', 'LineWidth', 2);
 ax1.Box = 'on'; ax1.XTick = []; ax1.YTick = [];
 ax1.XLim = [min(tmp1) max(tmp1)];
@@ -246,6 +255,8 @@ loc_inset = [h2.Position(1)+inset_bufX h2.Position(2)+inset_bufY inset_width ins
 ax2 = axes('Position',loc_inset);
 tmp1 = linspace(0,1,M_inlet);
 tmp2 = 4*(tmp1-.5).^2;
+tmp1 = discretizeRv(tmp1, numDiscreteIntervals)';
+tmp2 = discretizeRv(tmp2, numDiscreteIntervals)';
 plot(tmp1,tmp2, 'k', 'LineWidth', 2);
 ax2.Box = 'on'; ax2.XTick = []; ax2.YTick = [];
 ax2.XLim = [min(tmp1) max(tmp1)];
@@ -264,6 +275,8 @@ loc_inset = [h3.Position(1)+inset_bufX h3.Position(2)+inset_bufY inset_width ins
 ax3 = axes('Position',loc_inset);
 tmp1 = linspace(0,1,M_inlet);
 tmp2 = 128*(tmp1-1/3).^3-48*(tmp1-1/3).^3-12*(tmp1-1/3);
+tmp1 = discretizeRv(tmp1, numDiscreteIntervals)';
+tmp2 = discretizeRv(tmp2, numDiscreteIntervals)';
 plot(tmp1,tmp2, 'k', 'LineWidth', 2);
 ax3.Box = 'on'; ax3.XTick = []; ax3.YTick = [];
 ax3.XLim = [min(tmp1) max(tmp1)];
@@ -282,6 +295,8 @@ loc_inset = [h4.Position(1)+inset_bufX h4.Position(2)+inset_bufY inset_width ins
 ax4 = axes('Position',loc_inset);
 tmp1 = linspace(0,1,M_inlet);
 tmp2 = sin(4*pi*tmp1);
+tmp1 = discretizeRv(tmp1, numDiscreteIntervals)';
+tmp2 = discretizeRv(tmp2, numDiscreteIntervals)';
 plot(tmp1,tmp2, 'k', 'LineWidth', 2);
 ax4.Box = 'on'; ax4.XTick = []; ax4.YTick = [];
 ax4.XLim = [min(tmp1) max(tmp1)];
@@ -301,6 +316,8 @@ loc_inset = [h5.Position(1)+inset_bufX h5.Position(2)+inset_bufY inset_width ins
 ax5 = axes('Position',loc_inset);
 tmp1 = linspace(0,1,M_inlet);
 tmp2 = sin(16*pi*tmp1);
+tmp1 = discretizeRv(tmp1, numDiscreteIntervals)';
+tmp2 = discretizeRv(tmp2, numDiscreteIntervals)';
 plot(tmp1,tmp2, 'k', 'LineWidth', 2);
 ax5.Box = 'on'; ax5.XTick = []; ax5.YTick = [];
 ax5.XLim = [min(tmp1) max(tmp1)];
@@ -319,6 +336,8 @@ loc_inset = [h6.Position(1)+inset_bufX h6.Position(2)+inset_bufY inset_width ins
 ax6 = axes('Position',loc_inset);
 tmp1 = linspace(0,1,M_inlet);
 tmp2 = tmp1.^(1/4);
+tmp1 = discretizeRv(tmp1, numDiscreteIntervals)';
+tmp2 = discretizeRv(tmp2, numDiscreteIntervals)';
 plot(tmp1,tmp2, 'k', 'LineWidth', 2);
 ax6.Box = 'on'; ax6.XTick = []; ax6.YTick = [];
 ax6.XLim = [min(tmp1) max(tmp1)];
@@ -338,6 +357,9 @@ ax7 = axes('Position',loc_inset);
 tmp1 = linspace(0,1,M_inlet/2);
 tmp2 = (sqrt(1 - (2*tmp1 - 1).^2));
 tmp3 = -(sqrt(1 - (2*tmp1 - 1).^2));
+tmp1 = discretizeRv(tmp1, numDiscreteIntervals)';
+tmp2 = discretizeRv(tmp2, numDiscreteIntervals)';
+tmp3 = discretizeRv(tmp3, numDiscreteIntervals)';
 plot(tmp1,tmp2, 'k', 'LineWidth', 2); hold on;
 plot(tmp1,tmp3, 'k', 'LineWidth', 2); 
 ax7.Box = 'on'; ax7.XTick = []; ax7.YTick = [];
@@ -359,6 +381,8 @@ loc_inset = [h8.Position(1)+inset_bufX h8.Position(2)+inset_bufY inset_width ins
 ax8 = axes('Position',loc_inset);
 tmp1 = linspace(0,1,M_inlet);
 tmp2 = (tmp1 > 0.5);
+tmp1 = discretizeRv(tmp1, numDiscreteIntervals)';
+tmp2 = discretizeRv(tmp2, numDiscreteIntervals)';
 plot(tmp1,tmp2, 'k', 'LineWidth', 2);
 ax8.Box = 'on'; ax8.XTick = []; ax8.YTick = [];
 ax8.XLim = [min(tmp1) max(tmp1)];

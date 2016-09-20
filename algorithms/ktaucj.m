@@ -39,7 +39,7 @@ function [ taucj ] = ktaucj( X, Y )
 %* 
 %**************************************************************************
 
-MAX_NUM_BINS = 100;
+MAX_NUM_BINS = 25;
 numUniqueX = length(unique(X));
 numUniqueY = length(unique(Y));
 if(numUniqueX>MAX_NUM_BINS)
@@ -56,13 +56,16 @@ else
 end
 
 % compute the normal kendall's tau
-ktau = corr(X,Y,'type','kendall');
+% ktau = corr(X,Y,'type','kendall');
+ktau = ktaub([X Y],0.05,0);      % calculate tau w/out correcting for ties
+                                 % the last 2 arguments are dont cares
 
 % compute the pmf
 h_XY = calcpmf( [X_discretized Y_discretized] );
 
 % compute the Carley bounds
 [ tau_C_plus, tau_C_minus ] = carleybounds( h_XY );
+fprintf('tau_C_plus=%0.02f tau_C_minus=%0.02f\n', tau_C_plus, tau_C_minus);
 
 % rescale the kendall's tau
 if(ktau<0)
