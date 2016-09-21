@@ -36,7 +36,7 @@ nsim_alt  = 500;   % Number of alternative datasets we use to estimate our power
 num_noise = 30;                    % The number of different noise levels used
 noise = 3;                         % A constant to determine the amount of noise
 
-M = 100;                % number of samples
+M = 250;                % number of samples
 numDepTests = 8;        % the number of different dependency tests we will conduct
                         % TODO: add copula dependencies as well
 
@@ -210,7 +210,12 @@ end
 
 % inlet plot configuration
 M_inlet = 200;
-inset_bufX = 0.0005; inset_bufY = 0.002;
+if(M==500)
+    inset_bufX = 0.0005; inset_bufY = 0.002;
+else
+    inset_bufX = 0.15; inset_bufY = 0.26;
+end
+
 inset_width = 0.1; inset_height = 0.08;
 
 noiseVec = (num_noise_test_min:num_noise_test_max)/10;
