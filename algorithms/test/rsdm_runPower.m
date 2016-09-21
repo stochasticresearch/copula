@@ -36,7 +36,7 @@ nsim_alt  = 500;   % Number of alternative datasets we use to estimate our power
 num_noise = 30;                    % The number of different noise levels used
 noise = 3;                         % A constant to determine the amount of noise
 
-M_vec = 100:50:500;     % number of samples
+M = 500;                % number of samples
 numDepTests = 8;        % the number of different dependency tests we will conduct
                         % TODO: add copula dependencies as well
 
@@ -56,11 +56,11 @@ rdcAlt  = zeros(1,nsim_alt);
 
 % Arrays holding the estimated power for each of the "correlation" types, 
 % for each data type (linear, parabolic, etc...) with each noise level
-rsdmPower = zeros(numDepTests, num_noise, length(M_vec));
-dcorrPower = zeros(numDepTests, num_noise, length(M_vec));
-micePower = zeros(numDepTests, num_noise, length(M_vec));
-corrPower = zeros(numDepTests, num_noise, length(M_vec));
-rdcPower  = zeros(numDepTests, num_noise, length(M_vec));
+rsdmPower = zeros(numDepTests, num_noise);
+dcorrPower = zeros(numDepTests, num_noise);
+micePower = zeros(numDepTests, num_noise);
+corrPower = zeros(numDepTests, num_noise);
+rdcPower  = zeros(numDepTests, num_noise);
 
 % Optimal parameters for MICe
 mine_c = 15;
@@ -90,124 +90,122 @@ dispstat('','init'); % One time only initialization
 dispstat(sprintf('Begining the simulation...\n'),'keepthis','timestamp');
 num_noise_test_min = 1;
 num_noise_test_max = 30;
-for m=1:length(M_vec)
-    M = M_vec(m);
-    for l=num_noise_test_min:num_noise_test_max
-        for typ=1:numDepTests
-            dispstat(sprintf('Computing for noise level=%d Dependency Test=%d',l, typ),'keepthis', 'timestamp');
-            % simulate data under the null w/ correct marginals
-            parfor ii=1:nsim_null
-                dispstat(sprintf('Simulating Null -- %0.02f', ii/nsim_null*100),'timestamp');
-                x = rand(M,1)*(xMax-xMin)+xMin;
-                switch(typ)
-                    case 1
-                        % linear
-                        y = x + noise*(l/num_noise)*randn(M,1); 
-                    case 2
-                        % parabolic
-                        y = 4*(x-.5).^2 + noise*(l/num_noise)*randn(M,1);
-                    case 3
-                        % cubic
-                        y = 128*(x-1/3).^3-48*(x-1/3).^3-12*(x-1/3)+10* noise*(l/num_noise)*randn(M,1);
-                    case 4
-                        % low-freq sin
-                        y = sin(4*pi*x) + 2*noise*(l/num_noise)*randn(M,1);
-                    case 5
-                        % high-freq sin
-                        y = sin(16*pi*x) + noise*(l/num_noise)*randn(M,1);
-                    case 6
-                        % fourth root
-                        y = x.^(1/4) + noise*(l/num_noise)*randn(M,1);
-                    case 7
-                        % circle
-                        y=(2*binornd(1,0.5,M,1)-1) .* (sqrt(1 - (2*x - 1).^2)) + noise/4*l/num_noise*randn(M,1);
-                    case 8
-                        % step function
-                        y = (x > 0.5) + noise*5*l/num_noise*randn(M,1);
-                    otherwise
-                        error('unknown dep type!');
-                end
-                % resimulate x so we have null scenario
-                x = rand(M,1)*(xMax-xMin)+xMin;
-
-                % calculate the metrics
-                rsdmNull(ii) = rsdm(x, y, rsdm_minscanincr, rsdm_diffthresh, rsdm_alpha);
-                dcorrNull(ii) = dcorr(x, y);
-                % compute MICe
-                minestats = mine(x',y',mine_alpha,mine_c,'mic_e');
-                miceNull(ii) = minestats.mic;
-                % compute correlation
-                corrNull(ii) = corr(x,y);
-                % compute RDC
-                rdcNull(ii) = rdc(x,y,rdc_k,rdc_s);
+for l=num_noise_test_min:num_noise_test_max
+    for typ=1:numDepTests
+        dispstat(sprintf('Computing for noise level=%d Dependency Test=%d',l, typ),'keepthis', 'timestamp');
+        % simulate data under the null w/ correct marginals
+        parfor ii=1:nsim_null
+            dispstat(sprintf('Simulating Null -- %0.02f', ii/nsim_null*100),'timestamp');
+            x = rand(M,1)*(xMax-xMin)+xMin;
+            switch(typ)
+                case 1
+                    % linear
+                    y = x + noise*(l/num_noise)*randn(M,1); 
+                case 2
+                    % parabolic
+                    y = 4*(x-.5).^2 + noise*(l/num_noise)*randn(M,1);
+                case 3
+                    % cubic
+                    y = 128*(x-1/3).^3-48*(x-1/3).^3-12*(x-1/3)+10* noise*(l/num_noise)*randn(M,1);
+                case 4
+                    % low-freq sin
+                    y = sin(4*pi*x) + 2*noise*(l/num_noise)*randn(M,1);
+                case 5
+                    % high-freq sin
+                    y = sin(16*pi*x) + noise*(l/num_noise)*randn(M,1);
+                case 6
+                    % fourth root
+                    y = x.^(1/4) + noise*(l/num_noise)*randn(M,1);
+                case 7
+                    % circle
+                    y=(2*binornd(1,0.5,M,1)-1) .* (sqrt(1 - (2*x - 1).^2)) + noise/4*l/num_noise*randn(M,1);
+                case 8
+                    % step function
+                    y = (x > 0.5) + noise*5*l/num_noise*randn(M,1);
+                otherwise
+                    error('unknown dep type!');
             end
-
-            % compute the rejection cutoffs
-            rsdm_cut = quantile(rsdmNull, 0.95);
-            dcorr_cut = quantile(dcorrNull, 0.95);
-            mice_cut = quantile(miceNull, 0.95);
-            corr_cut = quantile(corrNull, 0.95);
-            rdc_cut  = quantile(rdcNull, 0.95);
-
-            % resimulate the data under the alternative hypothesis
-            parfor ii=1:nsim_alt
-                dispstat(sprintf('Simulating Alt -- %0.02f', ii/nsim_alt*100),'timestamp');
-                x = rand(M,1)*(xMax-xMin)+xMin;
-                switch(typ)
-                    case 1
-                        % linear
-                        y = x + noise*(l/num_noise)*randn(M,1); 
-                    case 2
-                        % parabolic
-                        y = 4*(x-.5).^2 + noise*(l/num_noise)*randn(M,1);
-                    case 3
-                        % cubic
-                        y = 128*(x-1/3).^3-48*(x-1/3).^3-12*(x-1/3) + 10*noise*(l/num_noise)*randn(M,1);
-                    case 4
-                        % low-freq sin
-                        y = sin(4*pi*x) + 2*noise*(l/num_noise)*randn(M,1);
-                    case 5
-                        % high-freq sin
-                        y = sin(16*pi*x) + noise*(l/num_noise)*randn(M,1);
-                    case 6
-                        % fourth root
-                        y = x.^(1/4) + noise*(l/num_noise)*randn(M,1);
-                    case 7
-                        % circle
-                        y=(2*binornd(1,0.5,M,1)-1) .* (sqrt(1 - (2*x - 1).^2)) + noise/4*l/num_noise*randn(M,1);
-                    case 8
-                        % step function
-                        y = (x > 0.5) + noise*5*l/num_noise*randn(M,1);
-                    otherwise
-                        error('unknown dep type!');
-                end
-
-                % calculate the metrics
-                rsdmAlt(ii) = rsdm(x, y, rsdm_minscanincr, rsdm_diffthresh, rsdm_alpha);
-                dcorrAlt(ii) = dcorr(x, y);
-                % compute MICe
-                minestats = mine(x',y',mine_alpha,mine_c,'mic_e');
-                miceAlt(ii) = minestats.mic;
-                % compute corr
-                corrAlt(ii) = corr(x, y);
-                % compute RDC
-                rdcAlt(ii) = rdc(x,y,rdc_k,rdc_s);
-            end
-
-            % compute the power
-            rsdmPower(typ, l, m)  = sum(rsdmAlt > rsdm_cut)/nsim_alt;
-            dcorrPower(typ, l, m)  = sum(dcorrAlt > dcorr_cut)/nsim_alt;
-            micePower(typ, l, m)   = sum(miceAlt > mice_cut)/nsim_alt;
-            corrPower(typ, l, m)   = sum(corrAlt > corr_cut)/nsim_alt;
-            rdcPower(typ, l, m)    = sum(rdcAlt > rdc_cut)/nsim_alt;
+            % resimulate x so we have null scenario
+            x = rand(M,1)*(xMax-xMin)+xMin;
+            
+            % calculate the metrics
+            rsdmNull(ii) = rsdm(x, y, rsdm_minscanincr, rsdm_diffthresh, rsdm_alpha);
+            dcorrNull(ii) = dcorr(x, y);
+            % compute MICe
+            minestats = mine(x',y',mine_alpha,mine_c,'mic_e');
+            miceNull(ii) = minestats.mic;
+            % compute correlation
+            corrNull(ii) = corr(x,y);
+            % compute RDC
+            rdcNull(ii) = rdc(x,y,rdc_k,rdc_s);
         end
+        
+        % compute the rejection cutoffs
+        rsdm_cut = quantile(rsdmNull, 0.95);
+        dcorr_cut = quantile(dcorrNull, 0.95);
+        mice_cut = quantile(miceNull, 0.95);
+        corr_cut = quantile(corrNull, 0.95);
+        rdc_cut  = quantile(rdcNull, 0.95);
+        
+        % resimulate the data under the alternative hypothesis
+        parfor ii=1:nsim_alt
+            dispstat(sprintf('Simulating Alt -- %0.02f', ii/nsim_alt*100),'timestamp');
+            x = rand(M,1)*(xMax-xMin)+xMin;
+            switch(typ)
+                case 1
+                    % linear
+                    y = x + noise*(l/num_noise)*randn(M,1); 
+                case 2
+                    % parabolic
+                    y = 4*(x-.5).^2 + noise*(l/num_noise)*randn(M,1);
+                case 3
+                    % cubic
+                    y = 128*(x-1/3).^3-48*(x-1/3).^3-12*(x-1/3) + 10*noise*(l/num_noise)*randn(M,1);
+                case 4
+                    % low-freq sin
+                    y = sin(4*pi*x) + 2*noise*(l/num_noise)*randn(M,1);
+                case 5
+                    % high-freq sin
+                    y = sin(16*pi*x) + noise*(l/num_noise)*randn(M,1);
+                case 6
+                    % fourth root
+                    y = x.^(1/4) + noise*(l/num_noise)*randn(M,1);
+                case 7
+                    % circle
+                    y=(2*binornd(1,0.5,M,1)-1) .* (sqrt(1 - (2*x - 1).^2)) + noise/4*l/num_noise*randn(M,1);
+                case 8
+                    % step function
+                    y = (x > 0.5) + noise*5*l/num_noise*randn(M,1);
+                otherwise
+                    error('unknown dep type!');
+            end
+            
+            % calculate the metrics
+            rsdmAlt(ii) = rsdm(x, y, rsdm_minscanincr, rsdm_diffthresh, rsdm_alpha);
+            dcorrAlt(ii) = dcorr(x, y);
+            % compute MICe
+            minestats = mine(x',y',mine_alpha,mine_c,'mic_e');
+            miceAlt(ii) = minestats.mic;
+            % compute corr
+            corrAlt(ii) = corr(x, y);
+            % compute RDC
+            rdcAlt(ii) = rdc(x,y,rdc_k,rdc_s);
+        end
+        
+        % compute the power
+        rsdmPower(typ, l)  = sum(rsdmAlt > rsdm_cut)/nsim_alt;
+        dcorrPower(typ, l)  = sum(dcorrAlt > dcorr_cut)/nsim_alt;
+        micePower(typ, l)   = sum(miceAlt > mice_cut)/nsim_alt;
+        corrPower(typ, l)   = sum(corrAlt > corr_cut)/nsim_alt;
+        rdcPower(typ, l)    = sum(rdcAlt > rdc_cut)/nsim_alt;
     end
 end
+
 % save the data
 if(ispc)
-    save('C:\\Users\\Kiran\\ownCloud\\PhD\\sim_results\\independence\\rsdmPower.mat');
+    save(sprintf('C:\\Users\\Kiran\\ownCloud\\PhD\\sim_results\\independence\\rsdmPower_M_%d.mat', M));
 else
-    save('/home/kiran/ownCloud/PhD/sim_results/independence/rsdmPower.mat');
+    save(sprintf('/home/kiran/ownCloud/PhD/sim_results/independence/rsdmPower_M_%d.mat', M));
 end
 
 % inlet plot configuration
@@ -369,3 +367,201 @@ tmp2 = (tmp1 > 0.5);
 plot(tmp1,tmp2, 'k', 'LineWidth', 2);
 ax8.Box = 'on'; ax8.XTick = []; ax8.YTick = [];
 ax8.XLim = [min(tmp1) max(tmp1)];
+
+%% Generate curves which show the effect of sample size for statistical 
+% power for the various dependency metrics
+
+clear;
+clc;
+
+% WARNING: ENSURE THAT minepy/matlab/ is in the matlab path for MIC to
+% work!
+
+rng(1234);
+dbstop if error;
+
+nsim_null = 500;   % The number of null datasets we use to estimate our rejection reject regions for an alternative with level 0.05
+nsim_alt  = 500;   % Number of alternative datasets we use to estimate our power
+
+num_noise = 30;                    % The number of different noise levels used
+noise = 3;                         % A constant to determine the amount of noise
+
+M_vec = 100:50:500;     % number of samples
+numDepTests = 8;        % the number of different dependency tests we will conduct
+                        % TODO: add copula dependencies as well
+
+% Vectors holding the null "correlations" (for pearson, dcor and mic respectively) 
+% for each of the nsim null datasets at a given noise level
+rsdmNull = zeros(1,nsim_null);
+dcorrNull = zeros(1,nsim_null);
+miceNull = zeros(1,nsim_null);
+corrNull = zeros(1,nsim_null);
+rdcNull  = zeros(1,nsim_null);
+
+rsdmAlt  = zeros(1,nsim_alt);
+dcorrAlt = zeros(1,nsim_alt);
+miceAlt = zeros(1,nsim_alt);
+corrAlt = zeros(1,nsim_alt);
+rdcAlt  = zeros(1,nsim_alt);
+
+% Arrays holding the estimated power for each of the "correlation" types, 
+% for each data type (linear, parabolic, etc...) with each noise level
+rsdmPower = zeros(numDepTests, num_noise, length(M_vec));
+dcorrPower = zeros(numDepTests, num_noise, length(M_vec));
+micePower = zeros(numDepTests, num_noise, length(M_vec));
+corrPower = zeros(numDepTests, num_noise, length(M_vec));
+rdcPower  = zeros(numDepTests, num_noise, length(M_vec));
+
+% Optimal parameters for MICe
+mine_c = 15;
+mine_alpha = 0.6;
+
+% Optimal parameters for RSDM -- CFG1 - 5,8,1
+rsdm_minscanincr = 0.025;
+rsdm_diffthresh = 100;
+rsdm_alpha = 0.08;
+
+% Optimal parameters for RDC
+rdc_k = 20;
+rdc_s = 1/6;
+
+powerThreshold = 0.7;       % we want to see what sample-size is needed by
+                            % each dependency metric to acheive 70% 
+                            % statistical power
+
+% We loop through the noise level and functional form; 
+% each time we estimate a null distribution based on the marginals of the data, 
+% and then use that null distribution to estimate power
+
+% We use a uniformly distributed x, because in the original paper the 
+% authors used the same
+
+% Simon & Tibshirani use xMin=0, xMax=1 for performing their analysis ...
+xMin = 0;
+xMax = 1;
+
+dispstat('','init'); % One time only initialization
+dispstat(sprintf('Begining the simulation...\n'),'keepthis','timestamp');
+num_noise_test_min = 1;
+num_noise_test_max = 30;
+for m=1:length(M_vec)
+    M = M_vec(m);
+    for l=num_noise_test_min:num_noise_test_max
+        for typ=1:numDepTests
+            dispstat(sprintf('Computing for noise level=%d Dependency Test=%d',l, typ),'keepthis', 'timestamp');
+            % simulate data under the null w/ correct marginals
+            parfor ii=1:nsim_null
+                dispstat(sprintf('Simulating Null -- %0.02f', ii/nsim_null*100),'timestamp');
+                x = rand(M,1)*(xMax-xMin)+xMin;
+                switch(typ)
+                    case 1
+                        % linear
+                        y = x + noise*(l/num_noise)*randn(M,1); 
+                    case 2
+                        % parabolic
+                        y = 4*(x-.5).^2 + noise*(l/num_noise)*randn(M,1);
+                    case 3
+                        % cubic
+                        y = 128*(x-1/3).^3-48*(x-1/3).^3-12*(x-1/3)+10* noise*(l/num_noise)*randn(M,1);
+                    case 4
+                        % low-freq sin
+                        y = sin(4*pi*x) + 2*noise*(l/num_noise)*randn(M,1);
+                    case 5
+                        % high-freq sin
+                        y = sin(16*pi*x) + noise*(l/num_noise)*randn(M,1);
+                    case 6
+                        % fourth root
+                        y = x.^(1/4) + noise*(l/num_noise)*randn(M,1);
+                    case 7
+                        % circle
+                        y=(2*binornd(1,0.5,M,1)-1) .* (sqrt(1 - (2*x - 1).^2)) + noise/4*l/num_noise*randn(M,1);
+                    case 8
+                        % step function
+                        y = (x > 0.5) + noise*5*l/num_noise*randn(M,1);
+                    otherwise
+                        error('unknown dep type!');
+                end
+                % resimulate x so we have null scenario
+                x = rand(M,1)*(xMax-xMin)+xMin;
+
+                % calculate the metrics
+                rsdmNull(ii) = rsdm(x, y, rsdm_minscanincr, rsdm_diffthresh, rsdm_alpha);
+                dcorrNull(ii) = dcorr(x, y);
+                % compute MICe
+                minestats = mine(x',y',mine_alpha,mine_c,'mic_e');
+                miceNull(ii) = minestats.mic;
+                % compute correlation
+                corrNull(ii) = corr(x,y);
+                % compute RDC
+                rdcNull(ii) = rdc(x,y,rdc_k,rdc_s);
+            end
+
+            % compute the rejection cutoffs
+            rsdm_cut = quantile(rsdmNull, 0.95);
+            dcorr_cut = quantile(dcorrNull, 0.95);
+            mice_cut = quantile(miceNull, 0.95);
+            corr_cut = quantile(corrNull, 0.95);
+            rdc_cut  = quantile(rdcNull, 0.95);
+
+            % resimulate the data under the alternative hypothesis
+            parfor ii=1:nsim_alt
+                dispstat(sprintf('Simulating Alt -- %0.02f', ii/nsim_alt*100),'timestamp');
+                x = rand(M,1)*(xMax-xMin)+xMin;
+                switch(typ)
+                    case 1
+                        % linear
+                        y = x + noise*(l/num_noise)*randn(M,1); 
+                    case 2
+                        % parabolic
+                        y = 4*(x-.5).^2 + noise*(l/num_noise)*randn(M,1);
+                    case 3
+                        % cubic
+                        y = 128*(x-1/3).^3-48*(x-1/3).^3-12*(x-1/3) + 10*noise*(l/num_noise)*randn(M,1);
+                    case 4
+                        % low-freq sin
+                        y = sin(4*pi*x) + 2*noise*(l/num_noise)*randn(M,1);
+                    case 5
+                        % high-freq sin
+                        y = sin(16*pi*x) + noise*(l/num_noise)*randn(M,1);
+                    case 6
+                        % fourth root
+                        y = x.^(1/4) + noise*(l/num_noise)*randn(M,1);
+                    case 7
+                        % circle
+                        y=(2*binornd(1,0.5,M,1)-1) .* (sqrt(1 - (2*x - 1).^2)) + noise/4*l/num_noise*randn(M,1);
+                    case 8
+                        % step function
+                        y = (x > 0.5) + noise*5*l/num_noise*randn(M,1);
+                    otherwise
+                        error('unknown dep type!');
+                end
+
+                % calculate the metrics
+                rsdmAlt(ii) = rsdm(x, y, rsdm_minscanincr, rsdm_diffthresh, rsdm_alpha);
+                dcorrAlt(ii) = dcorr(x, y);
+                % compute MICe
+                minestats = mine(x',y',mine_alpha,mine_c,'mic_e');
+                miceAlt(ii) = minestats.mic;
+                % compute corr
+                corrAlt(ii) = corr(x, y);
+                % compute RDC
+                rdcAlt(ii) = rdc(x,y,rdc_k,rdc_s);
+            end
+
+            % compute the power
+            rsdmPower(typ, l, m)  = sum(rsdmAlt > rsdm_cut)/nsim_alt;
+            dcorrPower(typ, l, m)  = sum(dcorrAlt > dcorr_cut)/nsim_alt;
+            micePower(typ, l, m)   = sum(miceAlt > mice_cut)/nsim_alt;
+            corrPower(typ, l, m)   = sum(corrAlt > corr_cut)/nsim_alt;
+            rdcPower(typ, l, m)    = sum(rdcAlt > rdc_cut)/nsim_alt;
+        end
+    end
+end
+% save the data
+if(ispc)
+    save('C:\\Users\\Kiran\\ownCloud\\PhD\\sim_results\\independence\\rsdmPower.mat');
+else
+    save('/home/kiran/ownCloud/PhD/sim_results/independence/rsdmPower.mat');
+end
+
+% 

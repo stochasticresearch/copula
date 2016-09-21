@@ -39,15 +39,15 @@ rdc_s = 1/6;
 mine_c = 15;
 mine_alpha = 0.6;
 
-numDiscreteIntervals = 10;
+numDiscreteIntervals = 5;
 
 rng(2);
 
 % do all the gaussian ones
 xy = cell(1,nCases);
 
-x = rand(n, 1)*2-1; % uniform between +/- 1
-y = rand(n, 1)*2-1;
+x = unidrnd(numDiscreteIntervals, n, 1);
+y = unidrnd(numDiscreteIntervals, n, 1);
 x = discretizeRv(x, numDiscreteIntervals)';
 y = discretizeRv(y, numDiscreteIntervals)';
 xy{1} = [x y];
@@ -59,52 +59,46 @@ corrBias = corr(x,y);
 minestats = mine(x',y',mine_alpha,mine_c,'mic_e');
 mic_e_bias = minestats.mic;
 
-data = mvnrnd([0 0], [1 1; 1 1], n);
-x = data(:,1); y = data(:,2);
-x = discretizeRv(x, numDiscreteIntervals)';
-y = discretizeRv(y, numDiscreteIntervals)';
+% data = mvnrnd([0 0], [1 1; 1 1], n);
+% x = data(:,1); y = data(:,2);
+x = unidrnd(numDiscreteIntervals, n, 1);
+y = x;
 xy{2} = [x y];
 
-data = mvnrnd([0 0], [1 -1; -1 1], n);
-x = data(:,1); y = data(:,2);
-x = discretizeRv(x, numDiscreteIntervals)';
-y = discretizeRv(y, numDiscreteIntervals)';
+% data = mvnrnd([0 0], [1 -1; -1 1], n);
+% x = data(:,1); y = data(:,2);
+x = unidrnd(numDiscreteIntervals, n, 1);
+y = -x;
 xy{3} = [x y];
 
 x = rand(n,1)*2-1;
-y = x.^3;
 x = discretizeRv(x, numDiscreteIntervals)';
-y = discretizeRv(y, numDiscreteIntervals)';
+y = x.^3;
 xy{4} = [x y];
 
 x = rand(n,1)*2-1;
-y = 2*x.^2;
 x = discretizeRv(x, numDiscreteIntervals)';
-y = discretizeRv(y, numDiscreteIntervals)';
+y = 2*x.^2;
 xy{5} = [x y];
 
 x = rand(n,1);
-y = sin(2*pi*x);
 x = discretizeRv(x, numDiscreteIntervals)';
-y = discretizeRv(y, numDiscreteIntervals)';
+y = sin(2*pi*x);
 xy{6} = [x y];
 
 x = rand(n,1);
-y = exp(x);
 x = discretizeRv(x, numDiscreteIntervals)';
-y = discretizeRv(y, numDiscreteIntervals)';
+y = exp(x);
 xy{7} = [x y];
 
 x = rand(n,1)*3;
-y = exp(-x).*cos(pi*x);
 x = discretizeRv(x, numDiscreteIntervals)';
-y = discretizeRv(y, numDiscreteIntervals)';
+y = exp(-x).*cos(pi*x);
 xy{8} = [x y];
 
 x = rand(n,1);
-y = x.^(1/4);
 x = discretizeRv(x, numDiscreteIntervals)';
-y = discretizeRv(y, numDiscreteIntervals)';
+y = x.^(1/4);
 xy{9} = [x y];
 
 %% Plot with barcharts and inset

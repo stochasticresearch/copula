@@ -46,7 +46,7 @@ close all;
 
 M = 500;
 
-numDiscreteIntervals = 2;
+numDiscreteIntervals = 4;
 
 % optimal parameters for MICe
 mine_c = 15;
