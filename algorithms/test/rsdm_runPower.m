@@ -564,4 +564,198 @@ else
     save('/home/kiran/ownCloud/PhD/sim_results/independence/rsdmPower.mat');
 end
 
-% TODO: plotting :)
+% process these results to search for the minimum M that gives us the
+% threshold power
+depMetrics = {'rsdm', 'dcorr', 'mice', 'corr', 'rdc'};
+sampleSizeAnalysisVec = zeros(depTypes, length(depMetrics), length(num_noise_test_min:num_noise_test_max));
+for depMetricIdx=1:length(depMetrics)
+    if(strcmpi(depMetrics{depMetricIdx}, 'rsdm'))
+        powerData = rsdmPower;
+    elseif(strcmpi(depMetrics{depMetricIdx}, 'dcorr'))
+        powerData = dcorrPower;
+    elseif(strcmpi(depMetrics{depMetricIdx}, 'mice'))
+        powerData = micePower;
+    elseif(strcmpi(depMetrics{depMetricIdx}, 'corr'))
+        powerData = corrPower;
+    elseif(strcmpi(depMetrics{depMetricIdx}, 'rdc'))
+        powerData = rdcPower;
+    end
+    
+    for typ=1:numDepTests
+        for l=num_noise_test_min:num_noise_test_max
+            for m=1:length(M_vec)
+                M = M_vec(m);
+                if(powerData(typ, l, m)>powerThreshold)
+                    % TODO: we can do some interpolation here, so that we
+                    % are not restricted to the boundaries of which tests
+                    % were run ...
+                    sampleSizeAnalysisVec(typ, depMetricIdx, l) = M;
+                end
+            end
+        end
+    end
+end
+
+% define indices to get to the correct dep metric easily
+rsdmIdx = 1;
+dcorrIdx = 2;
+miceIdx = 3;
+corrIdx = 4;
+rdcIdx = 5;
+
+% inlet plot configuration
+M_inlet = 200;
+inset_bufX = 0.0005; inset_bufY = 0.002;        % TODO: configure ...
+inset_bufX = 0.15; inset_bufY = 0.26;
+
+inset_width = 0.1; inset_height = 0.08;
+
+noiseVec = (num_noise_test_min:num_noise_test_max)/10;
+figure;
+h1 = subplot(2,2,1);
+hh1 = plot(noiseVec, sampleSizeAnalysisVec(1,rsdmIdx,num_noise_test_min:num_noise_test_max), 'o-.', ...
+     noiseVec, sampleSizeAnalysisVec(1,dcorrIdx,num_noise_test_min:num_noise_test_max), '+-.', ...
+     noiseVec, sampleSizeAnalysisVec(1,miceIdx,num_noise_test_min:num_noise_test_max), 'd-.', ...
+     noiseVec, sampleSizeAnalysisVec(1,corrIdx,num_noise_test_min:num_noise_test_max), '^-.', ...
+     noiseVec, sampleSizeAnalysisVec(1,rdcIdx,num_noise_test_min:num_noise_test_max), 'v-.'); 
+% axis([min(noiseVec) max(noiseVec) 0 1]);
+xlabel('Noise Level', 'FontSize', 20); ylabel('min(Sample Size)', 'FontSize', 20); grid on;
+h1.FontSize = 20; 
+loc_inset = [h1.Position(1)+inset_bufX h1.Position(2)+inset_bufY inset_width inset_height];
+ax1 = axes('Position',loc_inset);
+tmp1 = linspace(0,1,M_inlet);
+tmp2 = tmp1;
+plot(tmp1,tmp2, 'k', 'LineWidth', 2);
+ax1.Box = 'on'; ax1.XTick = []; ax1.YTick = [];
+ax1.XLim = [min(tmp1) max(tmp1)];
+ax1.YLim = [min(tmp2) max(tmp2)];
+
+h2 = subplot(2,2,2);
+hh2 = plot(noiseVec, sampleSizeAnalysisVec(2,rsdmIdx,num_noise_test_min:num_noise_test_max), 'o-.', ...
+     noiseVec, sampleSizeAnalysisVec(2,dcorrIdx,num_noise_test_min:num_noise_test_max), '+-.', ...
+     noiseVec, sampleSizeAnalysisVec(2,miceIdx,num_noise_test_min:num_noise_test_max), 'd-.', ...
+     noiseVec, sampleSizeAnalysisVec(2,corrIdx,num_noise_test_min:num_noise_test_max), '^-.', ...
+     noiseVec, sampleSizeAnalysisVec(2,rdcIdx,num_noise_test_min:num_noise_test_max), 'v-.'); 
+% axis([min(noiseVec) max(noiseVec) 0 1]);
+xlabel('Noise Level', 'FontSize', 20); ylabel('min(Sample Size)', 'FontSize', 20); grid on;
+h2.FontSize = 20; 
+loc_inset = [h2.Position(1)+inset_bufX h2.Position(2)+inset_bufY inset_width inset_height];
+ax1 = axes('Position',loc_inset);
+tmp1 = linspace(0,1,M_inlet);
+tmp2 = tmp1;
+plot(tmp1,tmp2, 'k', 'LineWidth', 2);
+ax1.Box = 'on'; ax1.XTick = []; ax1.YTick = [];
+ax1.XLim = [min(tmp1) max(tmp1)];
+ax1.YLim = [min(tmp2) max(tmp2)];
+
+h3 = subplot(2,2,3);
+hh3 = plot(noiseVec, sampleSizeAnalysisVec(3,rsdmIdx,num_noise_test_min:num_noise_test_max), 'o-.', ...
+     noiseVec, sampleSizeAnalysisVec(3,dcorrIdx,num_noise_test_min:num_noise_test_max), '+-.', ...
+     noiseVec, sampleSizeAnalysisVec(3,miceIdx,num_noise_test_min:num_noise_test_max), 'd-.', ...
+     noiseVec, sampleSizeAnalysisVec(3,corrIdx,num_noise_test_min:num_noise_test_max), '^-.', ...
+     noiseVec, sampleSizeAnalysisVec(3,rdcIdx,num_noise_test_min:num_noise_test_max), 'v-.'); 
+% axis([min(noiseVec) max(noiseVec) 0 1]);
+xlabel('Noise Level', 'FontSize', 20); ylabel('min(Sample Size)', 'FontSize', 20); grid on;
+h3.FontSize = 20; 
+loc_inset = [h3.Position(1)+inset_bufX h3.Position(2)+inset_bufY inset_width inset_height];
+ax1 = axes('Position',loc_inset);
+tmp1 = linspace(0,1,M_inlet);
+tmp2 = tmp1;
+plot(tmp1,tmp2, 'k', 'LineWidth', 2);
+ax1.Box = 'on'; ax1.XTick = []; ax1.YTick = [];
+ax1.XLim = [min(tmp1) max(tmp1)];
+ax1.YLim = [min(tmp2) max(tmp2)];
+
+h4 = subplot(2,2,4);
+hh4 = plot(noiseVec, sampleSizeAnalysisVec(4,rsdmIdx,num_noise_test_min:num_noise_test_max), 'o-.', ...
+     noiseVec, sampleSizeAnalysisVec(4,dcorrIdx,num_noise_test_min:num_noise_test_max), '+-.', ...
+     noiseVec, sampleSizeAnalysisVec(4,miceIdx,num_noise_test_min:num_noise_test_max), 'd-.', ...
+     noiseVec, sampleSizeAnalysisVec(4,corrIdx,num_noise_test_min:num_noise_test_max), '^-.', ...
+     noiseVec, sampleSizeAnalysisVec(4,rdcIdx,num_noise_test_min:num_noise_test_max), 'v-.'); 
+% axis([min(noiseVec) max(noiseVec) 0 1]);
+xlabel('Noise Level', 'FontSize', 20); ylabel('min(Sample Size)', 'FontSize', 20); grid on;
+h4.FontSize = 20; 
+loc_inset = [h4.Position(1)+inset_bufX h4.Position(2)+inset_bufY inset_width inset_height];
+ax1 = axes('Position',loc_inset);
+tmp1 = linspace(0,1,M_inlet);
+tmp2 = tmp1;
+plot(tmp1,tmp2, 'k', 'LineWidth', 2);
+ax1.Box = 'on'; ax1.XTick = []; ax1.YTick = [];
+ax1.XLim = [min(tmp1) max(tmp1)];
+ax1.YLim = [min(tmp2) max(tmp2)];
+
+figure;
+h5 = subplot(2,2,1);
+hh5 = plot(noiseVec, sampleSizeAnalysisVec(5,rsdmIdx,num_noise_test_min:num_noise_test_max), 'o-.', ...
+     noiseVec, sampleSizeAnalysisVec(5,dcorrIdx,num_noise_test_min:num_noise_test_max), '+-.', ...
+     noiseVec, sampleSizeAnalysisVec(5,miceIdx,num_noise_test_min:num_noise_test_max), 'd-.', ...
+     noiseVec, sampleSizeAnalysisVec(5,corrIdx,num_noise_test_min:num_noise_test_max), '^-.', ...
+     noiseVec, sampleSizeAnalysisVec(5,rdcIdx,num_noise_test_min:num_noise_test_max), 'v-.'); 
+% axis([min(noiseVec) max(noiseVec) 0 1]);
+xlabel('Noise Level', 'FontSize', 20); ylabel('min(Sample Size)', 'FontSize', 20); grid on;
+h5.FontSize = 20; 
+loc_inset = [h5.Position(1)+inset_bufX h5.Position(2)+inset_bufY inset_width inset_height];
+ax1 = axes('Position',loc_inset);
+tmp1 = linspace(0,1,M_inlet);
+tmp2 = tmp1;
+plot(tmp1,tmp2, 'k', 'LineWidth', 2);
+ax1.Box = 'on'; ax1.XTick = []; ax1.YTick = [];
+ax1.XLim = [min(tmp1) max(tmp1)];
+ax1.YLim = [min(tmp2) max(tmp2)];
+
+h6 = subplot(2,2,2);
+hh6 = plot(noiseVec, sampleSizeAnalysisVec(6,rsdmIdx,num_noise_test_min:num_noise_test_max), 'o-.', ...
+     noiseVec, sampleSizeAnalysisVec(6,dcorrIdx,num_noise_test_min:num_noise_test_max), '+-.', ...
+     noiseVec, sampleSizeAnalysisVec(6,miceIdx,num_noise_test_min:num_noise_test_max), 'd-.', ...
+     noiseVec, sampleSizeAnalysisVec(6,corrIdx,num_noise_test_min:num_noise_test_max), '^-.', ...
+     noiseVec, sampleSizeAnalysisVec(6,rdcIdx,num_noise_test_min:num_noise_test_max), 'v-.'); 
+% axis([min(noiseVec) max(noiseVec) 0 1]);
+xlabel('Noise Level', 'FontSize', 20); ylabel('min(Sample Size)', 'FontSize', 20); grid on;
+h6.FontSize = 20; 
+loc_inset = [h6.Position(1)+inset_bufX h6.Position(2)+inset_bufY inset_width inset_height];
+ax1 = axes('Position',loc_inset);
+tmp1 = linspace(0,1,M_inlet);
+tmp2 = tmp1;
+plot(tmp1,tmp2, 'k', 'LineWidth', 2);
+ax1.Box = 'on'; ax1.XTick = []; ax1.YTick = [];
+ax1.XLim = [min(tmp1) max(tmp1)];
+ax1.YLim = [min(tmp2) max(tmp2)];
+
+h7 = subplot(2,2,3);
+hh7 = plot(noiseVec, sampleSizeAnalysisVec(7,rsdmIdx,num_noise_test_min:num_noise_test_max), 'o-.', ...
+     noiseVec, sampleSizeAnalysisVec(7,dcorrIdx,num_noise_test_min:num_noise_test_max), '+-.', ...
+     noiseVec, sampleSizeAnalysisVec(7,miceIdx,num_noise_test_min:num_noise_test_max), 'd-.', ...
+     noiseVec, sampleSizeAnalysisVec(7,corrIdx,num_noise_test_min:num_noise_test_max), '^-.', ...
+     noiseVec, sampleSizeAnalysisVec(7,rdcIdx,num_noise_test_min:num_noise_test_max), 'v-.'); 
+% axis([min(noiseVec) max(noiseVec) 0 1]);
+xlabel('Noise Level', 'FontSize', 20); ylabel('min(Sample Size)', 'FontSize', 20); grid on;
+h7.FontSize = 20; 
+loc_inset = [h7.Position(1)+inset_bufX h7.Position(2)+inset_bufY inset_width inset_height];
+ax1 = axes('Position',loc_inset);
+tmp1 = linspace(0,1,M_inlet);
+tmp2 = tmp1;
+plot(tmp1,tmp2, 'k', 'LineWidth', 2);
+ax1.Box = 'on'; ax1.XTick = []; ax1.YTick = [];
+ax1.XLim = [min(tmp1) max(tmp1)];
+ax1.YLim = [min(tmp2) max(tmp2)];
+
+h8 = subplot(2,2,4);
+hh8 = plot(noiseVec, sampleSizeAnalysisVec(8,rsdmIdx,num_noise_test_min:num_noise_test_max), 'o-.', ...
+     noiseVec, sampleSizeAnalysisVec(8,dcorrIdx,num_noise_test_min:num_noise_test_max), '+-.', ...
+     noiseVec, sampleSizeAnalysisVec(8,miceIdx,num_noise_test_min:num_noise_test_max), 'd-.', ...
+     noiseVec, sampleSizeAnalysisVec(8,corrIdx,num_noise_test_min:num_noise_test_max), '^-.', ...
+     noiseVec, sampleSizeAnalysisVec(8,rdcIdx,num_noise_test_min:num_noise_test_max), 'v-.'); 
+% axis([min(noiseVec) max(noiseVec) 0 1]);
+xlabel('Noise Level', 'FontSize', 20); ylabel('min(Sample Size)', 'FontSize', 20); grid on;
+h8.FontSize = 20; 
+loc_inset = [h8.Position(1)+inset_bufX h8.Position(2)+inset_bufY inset_width inset_height];
+ax1 = axes('Position',loc_inset);
+tmp1 = linspace(0,1,M_inlet);
+tmp2 = tmp1;
+plot(tmp1,tmp2, 'k', 'LineWidth', 2);
+ax1.Box = 'on'; ax1.XTick = []; ax1.YTick = [];
+ax1.XLim = [min(tmp1) max(tmp1)];
+ax1.YLim = [min(tmp2) max(tmp2)];
+
+legend('RSDM', 'dcorr', 'MIC_e', 'corr', 'RDC');  % manually move this using the mouse to a
+                                                  % good location
