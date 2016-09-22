@@ -86,7 +86,7 @@ x = discretizeRv(x, numDiscreteIntervals)';
 y = sin(2*pi*x);
 xy{6} = [x y];
 
-x = rand(n,1);
+x = rand(n,1)*5;
 x = discretizeRv(x, numDiscreteIntervals)';
 y = exp(x);
 xy{7} = [x y];
