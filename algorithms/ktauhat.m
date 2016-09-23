@@ -94,11 +94,44 @@ end
 
 if( (closeToZero(u, len) && v>0) || (u>0 && closeToZero(v, len)) )
     % special case of hybrid data
-    t = max(u,v);
+    if(closeToZero(u,len))
+        continuousRvIndicator = 0;
+    else
+        continuousRvIndicator = 1;
+    end
+    numOverlapPtsVec = countOverlaps(U, V, continuousRvIndicator);
+    
+    % play w/ different correction factors ... do we have to theoretically
+    % ground one of them?
+    
+    %%%%%% CORRECTION FACTOR 1
+%     if(min(numOverlapPtsVec)<2)
+%         correctionFactor = 0;
+%     else
+%         correctionFactor = nchoosek(min(numOverlapPtsVec),2)*length(numOverlapPtsVec);
+%     end
+
+    %%%%%% CORRECTION FACTOR 2
+    correctionFactor = 0;
+    for ii=1:length(numOverlapPtsVec)
+        correctionFactor = correctionFactor + nchoosek(floor(numOverlapPtsVec(ii)),2);
+    end
+
+%     %%%%%% CORRECTION FACTOR 3
+%     correctionFactor = nchoosek(floor(mean(numOverlapPtsVec)),2)*length(numOverlapPtsVec);
+%     correctionFactor = 0;
+    t = max(u,v)-correctionFactor;
     tau = K/( sqrt(nchoosek(len,2)-t)*sqrt(nchoosek(len,2)-t) );
+    
+    fprintf('K=%0.02f max(u,v)=%0.02f [%0.02f %0.02f %0.02f], correctionFactor=%0.02f nchoosek(M,2)=%d C-t=%d\n', ...
+        K, max(u,v), numOverlapPtsVec(1), numOverlapPtsVec(2), numOverlapPtsVec(3), ...
+        correctionFactor, nchoosek(len,2), nchoosek(len,2)-t);
 else
     % case of either all continuous or all discrete data
     tau = K/( sqrt(nchoosek(len,2)-u)*sqrt(nchoosek(len,2)-v) );
+    
+    fprintf('K=%0.02f u=%0.02f v=%0.02f nchoosek(M,2)=%d C-u=%d C-v=%d\n', ...
+        K, u, v, nchoosek(len,2), nchoosek(len,2)-u, nchoosek(len,2)-v);
 end
 
 end
@@ -109,6 +142,49 @@ thresh = 0.02;      % if we are > 2% of length in terms of combinations;
 lenFloor = floor(len*thresh);
 if(in>nchoosek(lenFloor,2))
     out = 0;
+end
+
+end
+
+function [numOverlapPtsVec] = countOverlaps(U, V, continuousRvIndicator)
+% this function is only called for hybrid data, attempts to correct for
+% overestimation of the number of ties in hybrid data
+
+M = length(U);
+
+if(continuousRvIndicator==0)
+    % U is the continuous RV
+    continuousOutcomes = U;
+    discreteOutcomes = V;
+    % get the number of unique discrete outcomes
+    uniqueDiscreteOutcomes = unique(V);
+else
+    % V is the continuous RV
+    continuousOutcomes = V;
+    discreteOutcomes = U;
+    % get the number of unique discrete outcomes
+    uniqueDiscreteOutcomes = unique(U);
+end
+
+% for each unique outcome .. count the overlapping elements.
+numOverlapPtsVec = zeros(1,length(uniqueDiscreteOutcomes)-1);
+for discreteOutcomesIdx=1:length(uniqueDiscreteOutcomes)-1
+    % find the min/max values of the continuous values for this idx and the
+    % next
+    I = discreteOutcomes==uniqueDiscreteOutcomes(discreteOutcomesIdx);
+    relevantContinuousOutcomes_curIdx = continuousOutcomes(I);
+    I = discreteOutcomes==uniqueDiscreteOutcomes(discreteOutcomesIdx+1);
+    relevantContinuousOutcomes_nextIdx = continuousOutcomes(I);
+    
+    % compute the number of points which are overlapping
+    minCur = min(relevantContinuousOutcomes_curIdx);
+    maxCur = max(relevantContinuousOutcomes_curIdx);
+    
+    numOverlapPoints = length(find(relevantContinuousOutcomes_nextIdx>=minCur & ...
+                                   relevantContinuousOutcomes_nextIdx<=maxCur));
+%     numOverlapPtsVec(discreteOutcomesIdx) = numOverlapPoints;
+    numOverlapPtsVec(discreteOutcomesIdx) = numOverlapPoints/length(relevantContinuousOutcomes_nextIdx)*(M/length(uniqueDiscreteOutcomes));
+
 end
 
 end

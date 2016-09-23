@@ -46,7 +46,7 @@ close all;
 
 M = 500;
 
-numDiscreteIntervals = 8;
+numDiscreteIntervals = 4;
 
 % optimal parameters for MICe
 mine_c = 15;
@@ -196,6 +196,106 @@ subplot(2,2,4);
 scatter(xx,yyy); grid on;
 title(sprintf('$\\tau=%0.02f \\ \\tau_b=%0.02f \\ \\hat{\\tau}=%0.02f \\ MIC_e=%0.02f \\ RDC=%0.02f$', ...
     dep_xD_yD(1), dep_xD_yD(2), dep_xD_yD(3), dep_xD_yD(4), dep_xD_yD(5) ), 'Interpreter', 'Latex');
+
+
+%% Test tau-hat with some copula models for discrete data
+
+%% Test tau-hat with some copula models for hybrid data
+clear;
+clc;
+
+% rng(12345);
+
+alpha = 5;
+rhoVal = 0.5;
+rho = [1 rhoVal; rhoVal 1];
+M = 500;
+
+% some required but not used configuration parameters
+alpha_dontCare = 0.05;
+wantplot_dontCare = 0;
+
+% optimal parameters for MICe
+mine_c = 15;
+mine_alpha = 0.6;
+
+% Optimal parameters for RDC
+rdc_k = 20;
+rdc_s = 1/6;
+
+% the types of continuous distributions we will be generating for the
+% continuous random variable in the bivariate hybrid model
+copulaTypes = {'Gaussian', 'Frank', 'Gumbel', 'Clayton'};
+continuousDistTypes = {'Gaussian', 'Uniform', 'ThickTailed'};
+discreteDistTypes = {[0.25 0.25 0.25 0.25], ...
+                       [0.5 0.3 0.1 0.1], ...
+                       [0.1 0.1 0.3 0.5]};
+% xyOrientationVec = [1 0];
+xyOrientationVec = 1;
+
+for copulaTypeIdx=1:length(copulaTypes)
+    for continuousDistTypeIdx=1:length(continuousDistTypes)
+        for discreteDistTypeIdx=1:length(discreteDistTypes)
+            for xyOrientation=xyOrientationVec
+                copulaType = copulaTypes{copulaTypeIdx};
+                continuousDistType = continuousDistTypes{continuousDistTypeIdx};
+                discreteDistType = discreteDistTypes{discreteDistTypeIdx};
+
+                % make the continuous distribution type into a
+                % probabilitydistribution object
+                if(strcmpi(continuousDistType, 'Gaussian'))
+                    pd1 = makedist('Normal');
+                elseif(strcmpi(continuousDistType, 'Uniform'))
+                    pd1 = makedist('Uniform');
+                elseif(strcmpi(continuousDistType, 'ThickTailed'))
+                    pd1 = makedist('tLocationScale','mu',0,'sigma',1,'nu',3);
+                end
+
+                % make the discrete distribution type into a
+                % probabilitydistribution object
+                pd2 = makedist('Multinomial','Probabilities',discreteDistType);
+
+                % generate data from the copula
+                if(strcmpi(copulaType, 'Gaussian'))
+                    U = copularnd(copulaType, rho, M);
+                    tauTrue = copulastat(copulaType, rhoVal);
+                else
+                    U = copularnd(copulaType, alpha, M);
+                    tauTrue = copulastat(copulaType, alpha);
+                end
+                X = zeros(size(U));
+                if(xyOrientation==1)
+                    for ii=1:M
+                        X(ii,1) = pd1.icdf(U(ii,1));
+                        X(ii,2) = pd2.icdf(U(ii,2));
+                    end
+                else
+                    for ii=1:M
+                        X(ii,2) = pd1.icdf(U(ii,2));
+                        X(ii,1) = pd2.icdf(U(ii,1));
+                    end
+                end
+                
+                x = X(:,1); y = X(:,2);
+                
+                tau = corr(x,y,'type','kendall');
+%                 taub = ktaub([x y], alpha_dontCare, wantplot_dontCare);
+                tau_hat = ktauhat(x, y);
+                minestats = mine(x',y',mine_alpha,mine_c,'mic_e');
+                rdcVal = rdc(x,y,rdc_k,rdc_s);
+                
+                subplot(2,1,1);
+                scatter(U(:,1),U(:,2)); grid on;
+                subplot(2,1,2);
+                scatter(x, y); grid on;
+                title(sprintf('$[%d,%d,%d] \\tau=%0.02f \\ \\hat{\\tau}=%0.02f \\ MIC_e=%0.02f \\ RDC=%0.02f \\ \\theta=%0.02f$', ...
+                        copulaTypeIdx, continuousDistTypeIdx, discreteDistTypeIdx, ...
+                        tau, tau_hat, minestats.mic, rdcVal, tauTrue), 'Interpreter', 'Latex');
+                pause;
+            end
+        end
+    end
+end
 
 
 %% Understand how RSDM works w/ discrete function dependencies (TODO)
