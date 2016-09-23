@@ -50,7 +50,7 @@ data_sorted = sort(Y);
 K = 0;
 len = length(X);
 for k = 1:len-1
-    K = K + sum(sign(U(k)-U(k+1:len)).*sign(V(k)-V(k+1:len)));
+    K = K + sum( sign(U(k)-U(k+1:len)) .* sign(V(k)-V(k+1:len)) );
 end
 
 % compute the denominator ... compute the # of unique values of U and V and
@@ -67,7 +67,7 @@ for ii=1:length(uniqueU)
 end
 
 for ii=1:length(uniqueV)
-    uniqueVCounts(ii) = sum(U==uniqueV(ii));
+    uniqueVCounts(ii) = sum(V==uniqueV(ii));
 end
 
 u = 0;
@@ -92,6 +92,6 @@ for ii=1:length(uniqueV)
     v = v + addVal;
 end
 
-tau = K/(sqrt(nchoosek(len,2)-u)*sqrt(nchoosek(len,2)-v));
+tau = K/( sqrt(nchoosek(len,2)-u)*sqrt(nchoosek(len,2)-v) );
 
 end

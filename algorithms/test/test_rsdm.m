@@ -17,25 +17,25 @@
 %*                                                                        *
 %**************************************************************************
 
-%% 
-clear;
-clc;
-
-M = 1000;
-
-x = rand(M,1);
-y = x;
-
+% %% 
+% clear;
+% clc;
+% 
+% M = 1000;
+% 
 % x = rand(M,1);
-% y = sin(2*pi*x);
-
-% x = rand(M,1)*2-1;
-% y = x.^2;
-
-% x = rand(M,1);
-% y=(2*binornd(1,0.5,M,1)-1).* (sqrt(1 - (2*x - 1).^2));
-
-[rsdmMetric, rsdmResidual, residAssocIdxs, rsdmRectangleCfg] = rsdm(x,y);
+% y = x;
+% 
+% % x = rand(M,1);
+% % y = sin(2*pi*x);
+% 
+% % x = rand(M,1)*2-1;
+% % y = x.^2;
+% 
+% % x = rand(M,1);
+% % y=(2*binornd(1,0.5,M,1)-1).* (sqrt(1 - (2*x - 1).^2));
+% 
+% [rsdmMetric, rsdmResidual, residAssocIdxs, rsdmRectangleCfg] = rsdm(x,y);
 
 %% Understand how different tau's work w/ discrete and hybrid functional dependencies
 clear;
