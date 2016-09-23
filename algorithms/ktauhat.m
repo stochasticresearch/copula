@@ -92,6 +92,23 @@ for ii=1:length(uniqueV)
     v = v + addVal;
 end
 
-tau = K/( sqrt(nchoosek(len,2)-u)*sqrt(nchoosek(len,2)-v) );
+if( (closeToZero(u, len) && v>0) || (u>0 && closeToZero(v, len)) )
+    % special case of hybrid data
+    t = max(u,v);
+    tau = K/( sqrt(nchoosek(len,2)-t)*sqrt(nchoosek(len,2)-t) );
+else
+    % case of either all continuous or all discrete data
+    tau = K/( sqrt(nchoosek(len,2)-u)*sqrt(nchoosek(len,2)-v) );
+end
+
+end
+
+function [out] = closeToZero(in, len)
+out = 1;
+thresh = 0.02;      % if we are > 2% of length in terms of combinations;
+lenFloor = floor(len*thresh);
+if(in>nchoosek(lenFloor,2))
+    out = 0;
+end
 
 end
