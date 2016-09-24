@@ -114,7 +114,10 @@ if( (closeToZero(u, len) && v>0) || (u>0 && closeToZero(v, len)) )
     %%%%%% CORRECTION FACTOR 2
     correctionFactor = 0;
     for ii=1:length(numOverlapPtsVec)
-        correctionFactor = correctionFactor + nchoosek(floor(numOverlapPtsVec(ii)),2);
+        nop = floor(numOverlapPtsVec(ii));
+        if(nop>=2)
+            correctionFactor = correctionFactor + nchoosek(floor(numOverlapPtsVec(ii)),2);
+        end
     end
 
 %     %%%%%% CORRECTION FACTOR 3
