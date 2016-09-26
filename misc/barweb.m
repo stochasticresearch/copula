@@ -57,6 +57,9 @@ elseif nargin == 2
 	bw_legend = [];
 	error_sides = 2;
 	legend_type = 'plot';
+    
+    groupTextSize = 12;
+    
 elseif nargin == 3
 	groupnames = 1:size(barvalues,1);
 	bw_title = [];
@@ -67,6 +70,8 @@ elseif nargin == 3
 	bw_legend = [];
 	error_sides = 2;
 	legend_type = 'plot';
+    
+    groupTextSize = 12;
 elseif nargin == 4
 	bw_title = [];
 	bw_xlabel = [];
@@ -76,6 +81,8 @@ elseif nargin == 4
 	bw_legend = [];
 	error_sides = 2;
 	legend_type = 'plot';
+    
+    groupTextSize = 12;
 elseif nargin == 5
 	bw_xlabel = [];
 	bw_ylabel = [];
@@ -84,6 +91,8 @@ elseif nargin == 5
 	bw_legend = [];
 	error_sides = 2;
 	legend_type = 'plot';
+    
+    groupTextSize = 12;
 elseif nargin == 6
 	bw_ylabel = [];
 	bw_colormap = jet;
@@ -91,26 +100,38 @@ elseif nargin == 6
 	bw_legend = [];
 	error_sides = 2;
 	legend_type = 'plot';
+    
+    groupTextSize = 12;
 elseif nargin == 7
 	bw_colormap = jet;
 	gridstatus = 'none';
 	bw_legend = [];
 	error_sides = 2;
 	legend_type = 'plot';
+    
+    groupTextSize = 12;
 elseif nargin == 8
 	gridstatus = 'none';
 	bw_legend = [];
 	error_sides = 2;
 	legend_type = 'plot';
+    
+    groupTextSize = 12;
 elseif nargin == 9
 	bw_legend = [];
 	error_sides = 2;
 	legend_type = 'plot';
+    
+    groupTextSize = 12;
 elseif nargin == 10
 	error_sides = 2;
 	legend_type = 'plot';
+    
+    groupTextSize = 12;
 elseif nargin == 11
 	legend_type = 'plot';
+    
+    groupTextSize = 12;
 elseif nargin == 12
     legendTextSize = 12;
     labelTextSize = 14;

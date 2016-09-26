@@ -34,7 +34,7 @@ function [ tau ] = ktauhat( X, Y, correctionFlagOpt )
 % etc...
 
 if(nargin<3)
-    correctionFlagSelect = 3;       % default correction factor processing
+    correctionFlagSelect = 4;       % default correction factor processing
 else
     correctionFlagSelect = correctionFlagOpt;
 end
