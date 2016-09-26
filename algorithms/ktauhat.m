@@ -1,4 +1,4 @@
-function [ tau ] = ktauhat( X, Y )
+function [ tau ] = ktauhat( X, Y, correctionFlagOpt )
 %ktaucj - computes a rescaled version of Kendall's tau that preserves
 %         the definition of Kendall's tau, but assures that in the 
 %         scenario of perfect concordance or discordance for discrete
@@ -33,6 +33,11 @@ function [ tau ] = ktauhat( X, Y )
 % TODO: some error checking that X and Y are the same length, NaN, Inf ...
 % etc...
 
+if(nargin<3)
+    correctionFlagSelect = 3;       % default correction factor processing
+else
+    correctionFlagSelect = correctionFlagOpt;
+end
 
 % TOOD: compare the 2 ways to generate ranks ... wonder if that affects the
 % results?
@@ -101,42 +106,77 @@ if( (closeToZero(u, len) && v>0) || (u>0 && closeToZero(v, len)) )
     end
     numOverlapPtsVec = countOverlaps(U, V, continuousRvIndicator);
     
-    % play w/ different correction factors ... do we have to theoretically
-    % ground one of them?
-    
-    %%%%%% CORRECTION FACTOR 1
-%     if(min(numOverlapPtsVec)<2)
-%         correctionFactor = 0;
-%     else
-%         correctionFactor = nchoosek(min(numOverlapPtsVec),2)*length(numOverlapPtsVec);
-%     end
-
-    %%%%%% CORRECTION FACTOR 2
-    correctionFactor = 0;
-    for ii=1:length(numOverlapPtsVec)
-        nop = floor(numOverlapPtsVec(ii));
-        if(nop>=2)
-            correctionFactor = correctionFactor + nchoosek(floor(numOverlapPtsVec(ii)),2);
-        end
+    switch(correctionFlagSelect)
+        case 1
+            correctionFactor = correctionFactor1(numOverlapPtsVec);
+        case 2
+            correctionFactor = correctionFactor2(numOverlapPtsVec);
+        case 3
+            correctionFactor = correctionFactor3(numOverlapPtsVec);
+        case 4
+            correctionFactor = correctionFactor4(numOverlapPtsVec);
+        case 5
+            correctionFactor = correctionFactor5(numOverlapPtsVec);
+        otherwise
+            error('Unknown Correction Factor Option!');
     end
-
-%     %%%%%% CORRECTION FACTOR 3
-%     correctionFactor = nchoosek(floor(mean(numOverlapPtsVec)),2)*length(numOverlapPtsVec);
-%     correctionFactor = 0;
+    
     t = max(u,v)-correctionFactor;
     tau = K/( sqrt(nchoosek(len,2)-t)*sqrt(nchoosek(len,2)-t) );
     
-    fprintf('K=%0.02f max(u,v)=%0.02f [%0.02f %0.02f %0.02f], correctionFactor=%0.02f nchoosek(M,2)=%d C-t=%d\n', ...
-        K, max(u,v), numOverlapPtsVec(1), numOverlapPtsVec(2), numOverlapPtsVec(3), ...
-        correctionFactor, nchoosek(len,2), nchoosek(len,2)-t);
+%     fprintf('K=%0.02f max(u,v)=%0.02f [%0.02f %0.02f %0.02f], correctionFactor=%0.02f nchoosek(M,2)=%d C-t=%d\n', ...
+%         K, max(u,v), numOverlapPtsVec(1), numOverlapPtsVec(2), numOverlapPtsVec(3), ...
+%         correctionFactor, nchoosek(len,2), nchoosek(len,2)-t);
 else
     % case of either all continuous or all discrete data
     tau = K/( sqrt(nchoosek(len,2)-u)*sqrt(nchoosek(len,2)-v) );
     
-    fprintf('K=%0.02f u=%0.02f v=%0.02f nchoosek(M,2)=%d C-u=%d C-v=%d\n', ...
-        K, u, v, nchoosek(len,2), nchoosek(len,2)-u, nchoosek(len,2)-v);
+%     fprintf('K=%0.02f u=%0.02f v=%0.02f nchoosek(M,2)=%d C-u=%d C-v=%d\n', ...
+%         K, u, v, nchoosek(len,2), nchoosek(len,2)-u, nchoosek(len,2)-v);
 end
 
+end
+
+function [cf] = correctionFactor1(numOverlapPtsVec)
+    if(min(numOverlapPtsVec)<2)
+        cf = 0;
+    else
+        cf = nchoosek(floor(min(numOverlapPtsVec)),2)*length(numOverlapPtsVec);
+    end
+
+end
+
+function [cf] = correctionFactor2(numOverlapPtsVec)
+    if(min(numOverlapPtsVec)<2)
+        cf = 0;
+    else
+        cf = nchoosek(floor(max(numOverlapPtsVec)),2)*length(numOverlapPtsVec);
+    end
+end
+
+function [cf] = correctionFactor3(numOverlapPtsVec)
+
+    cf = 0;
+    for ii=1:length(numOverlapPtsVec)
+        nop = floor(numOverlapPtsVec(ii));
+        if(nop>=2)
+            cf = cf + nchoosek(floor(numOverlapPtsVec(ii)),2);
+        end
+    end
+
+end
+
+function [cf] = correctionFactor4(numOverlapPtsVec)
+    meanVal = floor(mean(numOverlapPtsVec));
+    if(meanVal==0)
+        cf = 0;
+    else
+        cf = nchoosek(meanVal,2)*length(numOverlapPtsVec);
+    end
+end
+
+function [cf] = correctionFactor5(numOverlapPtsVec)
+    cf = 0;
 end
 
 function [out] = closeToZero(in, len)

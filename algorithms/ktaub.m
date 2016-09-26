@@ -352,6 +352,7 @@ function [taub tau h sig Z S sigma sen n senplot CIlower CIupper D Dall C3 nsigm
     end
     
     % Notify for Sens slope = 0 but is determined significant
+    if 0        % prevent print outs....
     if h==1 && sen==0
         [hh, nsig] = ztest(s,0,nsigma,alpha);
         fprintf('\nTaub Message:  There was a significant trend = 0 found.\n');
@@ -363,7 +364,7 @@ function [taub tau h sig Z S sigma sen n senplot CIlower CIupper D Dall C3 nsigm
             fprintf(', but trend is not found to be significant.\n');
         end
     end
-    
+    end
     %% Plotting routine
     % Below is a very simplistic plotting routine to plot the Sen slope if
     % the significance is less than 0.05. Uncomment or delete at your
