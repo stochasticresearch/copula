@@ -291,7 +291,7 @@ correctionFactors = [1 2 3 4 5];
 numTotalConfigurations = 7; % 7 entries, 1-5 are the different correction factors, 6 is matlab's built in tau, 7 is tau-b
 % TODO: put monotonoic and comonotonic dependencies in here!
 dependenciesVec = {'Gaussian', 'Frank', 'Gumbel', 'Clayton'};
-subDependenciesVec = [0.01:0.1:0.99; ...
+subDependenciesVec = [linspace(0.01,0.99,10); ...
                        1:10; ...
                        1:10; ...
                        1:10];
@@ -441,11 +441,15 @@ else
     save('/home/kiran/ownCloud/PhD/sim_results/independence/ktauhat_biasData');
 end
 
+%%
 
 % plot the data
-metricsToPlot = [4 6 7];
+metricsToPlot = [7 6 4];        % 7 = tau-b, 6 = tau, 4 = tau-h
 % manually looking, CF4 seems to work best, plot against tau and tau-b
-legendCell = {'CF4', '\tau', '\tau_b'};
+legendCell = {'\tau_b', '\tau', '\tau_h' };     % put tau-h last, it is the best performing but the bounds
+                                                % are harder to see if we put it first
+cmap = winter(3);
+transparencyFactor = 0.15;
 
 % Gaussian Copula Data
 subplot(3,2,1);
@@ -457,9 +461,9 @@ e = zeros(size(subDependenciesVec,2), 2, length(metricsToPlot));
 for ii=1:length(metricsToPlot)
     e(:,1,ii) = y(ii,:)-varTmp(ii,:)/2; e(:,2,ii) = y(ii,:)+varTmp(ii,:)/2;
 end
-boundedline(x,y,e);
-grid on; xlabel('\rho'); ylabel('E[\rho-\rho_t]'); title('Gaussian Copula');
-legend(legendCell);
+boundedline(x,y,e,'cmap', cmap, 'transparency', transparencyFactor);
+grid on; xlabel('$\rho$', 'Interpreter', 'Latex'); ylabel('$E[\hat{\tau}-\tau]$', 'Interpreter', 'Latex'); 
+title('Gaussian Copula');
 
 % Frank Copula Data
 subplot(3,2,2);
@@ -471,8 +475,9 @@ e = zeros(size(subDependenciesVec,2), 2, 7);
 for ii=1:length(metricsToPlot)
     e(:,1,ii) = y(ii,:)-varTmp(ii,:)/2; e(:,2,ii) = y(ii,:)+varTmp(ii,:)/2;
 end
-boundedline(x,y,e);
-grid on; xlabel('\alpha'); ylabel('E[\alpha-\alpha_t]'); title('Frank Copula');
+boundedline(x,y,e,'cmap', cmap, 'transparency', transparencyFactor);
+grid on; xlabel('$\alpha$', 'Interpreter', 'Latex'); ylabel('$E[\hat{\tau}-\tau]$', 'Interpreter', 'Latex'); 
+title('Frank Copula');
 
 % Gumbel Copula Data
 subplot(3,2,3);
@@ -484,8 +489,9 @@ e = zeros(size(subDependenciesVec,2), 2, 7);
 for ii=1:length(metricsToPlot)
     e(:,1,ii) = y(ii,:)-varTmp(ii,:)/2; e(:,2,ii) = y(ii,:)+varTmp(ii,:)/2;
 end
-boundedline(x,y,e);
-grid on; xlabel('\alpha'); ylabel('E[\alpha-\alpha_t]'); title('Gumbel Copula');
+boundedline(x,y,e,'cmap', cmap, 'transparency', transparencyFactor);
+grid on; xlabel('$\alpha$', 'Interpreter', 'Latex'); ylabel('$E[\hat{\tau}-\tau]$', 'Interpreter', 'Latex'); 
+title('Gumbel Copula');
 
 % Clayton Copula Data
 subplot(3,2,4);
@@ -497,33 +503,43 @@ e = zeros(size(subDependenciesVec,2), 2, 7);
 for ii=1:length(metricsToPlot)
     e(:,1,ii) = y(ii,:)-varTmp(ii,:)/2; e(:,2,ii) = y(ii,:)+varTmp(ii,:)/2;
 end
-boundedline(x,y,e);
-grid on; xlabel('\alpha'); ylabel('E[\alpha-\alpha_t]'); title('Clayton Copula');
+boundedline(x,y,e,'cmap', cmap, 'transparency', transparencyFactor);
+grid on; xlabel('$\alpha$', 'Interpreter', 'Latex'); ylabel('$E[\hat{\tau}-\tau]$', 'Interpreter', 'Latex'); 
+title('Clayton Copula');
 
-subplot(3,2,[5 6]);
-biasValsMonotonicXY = squeeze(resultsXYFunctional_bias(1,:,metricsToPlot));
+subplot(3,2,5);
+biasValsMonotonicXY = abs(squeeze(resultsXYFunctional_bias(1,:,metricsToPlot)));
 varValsMonotonicXY =  squeeze(resultsXYFunctional_var(1,:,metricsToPlot));
-biasValsComonotonicXY = squeeze(resultsXYFunctional_bias(2,:,metricsToPlot));
-varValsComonotonicXY = squeeze(resultsXYFunctional_var(2,:,metricsToPlot));
 
-biasValsXY = abs([biasValsMonotonicXY; biasValsComonotonicXY]);
-varValsXY  = [varValsMonotonicXY; varValsComonotonicXY];
+% biasValsXY = abs([biasValsMonotonicXY; biasValsComonotonicXY]);
+% varValsXY  = [varValsMonotonicXY; varValsComonotonicXY];
 
 % if we have any 0 bias, make it a very miniscule value so that the user
 % can see it...
-biasValsXY(biasValsXY==0) = 0.05e-2;
-
-stddevXY   = sqrt(varValsXY);
+minVal = 0.05e-1;
+biasValsMonotonicXY(biasValsMonotonicXY==0) = minVal;
+stddevXY = sqrt(varValsMonotonicXY);
 width = 1;
-groupnames = {'Linear', 'Quadratic', 'Exponential', '-1*Linear', '-1*Quadratic', '-1*Exponential'};
-bw_title = 'Functional Dependency';
+% groupnames = {'Linear', 'Quadratic', 'Exponential', '-1*Linear', '-1*Quadratic', '-1*Exponential'};
+groupnames = {'Linear', 'Quadratic', 'Exponential'};
+bw_title = 'Monotonic Dependency';
 bw_xlabel = [];
 bw_ylabel = '|E[\tau-\tau_t]|';
-bw_colormap = jet;
+bw_colormap = winter;
 gridstatus = 'xy';
-bw_legend = {'CF', '\tau', '\tau_b'};
+bw_legend = legendCell;
 error_sides = 2;        % change to 1 if you want 1-sided error-bars, but doesn't seem to work properly
 legend_type = 'plot';
 
-barweb(biasValsXY,stddevXY,width,groupnames,bw_title, bw_xlabel, bw_ylabel, ...
+barweb(biasValsMonotonicXY,stddevXY,width,groupnames,bw_title, bw_xlabel, bw_ylabel, ...
+       bw_colormap, gridstatus, bw_legend, error_sides, legend_type);
+
+subplot(3,2,6);
+biasValsComonotonicXY = abs(squeeze(resultsXYFunctional_bias(2,:,metricsToPlot)));
+varValsComonotonicXY = squeeze(resultsXYFunctional_var(2,:,metricsToPlot));
+biasValsComonotonicXY(biasValsComonotonicXY==0) = minVal;
+stddevXY = sqrt(varValsComonotonicXY);
+
+bw_title = 'Comonotonic Dependency';
+barweb(biasValsComonotonicXY,stddevXY,width,groupnames,bw_title, bw_xlabel, bw_ylabel, ...
        bw_colormap, gridstatus, bw_legend, error_sides, legend_type);
