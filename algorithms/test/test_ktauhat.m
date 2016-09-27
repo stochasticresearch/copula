@@ -441,12 +441,10 @@ else
     save('/home/kiran/ownCloud/PhD/sim_results/independence/ktauhat_biasData');
 end
 
-%%
-
 % plot the data
 metricsToPlot = [7 6 4];        % 7 = tau-b, 6 = tau, 4 = tau-h
 % manually looking, CF4 seems to work best, plot against tau and tau-b
-legendCell = {'\tau_b', '\tau', '\tau_h' };     % put tau-h last, it is the best performing but the bounds
+legendCell = {'\tau_b', '\tau_{CJ}', '\tau_h' };     % put tau-h last, it is the best performing but the bounds
                                                 % are harder to see if we put it first
 cmap = winter(3);
 transparencyFactor = 0.15;
