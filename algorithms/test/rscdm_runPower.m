@@ -314,28 +314,33 @@ rscdmVal_Z = sqrt(M-4)*abs(rscdmVal);
 testVal = norminv(1-alpha/2);
 
 subplot(3,12,1:3);
-scatter(x,y); grid on; xlabel('x'); ylabel('y'); title(sprintf('RSDM=%0.2f', rsdm1));
+scatter(x,y); grid on; xlabel('x', 'FontSize', 20); ylabel('y', 'FontSize', 20); 
+title(sprintf('RSDM=%0.2f', rsdm1), 'FontSize', 20);
 
 subplot(3,12,5:8);
-scatter(y,z); grid on; xlabel('y'); ylabel('z'); title(sprintf('RSDM=%0.2f', rsdm3));
+scatter(y,z); grid on; xlabel('y', 'FontSize', 20); ylabel('z', 'FontSize', 20); 
+title(sprintf('RSDM=%0.2f', rsdm3), 'FontSize', 20);
 
 subplot(3,12,10:12);
-scatter(x,z); grid on; xlabel('x'); ylabel('z'); title(sprintf('RSDM=%0.2f', rsdm2));
+scatter(x,z); grid on; xlabel('x', 'FontSize', 20); ylabel('z', 'FontSize', 20); 
+title(sprintf('RSDM=%0.2f', rsdm2), 'FontSize', 20);
 
 subplot(3,12,13:17);
 scatter(RxPtsStacked, RxStacked); grid on;
-xlabel('u'); title('R_y');
+xlabel('u', 'FontSize', 20); ylabel('r_y', 'FontSize', 20);
 
 subplot(3,12,20:24);
 scatter(RyPtsStacked, RyStacked); grid on;
-xlabel('u'); title('R_z');
+xlabel('u', 'FontSize', 20); ylabel('r_z', 'FontSize', 20);
 
 subplot(3,12,25:29);
-scatter(RxStacked,RyStacked); grid on; xlabel('R_y'); ylabel('R_z');  
-title(sprintf('rscdm=%0.2f', rscdmVal));
+scatter(RxStacked,RyStacked); grid on; 
+xlabel('r_y', 'FontSize', 20); ylabel('r_z', 'FontSize', 20);  
+title(sprintf('rscdm=%0.2f', rscdmVal), 'FontSize', 20);
 
 subplot(3,12,32:36);
-scatter(pobs(RxStacked),pobs(RyStacked), 'r'); grid on; xlabel('F_{R_y}'); ylabel('F_{R_z}');
+scatter(pobs(RxStacked),pobs(RyStacked), 'r'); grid on; 
+xlabel('F_{r_y}', 'FontSize', 20); ylabel('F_{r_z}', 'FontSize', 20);
 
 
 %% Do a conditionally dependent test
@@ -353,8 +358,8 @@ alpha = 0.05;
 % Generate data from     Y-->X<--Z
 y = rand(M,1);
 z = rand(M,1);
-% x = y.^2+z.^3;
-x = y + z + noise;
+x = y.^2+z.^3 + noise;      % TODO: fix the bug :D
+% x = y + z + noise;
 
 
 rsdm1 = rsdm(x, y);
@@ -368,25 +373,28 @@ rscdmVal_Z = sqrt(M-4)*abs(rscdmVal);
 testVal = norminv(1-alpha/2);
 
 subplot(3,12,1:4);
-scatter(x,y); grid on; xlabel('x'); ylabel('y'); title(sprintf('RSDM=%0.2f', rsdm1));
+scatter(x,y); grid on; xlabel('x', 'FontSize', 20); ylabel('y', 'FontSize', 20); 
+title(sprintf('RSDM=%0.2f', rsdm1), 'FontSize', 20);
 
 subplot(3,12,5:8);
-scatter(x,z); grid on; xlabel('x'); ylabel('z'); title(sprintf('RSDM=%0.2f', rsdm2));
+scatter(x,z); grid on; xlabel('x', 'FontSize', 20); ylabel('z', 'FontSize', 20); 
+title(sprintf('RSDM=%0.2f', rsdm2), 'FontSize', 20);
 
 subplot(3,12,9:12);
-scatter(y,z); grid on; xlabel('y'); ylabel('z'); title(sprintf('RSDM=%0.2f', rsdm3));
+scatter(y,z); grid on; xlabel('y', 'FontSize', 20); ylabel('z', 'FontSize', 20); 
+title(sprintf('RSDM=%0.2f', rsdm3), 'FontSize', 20);
 
 subplot(3,12,13:18);
 scatter(RxPtsStacked, RxStacked); grid on;
-xlabel('u'); title('R_y');
+xlabel('u', 'FontSize', 20); title('r_y', 'FontSize', 20);
 
 subplot(3,12,19:24);
 scatter(RyPtsStacked, RyStacked); grid on;
-xlabel('u'); title('R_z');
+xlabel('u', 'FontSize', 20); title('r_z', 'FontSize', 20);
 
 subplot(3,12,25:30);
-scatter(RxStacked,RyStacked); grid on; xlabel('R_y'); ylabel('R_z');  
-title(sprintf('rscdm=%0.2f', rscdmVal));
+scatter(RxStacked,RyStacked); grid on; xlabel('r_y', 'FontSize', 20); ylabel('r_z', 'FontSize', 20);  
+title(sprintf('rscdm=%0.2f', rscdmVal), 'FontSize', 20);
 
 subplot(3,12,31:36);
-scatter(pobs(RxStacked),pobs(RyStacked), 'r'); grid on; xlabel('F_{R_y}'); ylabel('F_{R_z}');
+scatter(pobs(RxStacked),pobs(RyStacked), 'r'); grid on; xlabel('F_{r_y}'); ylabel('F_{r_z}');
