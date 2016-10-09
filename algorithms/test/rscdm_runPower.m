@@ -285,16 +285,20 @@ h6.FontSize = 20;
 clear;
 clc;
 
+rng(123);
+
 M = 500;
 noise = 0.01;
 alpha = 0.05;
 
 % Generate data from     Y<--X-->Z
 x = rand(M,1);
-y = 4*(x-0.5).^2 + noise*randn(M,1);
-z = 4*(x-0.5).^2 + noise*randn(M,1);
+% y = 4*(x-0.5).^2 + noise*randn(M,1);
+% z = 4*(x-0.5).^2 + noise*randn(M,1);
 % y = x + noise*randn(M,1);
 % z = x + noise*randn(M,1);
+y = sin(2*pi*x) + noise*randn(M,1);
+z = 4*(x-0.5).^2 + noise*randn(M,1);
 
 rsdm1 = rsdm(x, y);
 rsdm2 = rsdm(x, z);
@@ -305,34 +309,33 @@ rsdm3 = rsdm(y, z);
 % why, look at the graphical model, Y indep Z | X according to
 % d-separation.  So if we condition upon X (i.e. remove teh effect of X on
 % Y and Z separately), then we should get independence.
-[rscdmVal, Rx_aligned, Ry_aligned] = rscdm(y,z,x);
+[rscdmVal, RxStacked, RyStacked, RxPtsStacked, RyPtsStacked] = rscdm(y,z,x);
 rscdmVal_Z = sqrt(M-4)*abs(rscdmVal);
 testVal = norminv(1-alpha/2);
 
-subplot(3,3,1);
+subplot(3,12,1:3);
 scatter(x,y); grid on; xlabel('x'); ylabel('y'); title(sprintf('RSDM=%0.2f', rsdm1));
 
-subplot(3,3,2);
-scatter(x,z); grid on; xlabel('x'); ylabel('z'); title(sprintf('RSDM=%0.2f', rsdm2));
-
-subplot(3,3,3);
+subplot(3,12,5:8);
 scatter(y,z); grid on; xlabel('y'); ylabel('z'); title(sprintf('RSDM=%0.2f', rsdm3));
 
-subplot(3,3,4);
-scatter(pobs(x),pobs(y), 'r'); grid on; xlabel('F_X(x)'); ylabel('F_Y(y)');
+subplot(3,12,10:12);
+scatter(x,z); grid on; xlabel('x'); ylabel('z'); title(sprintf('RSDM=%0.2f', rsdm2));
 
-subplot(3,3,5);
-scatter(pobs(x),pobs(z), 'r'); grid on; xlabel('F_X(x)'); ylabel('F_Z(z)');
+subplot(3,12,13:17);
+scatter(RxPtsStacked, RxStacked); grid on;
+xlabel('u'); title('R_y');
 
-subplot(3,3,6);
-scatter(pobs(y),pobs(z), 'r'); grid on; xlabel('F_Y(y)'); ylabel('F_Z(z)');
+subplot(3,12,20:24);
+scatter(RyPtsStacked, RyStacked); grid on;
+xlabel('u'); title('R_z');
 
-subplot(3,3,7);
-scatter(Rx_aligned,Ry_aligned); grid on; xlabel('R_x'); ylabel('R_y');  
-title(sprintf('rscdm=%0.2f rscdm_Z=%0.02f testVal=%0.02f', rscdmVal, rscdmVal_Z, testVal));
+subplot(3,12,25:29);
+scatter(RxStacked,RyStacked); grid on; xlabel('R_y'); ylabel('R_z');  
+title(sprintf('rscdm=%0.2f', rscdmVal));
 
-subplot(3,3,8);
-scatter(pobs(Rx_aligned),pobs(Ry_aligned), 'r'); grid on; xlabel('F_{R_x}'); ylabel('F_{R_y}');
+subplot(3,12,32:36);
+scatter(pobs(RxStacked),pobs(RyStacked), 'r'); grid on; xlabel('F_{R_y}'); ylabel('F_{R_z}');
 
 
 %% Do a conditionally dependent test
@@ -350,8 +353,8 @@ alpha = 0.05;
 % Generate data from     Y-->X<--Z
 y = rand(M,1);
 z = rand(M,1);
-x = y.^2+z.^3;
-% x = y + z.^2 + noise;
+% x = y.^2+z.^3;
+x = y + z + noise;
 
 
 rsdm1 = rsdm(x, y);
@@ -360,31 +363,30 @@ rsdm3 = rsdm(y, z);
 % In this graphical model, Y and Z are independent of each other, but when
 % conditioned upon X, they become dependent.  Refer to the rules of
 % d-separation to see why, this is a V-Structure!
-[rscdmVal, Rx_aligned, Ry_aligned] = rscdm(y,z,x);
+[rscdmVal, RxStacked, RyStacked, RxPtsStacked, RyPtsStacked] = rscdm(y,z,x);
 rscdmVal_Z = sqrt(M-4)*abs(rscdmVal);
 testVal = norminv(1-alpha/2);
 
-subplot(3,3,1);
+subplot(3,12,1:4);
 scatter(x,y); grid on; xlabel('x'); ylabel('y'); title(sprintf('RSDM=%0.2f', rsdm1));
 
-subplot(3,3,2);
+subplot(3,12,5:8);
 scatter(x,z); grid on; xlabel('x'); ylabel('z'); title(sprintf('RSDM=%0.2f', rsdm2));
 
-subplot(3,3,3);
+subplot(3,12,9:12);
 scatter(y,z); grid on; xlabel('y'); ylabel('z'); title(sprintf('RSDM=%0.2f', rsdm3));
 
-subplot(3,3,4);
-scatter(pobs(x),pobs(y), 'r'); grid on; xlabel('F_X(x)'); ylabel('F_Y(y)');
+subplot(3,12,13:18);
+scatter(RxPtsStacked, RxStacked); grid on;
+xlabel('u'); title('R_y');
 
-subplot(3,3,5);
-scatter(pobs(x),pobs(z), 'r'); grid on; xlabel('F_X(x)'); ylabel('F_Z(z)');
+subplot(3,12,19:24);
+scatter(RyPtsStacked, RyStacked); grid on;
+xlabel('u'); title('R_z');
 
-subplot(3,3,6);
-scatter(pobs(y),pobs(z), 'r'); grid on; xlabel('F_Y(y)'); ylabel('F_Z(z)');
+subplot(3,12,25:30);
+scatter(RxStacked,RyStacked); grid on; xlabel('R_y'); ylabel('R_z');  
+title(sprintf('rscdm=%0.2f', rscdmVal));
 
-subplot(3,3,7);
-scatter(Rx_aligned,Ry_aligned); grid on; xlabel('R_x'); ylabel('R_y');  
-title(sprintf('rscdm=%0.2f rscdm_Z=%0.02f testVal=%0.02f', rscdmVal, rscdmVal_Z, testVal));
-
-subplot(3,3,8);
-scatter(pobs(Rx_aligned),pobs(Ry_aligned), 'r'); grid on; xlabel('F_{R_x}'); ylabel('F_{R_y}');
+subplot(3,12,31:36);
+scatter(pobs(RxStacked),pobs(RyStacked), 'r'); grid on; xlabel('F_{R_y}'); ylabel('F_{R_z}');
