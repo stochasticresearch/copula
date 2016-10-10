@@ -327,11 +327,11 @@ title(sprintf('RSDM=%0.2f', rsdm2), 'FontSize', 20);
 
 subplot(3,12,13:17);
 scatter(RxPtsStacked, RxStacked); grid on;
-xlabel('u', 'FontSize', 20); ylabel('r_y', 'FontSize', 20);
+xlabel('x', 'FontSize', 20); ylabel('r_y', 'FontSize', 20);
 
 subplot(3,12,20:24);
 scatter(RyPtsStacked, RyStacked); grid on;
-xlabel('u', 'FontSize', 20); ylabel('r_z', 'FontSize', 20);
+xlabel('x', 'FontSize', 20); ylabel('r_z', 'FontSize', 20);
 
 subplot(3,12,25:29);
 scatter(RxStacked,RyStacked); grid on; 
@@ -350,6 +350,8 @@ xlabel('F_{r_y}', 'FontSize', 20); ylabel('F_{r_z}', 'FontSize', 20);
 
 clear;
 clc;
+
+rng(123);
 
 M = 500;
 noise = 0.5;
@@ -372,29 +374,29 @@ rsdm3 = rsdm(y, z);
 rscdmVal_Z = sqrt(M-4)*abs(rscdmVal);
 testVal = norminv(1-alpha/2);
 
-subplot(3,12,1:4);
+subplot(3,12,1:3);
 scatter(x,y); grid on; xlabel('x', 'FontSize', 20); ylabel('y', 'FontSize', 20); 
 title(sprintf('RSDM=%0.2f', rsdm1), 'FontSize', 20);
 
 subplot(3,12,5:8);
-scatter(x,z); grid on; xlabel('x', 'FontSize', 20); ylabel('z', 'FontSize', 20); 
-title(sprintf('RSDM=%0.2f', rsdm2), 'FontSize', 20);
-
-subplot(3,12,9:12);
 scatter(y,z); grid on; xlabel('y', 'FontSize', 20); ylabel('z', 'FontSize', 20); 
 title(sprintf('RSDM=%0.2f', rsdm3), 'FontSize', 20);
 
-subplot(3,12,13:18);
+subplot(3,12,10:12);
+scatter(x,z); grid on; xlabel('x', 'FontSize', 20); ylabel('z', 'FontSize', 20); 
+title(sprintf('RSDM=%0.2f', rsdm2), 'FontSize', 20);
+
+subplot(3,12,13:17);
 scatter(RxPtsStacked, RxStacked); grid on;
-xlabel('u', 'FontSize', 20); title('r_y', 'FontSize', 20);
+xlabel('x', 'FontSize', 20); title('r_y', 'FontSize', 20);
 
-subplot(3,12,19:24);
+subplot(3,12,20:24);
 scatter(RyPtsStacked, RyStacked); grid on;
-xlabel('u', 'FontSize', 20); title('r_z', 'FontSize', 20);
+xlabel('x', 'FontSize', 20); title('r_z', 'FontSize', 20);
 
-subplot(3,12,25:30);
+subplot(3,12,25:29);
 scatter(RxStacked,RyStacked); grid on; xlabel('r_y', 'FontSize', 20); ylabel('r_z', 'FontSize', 20);  
 title(sprintf('rscdm=%0.2f', rscdmVal), 'FontSize', 20);
 
-subplot(3,12,31:36);
+subplot(3,12,32:36);
 scatter(pobs(RxStacked),pobs(RyStacked), 'r'); grid on; xlabel('F_{r_y}'); ylabel('F_{r_z}');
