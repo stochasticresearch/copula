@@ -765,3 +765,168 @@ ax1.Box = 'on'; ax1.XTick = []; ax1.YTick = [];
 ax1.XLim = [min(tmp1) max(tmp1)];
 % ax1.YLim = [min(tmp2) max(tmp2)]; % why is this erroring?
 ax1.YLim = [0 1];
+
+%% Characterize null distribution (X indep Y) experimentally for \hat{RSDM}
+clear;
+clc;
+
+rng(1234);
+
+nsim = 1000;
+M_vec = 100:100:1000;
+
+xMin = 0; xMax = 1;
+yMin = 0; yMax = 1;
+
+FIT_PLOTS = 0;
+
+rsdmNullDistributionResults = zeros(nsim, length(M_vec));
+
+% Optimal parameters for RSDM -- CFG1 - 5,8,1
+rsdm_minscanincr = 0.025;
+rsdm_diffthresh = 100;
+rsdm_alpha = 0.08;
+
+for ii=1:nsim
+    parfor jj=1:length(M_vec)
+        M = M_vec(jj);
+        % create independent x & y
+        x = rand(M,1)*(xMax-xMin)+xMin;
+        y = rand(M,1)*(yMax-yMin)+yMin;
+    
+        % compute RSDM
+        rsdmNullDistributionResults(ii,jj) = rsdm(x, y, rsdm_minscanincr, rsdm_diffthresh, rsdm_alpha);
+    end
+end
+
+% save the data
+if(ispc)
+    save('C:\\Users\\Kiran\\ownCloud\\PhD\\sim_results\\independence\\rsdmNullDistribution.mat');
+elseif(ismac)
+    save('/Users/Kiran/ownCloud/PhD/sim_results/independence/rsdmNullDistribution.mat');
+else
+    save('/home/kiran/ownCloud/PhD/sim_results/independence/rsdmNullDistribution.mat');
+end
+
+% plot distribution of RSDM under the null distribution 
+legendCell = cell(1,length(M_vec));
+for ii=1:length(M_vec)
+    [f,xi] = ksdensity(rsdmNullDistributionResults(:,ii));
+    plot(xi,f); hold on;
+    legendCell{ii} = sprintf('M=%d',M_vec(ii));
+end
+grid on;
+legend(legendCell);
+title('Distribution of RSDM_{approx}');
+
+D_cell = cell(1,length(M_vec)); 
+PD_cell = cell(1,length(M_vec));
+idx = 1;
+for ii=1:length(M_vec)
+    [D, PD] = allfitdist(rsdmNullDistributionResults(:,ii), 'PDF');
+    D_cell{idx} = D; 
+    PD_cell{idx} = PD;
+    idx = idx + 1;
+end
+if(~FIT_PLOTS)
+    close all;      % close the generated plots
+end
+
+% for each PD type, compute the total BIC score for all sample sizes, and
+% choose the best one in that fashion
+distributions = {'Beta', 'Birnbaum-Saunders', 'Exponential', ...
+                 'Extreme value', 'Gamma', 'Generalized extreme value', ...
+                 'Generalized Pareto', 'Inverse Gaussian', 'Logistic', ...
+                 'Log-logistic', 'Lognormal', 'Nakagami', 'Normal', ...
+                 'Rayleigh', 'Rician', 't location-scale', 'Weibull'};
+
+distScores = zeros(4,length(distributions));
+for ii=1:length(distributions)
+    dist = distributions{ii};
+    % find this distribution in the fit and store the BIC, AIC, AICc scores
+    % for all M
+    NLogL = 0;
+    BIC = 0;
+    AIC = 0;
+    AICc = 0;
+    for jj=1:length(M_vec)
+        D = D_cell{jj};
+        PD = PD_cell{jj};
+        
+        % find the distribution
+        for kk=1:length(PD)
+            if(strcmpi(PD{kk}.DistributionName, dist))
+                break;
+            end
+        end
+        
+        NLogL = NLogL + D(kk).NLogL;
+        BIC = BIC + D(kk).BIC;
+        AIC = AIC + D(kk).AIC;
+        AICc = AICc + D(kk).AICc;
+    end
+    
+    distScores(1,ii) = NLogL;
+    distScores(2,ii) = BIC;
+    distScores(3,ii) = AIC;
+    distScores(4,ii) = AICc;
+end
+
+% Sort by NLogL
+[~,I] = sort(distScores(1,:), 'ascend');
+fprintf('NLogL\n');
+distributions{I(1)}
+
+% Sort by BIC
+[~,I] = sort(distScores(2,:), 'ascend');
+fprintf('BIC\n');
+distributions{I(1)}
+
+% Sort by AIC
+[~,I] = sort(distScores(3,:), 'ascend');
+fprintf('AIC\n');
+distributions{I(1)}
+
+% Sort by AICc
+[~,I] = sort(distScores(4,:), 'ascend');
+fprintf('AICc\n');
+distributions{I(1)}
+
+% From the above analysis, the Inverse Gaussian distribution seems to fit
+% best ... Do Q-Q Plots of the Inverse Gaussian Distribution Fit
+
+% QQ Plot w/ best fit for M=100 and M=1000
+pdObjs = cell(1,length(M_vec));
+muVec = zeros(1,length(M_vec));
+lambdaVec = zeros(1,length(M_vec));
+for ii=1:length(M_vec)
+    M = M_vec(ii);
+    % look for the Inverse Gaussian Distribution in the correct cell array
+    D = D_cell(ii);
+    PD = PD_cell(ii); PD = PD{1};
+    for jj=1:length(PD)
+        if(strcmpi('Inverse Gaussian', PD{jj}.DistributionName))
+            pd = PD{jj};
+        end
+    end
+    pdObjs{ii} = pd;
+    muVec(ii) = pd.mu;
+    lambdaVec(ii) = pd.lambda;
+end
+
+% do the Q-Q plot
+pd = pdObjs{1};
+subplot(2,2,1); qqplot(rsdmNullDistributionResults(:,1), pd); grid on;
+xlabel(sprintf('Quantiles of IG(%0.02f,%0.02f)', pd.mu, pd.lambda), 'FontSize', 20);
+ylabel('Quantiles of Input Samples', 'FontSize', 20);
+title('M = 100', 'FontSize', 24);
+
+pd = pdObjs{10};
+subplot(2,2,3); qqplot(rsdmNullDistributionResults(:,1), pd); grid on;
+xlabel(sprintf('Quantiles of IG(%0.02f,%0.02f)', pd.mu, pd.lambda), 'FontSize', 20);
+ylabel('Quantiles of Input Samples', 'FontSize', 20);
+title('M = 1000', 'FontSize', 24);
+
+% plot how mu and lambda change as M goes from 100 --> 1000
+subplot(2,2,2); plot(M_vec, muVec); grid on; xlabel('M', 'FontSize', 20); ylabel('\mu', 'FontSize', 20); grid on;
+subplot(2,2,4); plot(M_vec, lambdaVec); grid on; xlabel('M', 'FontSize', 20); ylabel('\lambda', 'FontSize', 20); grid on;

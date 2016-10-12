@@ -400,3 +400,6 @@ title(sprintf('rscdm=%0.2f', rscdmVal), 'FontSize', 20);
 
 subplot(3,12,32:36);
 scatter(pobs(RxStacked),pobs(RyStacked), 'r'); grid on; xlabel('F_{r_y}'); ylabel('F_{r_z}');
+
+%% Characterize null distribution {Y indep Z} | X
+
