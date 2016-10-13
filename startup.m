@@ -24,3 +24,5 @@ addpath('./simulations/independence');
 addpath('./testfiles');
 
 addpath('../minepy/matlab');
+
+addpath('./python');
