@@ -5,6 +5,9 @@ function r = rdc(x,y,k,s)
 % Default parameters: k=20,s=1/6 (from the paper reference, where they used
 %                                 these parameters to conduct the tests)
 
+% The original code for RDC was obtained from David Lopez-Paz's GITHUB for RDC.  The URL is:
+% git@github.com:lopezpaz/randomized_dependence_coefficient.git
+
 % We put some stuff in here to supress warnings.  The warning ID was
 % collected as follows:
 %
