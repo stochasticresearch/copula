@@ -26,3 +26,15 @@ y = rand(1,M);
 z = rand(1,M);
 
 pdcor_val = pdcorr_R(x,y,z)
+
+%% Test Projection Distance Correlation Interface
+clear;
+clc;
+
+M = 1000;
+
+x = rand(1,M);
+y = rand(1,M);
+z = rand(1,M);
+
+pdcor_val = projcorr_R(x,y,z)

@@ -39,9 +39,9 @@ if count(py.sys.path,'./python') == 0
 end
 
 % python module dependencies check
-requiredModules = {'numpy', 'matplotlib', 'scipy', 'sklearn', 'cvxopt'};
-for ii=1:length(requiredModules)
-    modName = requiredModules{ii};
+requiredPythonModules = {'numpy', 'matplotlib', 'scipy', 'sklearn', 'cvxopt'};
+for ii=1:length(requiredPythonModules)
+    modName = requiredPythonModules{ii};
     try
         py.importlib.import_module(modName);
     catch ME
@@ -84,3 +84,7 @@ elseif(isunix)
 else
     % TODO: add path to R in Windows installation... prompt user?
 end
+
+% TODO: Required R-Packages dependency check??
+requiredRPackages = {'SAM', 'energy', 'glasso', 'glmnet', ...
+                     'pracma', 'pgraph'};

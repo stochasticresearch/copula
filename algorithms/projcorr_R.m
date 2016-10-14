@@ -1,5 +1,5 @@
-function [pdcor_val] = pdcorr_R(x, y, z)
-%PDCORR_R computes the partial distance correlation of {x,y}|z.
+function [projcor_val] = projcorr_R(x, y, z)
+%PDCORR_R computes the projection distance correlation of {x,y}|z.
 %Underneath, it calls the R function pdcor from Matlab using a CSV file
 %interface.
 % Inputs:
@@ -7,12 +7,12 @@ function [pdcor_val] = pdcorr_R(x, y, z)
 %  y - [n x 1] input vector
 %  z - [n x 1] input vector
 % Outputs:
-%  pdcor_val - the partial distance correlation value
+%  projcor_val - the partial distance correlation value
 % Notes:
 %  Check the startup.m script at the root of this repository to see how R
 %  is called and ensure that you have the appropriate dependencies.  For
-%  this script, the only R package required is the "energy" package, and
-%  the "pracma" package
+%  this script, the required R packages are:
+%   'SAM', 'energy', 'glasso', 'glmnet', 'pracma', 'pgraph'
 %**************************************************************************
 %*                                                                        *
 %* Copyright (C) 2016  Kiran Karra <kiran.karra@gmail.com>                *
@@ -38,21 +38,18 @@ else
     tmpDir = 'C:\Windows\Temp';
 end
 
-csvwrite(fullfile(tmpDir, 'x_pdcor.csv'), x(:));
-csvwrite(fullfile(tmpDir, 'y_pdcor.csv'), y(:));
-csvwrite(fullfile(tmpDir, 'z_pdcor.csv'), z(:));
+csvwrite(fullfile(tmpDir, 'x_projcor.csv'), x(:));
+csvwrite(fullfile(tmpDir, 'y_projcor.csv'), y(:));
+csvwrite(fullfile(tmpDir, 'z_projcor.csv'), z(:));
 
 % call the R function
-energyRdir = getEnergyPackagePath();
-retCode = system(['R CMD BATCH ' energyRdir '/pdcor_matlab.R' ]);
+pgraphRdir = getPGraphPackagePath();
+retCode = system(['R CMD BATCH ' pgraphRdir '/projcor_matlab.R 0' ]);
 if(retCode==0)
-    pdcor_val = csvread(fullfile(tmpDir, 'pdcor_matlab_output.csv'));
+    projcor_val = csvread(fullfile(tmpDir, 'projcor_matlab_output.csv'));
 else
-    warning('Calling R pdcor function failed!');
-    pdcor_val = -999;
+    warning('Calling R projcor function failed!');
+    projcor_val = -999;
 end
-
-% clean up temporary files
-delete('pdcor_matlab.Rout');
 
 end
