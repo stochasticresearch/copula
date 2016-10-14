@@ -26,3 +26,11 @@ addpath('./testfiles');
 addpath('../minepy/matlab');
 
 addpath('./python');
+
+% setup Python in Matlab
+pyversion 2.7   % assume you have Python 2.7 :D
+
+% add the python folder to the PYTHON search path
+if count(py.sys.path,'./python') == 0
+    insert(py.sys.path,int32(0),'./python');
+end

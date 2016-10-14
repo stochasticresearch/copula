@@ -2,3 +2,4 @@
 .RData
 r_playground/testfiles
 *.mex*
+*.pyc

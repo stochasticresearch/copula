@@ -76,6 +76,28 @@ def LNN_2_entropy(x,k=5,tr=30,bw=0):
 	else: 
 		return np.mean(local_est[np.nonzero(local_est)])
 
+#### Matlab interface ####
+def mi_matlab(x, y):
+    M = len(x)
+        
+    # if len(x)==len(y), then we are computing I(X;Y).
+    # if 2*len(x)==len(y), then  we are computing I(X;Y,Z).
+    # any other permutation is invalid!
+    if(len(x)==len(y)):
+        inData = np.zeros(shape=(M,2))
+        inData[:,0] = x
+        inData[:,1] = y
+    elif(2*len(x)==len(y)):
+        inData = np.zeros(shape=(M,3))
+        inData[:,0] = x
+        inData[:,1] = y[1:len(y)/2]
+        inData[:,2] = y[len(y)/2:len(y)]
+    else:
+        error('Invalid Inputs!')
+    
+    miVal = mi(inData, 1)
+    return miVal
+
 
 #These is main mutual information estimator
 def mi(data,split,k=5,tr=30):
