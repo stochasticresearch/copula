@@ -1,284 +1,259 @@
-%% Generates the Type I error curves for testing conditional independence
+%**************************************************************************
+%*                                                                        *
+%* Copyright (C) 2016  Kiran Karra <kiran.karra@gmail.com>                *
+%*                                                                        *
+%* This program is free software: you can redistribute it and/or modify   *
+%* it under the terms of the GNU General Public License as published by   *
+%* the Free Software Foundation, either version 3 of the License, or      *
+%* (at your option) any later version.                                    *
+%*                                                                        *
+%* This program is distributed in the hope that it will be useful,        *
+%* but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+%* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+%* GNU General Public License for more details.                           *
+%*                                                                        *
+%* You should have received a copy of the GNU General Public License      *
+%* along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
+%*                                                                        *
+%**************************************************************************
+
+%% Conditional Dependence Parametric test
 clear;
 clc;
 
-rng(315);
-dbstop if error;
-
-nsim = 500;
-
-num_noise = 30;
-noise = 3;
+rng(12345);
 
 M = 500;
+nsim = 500;
 
-numDepTests = 6;        % the number of different dependency tests we will conduct
-                        % TODO: add copula dependencies as well
+numDepTypes = 6;
+rscdmResultsMat = zeros(length(gammaVec), numDepTypes);
+cmaResultsMat = zeros(length(gammaVec), numDepTypes);
+cmiResultsMat = zeros(length(gammaVec), numDepTypes);
+hdResultsMat = zeros(length(gammaVec), numDepTypes);
+hsncicResultsMat = zeros(length(gammaVec), numDepTypes);
 
-rscdmTypeINull = zeros(1,nsim);
-rscdmTypeIAlt  = zeros(1,nsim);
-rscdmTypeIPower = zeros(numDepTests, num_noise);
+rscdmResultsVec = zeros(1,nsim);
+cmaResultsVec = zeros(1,nsim);
+cmiResultsVec = zeros(1,nsim);
+hdResultsVec = zeros(1,nsim);
+hsncicResultsVec = zeros(1,nsim);
 
-% Simon & Tibshirani use xMin=0, xMax=1 for performing their analysis ...
-minVal = 0;
-maxVal = 1;
-
-testAlpha = 0.05;
-
-dispstat('','init'); % One time only initialization
-dispstat(sprintf('Begining the Type I Error simulation...\n'),'keepthis','timestamp');
-num_noise_test_min = 1;
-num_noise_test_max = 20;
-for l=num_noise_test_min:num_noise_test_max
-    for typ=1:numDepTests
-        dispstat(sprintf('Computing for noise level=%d Dependency Test=%d',l, typ),'keepthis', 'timestamp');
-        % simulate data under the null w/ correct marginals
-        parfor ii=1:nsim
-            dispstat(sprintf('Simulating -- %0.02f', ii/nsim*100),'timestamp');
-            % Generate data from     Y-->X<--Z
-            y = rand(M,1)*(maxVal-minVal)+minVal;
-            z = rand(M,1)*(maxVal-minVal)+minVal;
-            switch(typ)
+gammaVec = 0:0.1:1;
+for gammaIdx=1:length(gammaVec)
+    gamma = gammaVec(gammaIdx);
+    for jj=1:numDepTypes
+        for ii=1:nsim
+            Y = rand(M,1);
+            Z = rand(M,1);
+            eps = randn(M,1);
+            
+            switch(jj)
                 case 1
-                    % linear
-                    x = y + z + noise*(l/num_noise)*randn(M,1); 
+                    X = gamma*(Y+Z) + (1-gamma)*eps;
                 case 2
-                    % parabolic
-                    x = 4*(y-.5).^2 + 4*(z-.5).^2 + ...
-                        noise*(l/num_noise)*randn(M,1);
+                    X = gamma*((Y-0.5).^2 + (Z-0.5).^2) + (1-gamma)*eps;
                 case 3
-                    % cubic
-                    x = 128*(y-1/3).^3-48*(y-1/3).^3-12*(y-1/3)+ ...
-                        128*(z-1/3).^3-48*(z-1/3).^3-12*(z-1/3)+ ...
-                        10* noise*(l/num_noise)*randn(M,1);
+                    X = gamma*(sin(4*pi*Y)+cos(4*pi*Y)) + (1-gamma)*eps;
                 case 4
-                    % low-freq sin
-                    x = sin(2*pi*y) + sin(2*pi*z) + ...
-                        2*noise*(l/num_noise)*randn(M,1);
+                    X = gamma*(nthroot(Y,4)+nthroot(Z,4)) + (1-gamma)*eps;
                 case 5
-                    % fourth root
-                    x = y.^(1/4) + z.^(1/4) + noise*(l/num_noise)*randn(M,1);
+                    X = gamma*(Y + (Z-0.5).^2) + (1-gamma)*eps;
                 case 6
-                    % circle
-                    binomailVals = (2*binornd(1,0.5,M,1)-1);
-                    x = binomailVals .* (sqrt(1 - (2*y - 1).^2)) + ...
-                        binomailVals .* (sqrt(1 - (2*z - 1).^2)) + ...
-                        noise/4*l/num_noise*randn(M,1);
-                % TODO: add copula based tests
-                
-                % TODO: decide whether to add post-nonlinear based tests
-                % also?
-                    
-                otherwise
-                    error('unknown dep type!');
+                    X = gamma*((Y-0.5).^2 + cos(4*pi*Z)) + (1-gamma)*eps;
             end
             
-            % calculate the metric
-            metricConditioned = rscdm(y, z, x);
-            metricUnconditioned = rsdm(y, z);
+            rscdmVal = rscdm(y,z,x);
+            data.X = Y; data.Y = Z; data.Z = X;
+            cmaVal = cassor(data);
+            cmiVal = cmi(data);
+            hdVal = hd(Y,Z,X);
+            hsncicVal = hsncic(Y,Z,X);
             
-            rscdmTypeIAlt(ii) = metricConditioned;
-            rscdmTypeINull(ii) = metricUnconditioned;
+            rscdmResultsVec(ii) = rscdmVal;
+            cmaResultsVec(ii) = cmaVal;
+            cmiResultsVec(ii) = cmiVal;
+            hdResultsVec(ii) = hdVal;
+            hsncicResultsVec(ii) = hsncicVal;
+            
         end
         
-        % compute the cutoff
-        rscdm_cut = quantile(rscdmTypeINull, 1-testAlpha);
-        % here we look for >, b/c we want to see that once it is
-        % conditioned upon the variable, we get a lower value, meaning we
-        % would declare conditional independence
-        rscdmTypeIPower(typ, l) = sum(rscdmTypeIAlt > rscdm_cut)/nsim;
+        rscdmMean = mean(rscdmResultsVec); rscdmSTD = std(rscdmResultsVec);
+        cmaMean = mean(cmaResultsVec); cmaSTD = std(cmaResultsVec);
+        cmiMean = mean(cmiResultsVec); cmiSTD = std(cmiResultsVec);
+        hdMean = mean(hdResultsVec); hdSTD = std(hdResultsVec);
+        hsncicMean = mean(hsncicResultsVec); hsncicSTD = std(hsncicResultsVec);
+        
+        rscdmResultsMat(gammaIdx, jj) = rscdmMean;
+        cmaResultsMat(gammaIdx, jj) = cmaMean;
+        cmiResultsMat(gammaIdx, jj) = cmiMean;
+        hdResultsMat(gammaIdx, jj) = hdMean;
+        hsncicResultsMat(gammaIdx, jj) = hsncicMean;
+        
     end
 end
 
-% save the data
+% save the results
 if(ispc)
-    save('C:\\Users\\Kiran\\ownCloud\\PhD\\sim_results\\independence\\rscdmPower_TypeI.mat');
-else
-    save('/home/kiran/ownCloud/PhD/sim_results/independence/rscdmPower_TypeI.mat');
+    save('C:\\Users\\Kiran\\ownCloud\\PhD\\sim_results\\independence\\rscdm_CD.mat');
+elseif(ismac)
+    save('/Users/Kiran/ownCloud/PhD/sim_results/independence/rscdm_CD.mat');
+elseif(isunix)
+    save('/home/kiran/ownCloud/PhD/sim_results/independence/rscdm_CD.mat');
 end
 
-% TODO: do the inlet for the plots instead of a title
+% plot the dependence metric results versus gamma for each dep type
+figure;
 
-noiseVec = (num_noise_test_min:num_noise_test_max)/10;
-h1 = subplot(3,2,1);
-hh1 = plot(noiseVec, rscdmTypeIPower(1,num_noise_test_min:num_noise_test_max), 'o-.'); 
-axis([min(noiseVec) max(noiseVec) 0 1]);
-xlabel('Noise Level'); ylabel('Type I Power'); grid on;
-title('Linear');
-h1.FontSize = 20; 
+h1 = subplot(2,2,1);
+plot(gammaVec, rscdmResultsMat(:,1), 'o-.', ...
+     gammaVec, cmaResultsMat(:,1), '+-.', ...
+     gammaVec, cmiResultsMat(:,1), 'd-.', ...
+     gammaVec, hdResultsMat(:,1),  '^-');
+xlabel('\gamma', 'FontSize', '20'); ylabel('DEP({X,Y}|Z)'); grid on;
+ 
+h2 = subplot(2,2,2);
+plot(gammaVec, rscdmResultsMat(:,2), 'o-.', ...
+     gammaVec, cmaResultsMat(:,2), '+-.', ...
+     gammaVec, cmiResultsMat(:,2), 'd-.', ...
+     gammaVec, hdResultsMat(:,2),  '^-');
+xlabel('\gamma', 'FontSize', '20'); ylabel('DEP({X,Y}|Z)'); grid on;
 
-h2 = subplot(3,2,2);
-hh2 = plot(noiseVec, rscdmTypeIPower(2,num_noise_test_min:num_noise_test_max), 'o-.'); 
-axis([min(noiseVec) max(noiseVec) 0 1]);
-xlabel('Noise Level'); ylabel('Type I Power'); grid on;
-title('Parabolic')
-h2.FontSize = 20; 
+h3 = subplot(2,2,3);
+plot(gammaVec, rscdmResultsMat(:,3), 'o-.', ...
+     gammaVec, cmaResultsMat(:,3), '+-.', ...
+     gammaVec, cmiResultsMat(:,3), 'd-.', ...
+     gammaVec, hdResultsMat(:,3),  '^-');
+xlabel('\gamma', 'FontSize', '20'); ylabel('DEP({X,Y}|Z)'); grid on;
 
-h3 = subplot(3,2,3); 
-hh3 = plot(noiseVec, rscdmTypeIPower(3,num_noise_test_min:num_noise_test_max), 'o-.');  
-axis([min(noiseVec) max(noiseVec) 0 1]);
-xlabel('Noise Level'); ylabel('Type I Power'); grid on;
-title('Cubic');
-h3.FontSize = 20; 
+h4 = subplot(2,2,4);
+plot(gammaVec, rscdmResultsMat(:,4), 'o-.', ...
+     gammaVec, cmaResultsMat(:,4), '+-.', ...
+     gammaVec, cmiResultsMat(:,4), 'd-.', ...
+     gammaVec, hdResultsMat(:,4),  '^-');
+xlabel('\gamma', 'FontSize', '20'); ylabel('DEP({X,Y}|Z)'); grid on;
 
-h4 = subplot(3,2,4); 
-hh4 = plot(noiseVec, rscdmTypeIPower(4,num_noise_test_min:num_noise_test_max), 'o-.');  
-axis([min(noiseVec) max(noiseVec) 0 1]);
-xlabel('Noise Level'); ylabel('Type I Power'); grid on;
-title('Sine')
-h4.FontSize = 20; 
+%% Conditional Independence Test
 
-h5 = subplot(3,2,5); 
-hh5 = plot(noiseVec, rscdmTypeIPower(5,num_noise_test_min:num_noise_test_max), 'o-.');
-xlabel('Noise Level'); ylabel('Type I Power'); grid on;
-title('Fourth-Root');
-h5.FontSize = 20; 
-
-h6 = subplot(3,2,6); 
-hh6 = plot(noiseVec, rscdmTypeIPower(6,num_noise_test_min:num_noise_test_max), 'o-.'); 
-axis([min(noiseVec) max(noiseVec) 0 1]);
-xlabel('Noise Level'); ylabel('Type I Power'); grid on;
-title('Circle');
-h6.FontSize = 20; 
-
-%% Generates the Type II error curves for testing conditional independence
 clear;
 clc;
 
-rng(315);
-dbstop if error;
-
-nsim = 500;
-
-num_noise = 30;
-noise = 3;
+rng(12345);
 
 M = 500;
+nsim = 500;
 
-numDepTests = 6;        % the number of different dependency tests we will conduct
-                        % TODO: add copula dependencies as well
+numDepTypes = 6;
+rscdmResultsMat = zeros(length(gammaVec), numDepTypes);
+cmaResultsMat = zeros(length(gammaVec), numDepTypes);
+cmiResultsMat = zeros(length(gammaVec), numDepTypes);
+hdResultsMat = zeros(length(gammaVec), numDepTypes);
+hsncicResultsMat = zeros(length(gammaVec), numDepTypes);
 
-rscdmTypeIINull = zeros(1,nsim);
-rscdmTypeIIAlt  = zeros(1,nsim);
-rscdmTypeIIPower = zeros(numDepTests, num_noise);
+rscdmResultsVec = zeros(1,nsim);
+cmaResultsVec = zeros(1,nsim);
+cmiResultsVec = zeros(1,nsim);
+hdResultsVec = zeros(1,nsim);
+hsncicResultsVec = zeros(1,nsim);
 
-% Simon & Tibshirani use xMin=0, xMax=1 for performing their analysis ...
-xMin = 0;
-xMax = 1;
-
-testAlpha = 0.05;
-
-dispstat('','init'); % One time only initialization
-dispstat(sprintf('Begining the Type II Error simulation...\n'),'keepthis','timestamp');
-num_noise_test_min = 1;
-num_noise_test_max = 20;
-for l=num_noise_test_min:num_noise_test_max
-    for typ=1:numDepTests
-        dispstat(sprintf('Computing for noise level=%d Dependency Test=%d',l, typ),'keepthis', 'timestamp');
-        % simulate data under the null w/ correct marginals
-        parfor ii=1:nsim
-            dispstat(sprintf('Simulating -- %0.02f', ii/nsim*100),'timestamp');
-            % Generate data from     Y<--X-->Z
-            x = rand(M,1)*(xMax-xMin)+xMin;
-            switch(typ)
-                case 1
-                    % linear
-                    y = x + noise*(l/num_noise)*randn(M,1); 
-                    z = x + noise*(l/num_noise)*randn(M,1); 
-                case 2
-                    % parabolic
-                    y = 4*(x-.5).^2 + noise*(l/num_noise)*randn(M,1);
-                    z = 4*(x-.5).^2 + noise*(l/num_noise)*randn(M,1);
-                case 3
-                    % cubic
-                    y = 128*(x-1/3).^3-48*(x-1/3).^3-12*(x-1/3)+10* noise*(l/num_noise)*randn(M,1);
-                    z = 128*(x-1/3).^3-48*(x-1/3).^3-12*(x-1/3)+10* noise*(l/num_noise)*randn(M,1);
-                case 4
-                    % low-freq sin
-                    y = sin(4*pi*x) + 2*noise*(l/num_noise)*randn(M,1);
-                    z = sin(4*pi*x) + 2*noise*(l/num_noise)*randn(M,1);
-                case 5
-                    % fourth root
-                    y = x.^(1/4) + noise*(l/num_noise)*randn(M,1);
-                    z = x.^(1/4) + noise*(l/num_noise)*randn(M,1);
-                case 6
-                    % circle
-                    y = (2*binornd(1,0.5,M,1)-1) .* (sqrt(1 - (2*x - 1).^2)) + noise/4*l/num_noise*randn(M,1);
-                    z = (2*binornd(1,0.5,M,1)-1) .* (sqrt(1 - (2*x - 1).^2)) + noise/4*l/num_noise*randn(M,1);
-                
-                % TODO: add copula based tests
-                
-                % TODO: decide whether to add post-nonlinear based tests
-                % also?
-                    
-                otherwise
-                    error('unknown dep type!');
-            end
-            % calculate the metric
-            metricConditioned = rscdm(y, z, x);
-            metricUnconditioned = rsdm(y, z);
+gammaVec = 0:0.1:1;
+for gammaIdx=1:length(gammaVec)
+    gamma = gammaVec(gammaIdx);
+    for jj=1:numDepTypes
+        for ii=1:nsim
+            X = rand(M,1);
+            eps = randn(M,1);
             
-            rscdmTypeIIAlt(ii) = metricConditioned;
-            rscdmTypeIINull(ii) = metricUnconditioned;
+            switch(jj)
+                case 1
+                    Y = gamma*X + (1-gamma)*eps;
+                    Z = gamma*X + (1-gamma)*eps;
+                case 2
+                    Y = gamma*(X-0.5).^2 + (1-gamma)*eps;
+                    Z = gamma*(X-0.5).^2 + (1-gamma)*eps;
+                case 3
+                    Y = gamma*sin(4*pi*X) + (1-gamma)*eps;
+                    Z = gamma*cos(4*pi*X) + (1-gamma)*eps;
+                case 4
+                    Y = gamma*nthroot(X,4) + (1-gamma)*eps;
+                    Z = gamma*nthroot(X,4) + (1-gamma)*eps;
+                case 5
+                    Y = gamma*X + (1-gamma)*eps;
+                    Z = gamma*(X-0.5).^2 + (1-gamma)*eps;
+                case 6
+                    Y = gamma*(X-0.5).^2 + (1-gamma)*eps;
+                    Z = gamma*cos(4*pi*X) + (1-gamma)*eps;
+            end
+            
+            rscdmVal = rscdm(y,z,x);
+            data.X = Y; data.Y = Z; data.Z = X;
+            cmaVal = cassor(data);
+            cmiVal = cmi(data);
+            hdVal = hd(Y,Z,X);
+            hsncicVal = hsncic(Y,Z,X);
+            
+            rscdmResultsVec(ii) = rscdmVal;
+            cmaResultsVec(ii) = cmaVal;
+            cmiResultsVec(ii) = cmiVal;
+            hdResultsVec(ii) = hdVal;
+            hsncicResultsVec(ii) = hsncicVal;
+            
         end
         
-        % compute the cutoff - we do alpha, not 1-alpha here b/c we are
-        % looking to see when the test will fail on the lower-end
-        rscdm_cut = quantile(rscdmTypeIINull, testAlpha);
-        % here we look for <, b/c we want to see that once it is
-        % conditioned upon the variable, we get a lower value, meaning we
-        % would declare conditional independence
-        rscdmTypeIIPower(typ, l) = sum(rscdmTypeIIAlt < rscdm_cut)/nsim;
+        rscdmMean = mean(rscdmResultsVec); rscdmSTD = std(rscdmResultsVec);
+        cmaMean = mean(cmaResultsVec); cmaSTD = std(cmaResultsVec);
+        cmiMean = mean(cmiResultsVec); cmiSTD = std(cmiResultsVec);
+        hdMean = mean(hdResultsVec); hdSTD = std(hdResultsVec);
+        hsncicMean = mean(hsncicResultsVec); hsncicSTD = std(hsncicResultsVec);
+        
+        rscdmResultsMat(gammaIdx, jj) = rscdmMean;
+        cmaResultsMat(gammaIdx, jj) = cmaMean;
+        cmiResultsMat(gammaIdx, jj) = cmiMean;
+        hdResultsMat(gammaIdx, jj) = hdMean;
+        hsncicResultsMat(gammaIdx, jj) = hsncicMean;
+        
     end
 end
 
-
-% save the data
+% save the results
 if(ispc)
-    save('C:\\Users\\Kiran\\ownCloud\\PhD\\sim_results\\independence\\rscdmPower_TypeII.mat');
-else
-    save('/home/kiran/ownCloud/PhD/sim_results/independence/rscdmPower_TypeII.mat');
+    save('C:\\Users\\Kiran\\ownCloud\\PhD\\sim_results\\independence\\rscdm_CI.mat');
+elseif(ismac)
+    save('/Users/Kiran/ownCloud/PhD/sim_results/independence/rscdm_CI.mat');
+elseif(isunix)
+    save('/home/kiran/ownCloud/PhD/sim_results/independence/rscdm_CI.mat');
 end
 
-% TODO: do the inlet for the plots instead of a title
+% plot the dependence metric results versus gamma for each dep type
+figure;
 
-noiseVec = (num_noise_test_min:num_noise_test_max)/10;
-h1 = subplot(3,2,1);
-hh1 = plot(noiseVec, rscdmTypeIIPower(1,num_noise_test_min:num_noise_test_max), 'o-.'); 
-xlabel('Noise Level'); ylabel('Type II Power'); grid on;
-title('Linear');
-h1.FontSize = 20; 
+h1 = subplot(2,2,1);
+plot(gammaVec, rscdmResultsMat(:,1), 'o-.', ...
+     gammaVec, cmaResultsMat(:,1), '+-.', ...
+     gammaVec, cmiResultsMat(:,1), 'd-.', ...
+     gammaVec, hdResultsMat(:,1),  '^-');
+xlabel('\gamma', 'FontSize', '20'); ylabel('DEP({X,Y}|Z)'); grid on;
+ 
+h2 = subplot(2,2,2);
+plot(gammaVec, rscdmResultsMat(:,2), 'o-.', ...
+     gammaVec, cmaResultsMat(:,2), '+-.', ...
+     gammaVec, cmiResultsMat(:,2), 'd-.', ...
+     gammaVec, hdResultsMat(:,2),  '^-');
+xlabel('\gamma', 'FontSize', '20'); ylabel('DEP({X,Y}|Z)'); grid on;
 
-h2 = subplot(3,2,2);
-hh2 = plot(noiseVec, rscdmTypeIIPower(2,num_noise_test_min:num_noise_test_max), 'o-.'); 
-xlabel('Noise Level'); ylabel('Type II Power'); grid on;
-title('Parabolic')
-h2.FontSize = 20; 
+h3 = subplot(2,2,3);
+plot(gammaVec, rscdmResultsMat(:,3), 'o-.', ...
+     gammaVec, cmaResultsMat(:,3), '+-.', ...
+     gammaVec, cmiResultsMat(:,3), 'd-.', ...
+     gammaVec, hdResultsMat(:,3),  '^-');
+xlabel('\gamma', 'FontSize', '20'); ylabel('DEP({X,Y}|Z)'); grid on;
 
-h3 = subplot(3,2,3); 
-hh3 = plot(noiseVec, rscdmTypeIIPower(3,num_noise_test_min:num_noise_test_max), 'o-.');  
-xlabel('Noise Level'); ylabel('Type II Power'); grid on;
-title('Cubic');
-h3.FontSize = 20; 
-
-h4 = subplot(3,2,4); 
-hh4 = plot(noiseVec, rscdmTypeIIPower(4,num_noise_test_min:num_noise_test_max), 'o-.');  
-xlabel('Noise Level'); ylabel('Type II Power'); grid on;
-title('Sine')
-h4.FontSize = 20; 
-
-h5 = subplot(3,2,5); 
-hh5 = plot(noiseVec, rscdmTypeIIPower(5,num_noise_test_min:num_noise_test_max), 'o-.');
-xlabel('Noise Level'); ylabel('Type II Power'); grid on;
-title('Fourth-Root');
-h5.FontSize = 20; 
-
-h6 = subplot(3,2,6); 
-hh6 = plot(noiseVec, rscdmTypeIIPower(6,num_noise_test_min:num_noise_test_max), 'o-.'); 
-axis([min(noiseVec) max(noiseVec) 0 1]);
-xlabel('Noise Level'); ylabel('Type II Power'); grid on;
-title('Circle');
-h6.FontSize = 20; 
+h4 = subplot(2,2,4);
+plot(gammaVec, rscdmResultsMat(:,4), 'o-.', ...
+     gammaVec, cmaResultsMat(:,4), '+-.', ...
+     gammaVec, cmiResultsMat(:,4), 'd-.', ...
+     gammaVec, hdResultsMat(:,4),  '^-');
+xlabel('\gamma', 'FontSize', '20'); ylabel('DEP({X,Y}|Z)'); grid on;
 
 %% Do a conditionally independent test
 
