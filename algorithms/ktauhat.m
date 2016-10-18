@@ -33,6 +33,9 @@ function [ tau ] = ktauhat( X, Y, correctionFlagOpt )
 % TODO: some error checking that X and Y are the same length, NaN, Inf ...
 % etc...
 
+X = X(:);
+Y = Y(:);
+
 if(nargin<3)
     correctionFlagSelect = 4;       % default correction factor processing
 else
@@ -129,6 +132,7 @@ if( (closeToZero(u, len) && v>0) || (u>0 && closeToZero(v, len)) )
 %         correctionFactor, nchoosek(len,2), nchoosek(len,2)-t);
 else
     % case of either all continuous or all discrete data
+%     fprintf('len=%d\n', len);
     tau = K/( sqrt(nchoosek(len,2)-u)*sqrt(nchoosek(len,2)-v) );
     
 %     fprintf('K=%0.02f u=%0.02f v=%0.02f nchoosek(M,2)=%d C-u=%d C-v=%d\n', ...
@@ -183,7 +187,14 @@ function [out] = closeToZero(in, len)
 out = 1;
 thresh = 0.02;      % if we are > 2% of length in terms of combinations;
 lenFloor = floor(len*thresh);
-if(in>nchoosek(lenFloor,2))
+
+if(lenFloor>=2)
+    cmpVal = nchoosek(lenFloor,2);
+else
+    cmpVal = 0;
+end
+
+if(in>cmpVal)
     out = 0;
 end
 

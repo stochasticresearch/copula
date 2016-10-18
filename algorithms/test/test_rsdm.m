@@ -24,10 +24,10 @@ clc;
 M = 1000;
 
 x = rand(M,1);
-y = x;
+y = x + 1*randn(M,1);
 
 % x = rand(M,1);
-% y = sin(2*pi*x);
+% y = sin(4*pi*x);
 
 % x = rand(M,1)*2-1;
 % y = x.^2;
@@ -35,7 +35,7 @@ y = x;
 % x = rand(M,1);
 % y=(2*binornd(1,0.5,M,1)-1).* (sqrt(1 - (2*x - 1).^2));
 
-[rsdmMetric, rsdmResidual, residAssocIdxs, rsdmRectangleCfg] = rsdm(x,y);
+[metric, resid, residAssocIdxs, residAssocPts, rectangleCfg] = rsdm_2(x,y);
 
 %% Understand how RSDM works w/ discrete function dependencies (TODO)
 

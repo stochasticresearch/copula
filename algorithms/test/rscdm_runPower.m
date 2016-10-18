@@ -26,6 +26,8 @@ rng(12345);
 M = 500;
 nsim = 500;
 
+gammaVec = 0:0.1:1;
+
 numDepTypes = 6;
 rscdmResultsMat = zeros(length(gammaVec), numDepTypes);
 cmaResultsMat = zeros(length(gammaVec), numDepTypes);
@@ -39,11 +41,14 @@ cmiResultsVec = zeros(1,nsim);
 hdResultsVec = zeros(1,nsim);
 hsncicResultsVec = zeros(1,nsim);
 
-gammaVec = 0:0.1:1;
+dispstat('','init'); % One time only initialization
+dispstat(sprintf('Begining the simulation...\n'),'keepthis','timestamp');
 for gammaIdx=1:length(gammaVec)
     gamma = gammaVec(gammaIdx);
+    dispstat(sprintf('Computing for gamma=%0.02f',gamma),'keepthis', 'timestamp');
     for jj=1:numDepTypes
         for ii=1:nsim
+            dispstat(sprintf('Simulating -- %0.02f %%', ii/nsim*100),'timestamp');
             Y = rand(M,1);
             Z = rand(M,1);
             eps = randn(M,1);
@@ -54,7 +59,7 @@ for gammaIdx=1:length(gammaVec)
                 case 2
                     X = gamma*((Y-0.5).^2 + (Z-0.5).^2) + (1-gamma)*eps;
                 case 3
-                    X = gamma*(sin(4*pi*Y)+cos(4*pi*Y)) + (1-gamma)*eps;
+                    X = gamma*(sin(4*pi*Y)+cos(4*pi*Z)) + (1-gamma)*eps;
                 case 4
                     X = gamma*(nthroot(Y,4)+nthroot(Z,4)) + (1-gamma)*eps;
                 case 5
@@ -63,7 +68,7 @@ for gammaIdx=1:length(gammaVec)
                     X = gamma*((Y-0.5).^2 + cos(4*pi*Z)) + (1-gamma)*eps;
             end
             
-            rscdmVal = rscdm(y,z,x);
+            rscdmVal = rscdm(Y,Z,X);
             data.X = Y; data.Y = Z; data.Z = X;
             cmaVal = cassor(data);
             cmiVal = cmi(data);
@@ -109,39 +114,50 @@ h1 = subplot(2,2,1);
 plot(gammaVec, rscdmResultsMat(:,1), 'o-.', ...
      gammaVec, cmaResultsMat(:,1), '+-.', ...
      gammaVec, cmiResultsMat(:,1), 'd-.', ...
-     gammaVec, hdResultsMat(:,1),  '^-');
-xlabel('\gamma', 'FontSize', '20'); ylabel('DEP({X,Y}|Z)'); grid on;
+     gammaVec, hdResultsMat(:,1),  '^-', ...
+     gammaVec, hsncicResultsMat(:,1), 'v-.');
+xlabel('\gamma', 'FontSize', 20); ylabel('DEP({X,Y}|Z)', 'FontSize', 20); grid on;
  
 h2 = subplot(2,2,2);
 plot(gammaVec, rscdmResultsMat(:,2), 'o-.', ...
      gammaVec, cmaResultsMat(:,2), '+-.', ...
      gammaVec, cmiResultsMat(:,2), 'd-.', ...
-     gammaVec, hdResultsMat(:,2),  '^-');
-xlabel('\gamma', 'FontSize', '20'); ylabel('DEP({X,Y}|Z)'); grid on;
+     gammaVec, hdResultsMat(:,2),  '^-', ...
+     gammaVec, hsncicResultsMat(:,2), 'v-.');
+xlabel('\gamma', 'FontSize', 20); ylabel('DEP({X,Y}|Z)', 'FontSize', 20); grid on;
 
 h3 = subplot(2,2,3);
 plot(gammaVec, rscdmResultsMat(:,3), 'o-.', ...
      gammaVec, cmaResultsMat(:,3), '+-.', ...
      gammaVec, cmiResultsMat(:,3), 'd-.', ...
-     gammaVec, hdResultsMat(:,3),  '^-');
-xlabel('\gamma', 'FontSize', '20'); ylabel('DEP({X,Y}|Z)'); grid on;
+     gammaVec, hdResultsMat(:,3),  '^-', ...
+     gammaVec, hsncicResultsMat(:,3), 'v-.');
+xlabel('\gamma', 'FontSize', 20); ylabel('DEP({X,Y}|Z)', 'FontSize', 20); grid on;
 
 h4 = subplot(2,2,4);
 plot(gammaVec, rscdmResultsMat(:,4), 'o-.', ...
      gammaVec, cmaResultsMat(:,4), '+-.', ...
      gammaVec, cmiResultsMat(:,4), 'd-.', ...
-     gammaVec, hdResultsMat(:,4),  '^-');
-xlabel('\gamma', 'FontSize', '20'); ylabel('DEP({X,Y}|Z)'); grid on;
+     gammaVec, hdResultsMat(:,4),  '^-', ...
+     gammaVec, hsncicResultsMat(:,4), 'v-.');
+xlabel('\gamma', 'FontSize', 20); ylabel('DEP({X,Y}|Z)', 'FontSize', 20); grid on;
+
+h4.FontSize = 20; 
+legend('RSCDM', 'CMA', 'CMI', 'HD', 'HSNCIC');  % manually move this using the mouse to a
+                                                % good location
 
 %% Conditional Independence Test
 
 clear;
 clc;
+dbstop if error;
 
 rng(12345);
 
 M = 500;
 nsim = 500;
+
+gammaVec = 0:0.1:1;
 
 numDepTypes = 6;
 rscdmResultsMat = zeros(length(gammaVec), numDepTypes);
@@ -156,11 +172,15 @@ cmiResultsVec = zeros(1,nsim);
 hdResultsVec = zeros(1,nsim);
 hsncicResultsVec = zeros(1,nsim);
 
-gammaVec = 0:0.1:1;
+dispstat('','init'); % One time only initialization
+dispstat(sprintf('Begining the simulation...\n'),'keepthis','timestamp');
 for gammaIdx=1:length(gammaVec)
     gamma = gammaVec(gammaIdx);
+    dispstat(sprintf('Computing for gamma=%0.02f',gamma),'keepthis', 'timestamp');
     for jj=1:numDepTypes
         for ii=1:nsim
+            dispstat(sprintf('Simulating -- %0.02f %%', ii/nsim*100),'timestamp');
+            
             X = rand(M,1);
             eps = randn(M,1);
             
@@ -185,7 +205,7 @@ for gammaIdx=1:length(gammaVec)
                     Z = gamma*cos(4*pi*X) + (1-gamma)*eps;
             end
             
-            rscdmVal = rscdm(y,z,x);
+            rscdmVal = rscdm(Y,Z,X);
             data.X = Y; data.Y = Z; data.Z = X;
             cmaVal = cassor(data);
             cmiVal = cmi(data);
@@ -329,15 +349,18 @@ clc;
 rng(123);
 
 M = 500;
-noise = 0.5;
+noise = 0;
 alpha = 0.05;
 
 % Generate data from     Y-->X<--Z
 y = rand(M,1);
 z = rand(M,1);
-x = y.^2+z.^3 + noise;      % TODO: fix the bug :D
-% x = y + z + noise;
-
+% x = y + z + noise*randn(M,1);
+% x = (y-0.5).^2+(z-0.5).^2 + noise*randn(M,1);
+% x = sin(4*pi*y)+cos(4*pi*z) + noise*randn(M,1);
+% x = nthroot(y,4)+nthroot(z,4) + noise*randn(M,1);
+% x = y + (z-0.5).^2 + noise*randn(M,1);
+x = (y-0.5).^2 + cos(4*pi*z) + noise*randn(M,1);
 
 rsdm1 = rsdm(x, y);
 rsdm2 = rsdm(x, z);
