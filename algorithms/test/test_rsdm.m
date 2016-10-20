@@ -24,18 +24,24 @@ clc;
 M = 1000;
 
 x = rand(M,1);
-y = x + 1*randn(M,1);
+y = x;% + 1*randn(M,1);
+[metric, resid, residAssocIdxs, residAssocPts, rectangleCfg] = rsdm_4(x,y);
+fprintf('linear metric = %0.02f\n', metric);
 
-% x = rand(M,1);
-% y = sin(4*pi*x);
+x = rand(M,1);
+y = sin(4*pi*x);
+[metric, resid, residAssocIdxs, residAssocPts, rectangleCfg] = rsdm_4(x,y);
+fprintf('sin metric = %0.02f\n', metric);
 
-% x = rand(M,1)*2-1;
-% y = x.^2;
+x = rand(M,1)*2-1;
+y = x.^2;
+[metric, resid, residAssocIdxs, residAssocPts, rectangleCfg] = rsdm_4(x,y);
+fprintf('quadratic metric = %0.02f\n', metric);
 
-% x = rand(M,1);
-% y=(2*binornd(1,0.5,M,1)-1).* (sqrt(1 - (2*x - 1).^2));
-
-[metric, resid, residAssocIdxs, residAssocPts, rectangleCfg] = rsdm_2(x,y);
+x = rand(M,1);
+y=(2*binornd(1,0.5,M,1)-1).* (sqrt(1 - (2*x - 1).^2));
+[metric, resid, residAssocIdxs, residAssocPts, rectangleCfg] = rsdm_4(x,y);
+fprintf('circular metric = %0.02f\n', metric);
 
 %% Understand how RSDM works w/ discrete function dependencies (TODO)
 
