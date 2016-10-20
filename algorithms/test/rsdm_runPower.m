@@ -204,6 +204,8 @@ end
 % save the data
 if(ispc)
     save(sprintf('C:\\Users\\Kiran\\ownCloud\\PhD\\sim_results\\independence\\rsdmPower_M_%d.mat', M));
+elseif(ismac)
+    save(sprintf('/Users/Kiran/ownCloud/PhD/sim_results/independence/rsdmPower_M_%d.mat', M));
 else
     save(sprintf('/home/kiran/ownCloud/PhD/sim_results/independence/rsdmPower_M_%d.mat', M));
 end
@@ -386,7 +388,7 @@ nsim_alt  = 500;   % Number of alternative datasets we use to estimate our power
 num_noise = 30;                    % The number of different noise levels used
 noise = 3;                         % A constant to determine the amount of noise
 
-M_vec = 25:25:750;      % number of samples
+M_vec = 25:25:1500;      % number of samples
 numDepTests = 8;        % the number of different dependency tests we will conduct
                         % TODO: add copula dependencies as well
 
@@ -743,7 +745,7 @@ plot(tmp1,tmp2, 'k', 'LineWidth', 2); hold on;
 plot(tmp1,tmp3, 'k', 'LineWidth', 2); 
 ax1.Box = 'on'; ax1.XTick = []; ax1.YTick = [];
 ax1.XLim = [min(tmp1) max(tmp1)];
-ax1.YLim = [min(tmp2) max(tmp2)];
+ax1.YLim = [min(tmp3) max(tmp2)];
 
 h8 = subplot(2,2,4);
 hh8 = plot(noiseVec, squeeze(sampleSizeAnalysisVec(8,rsdmIdx,num_noise_test_min:num_noise_test_max)), 'o-.', ...
