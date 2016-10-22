@@ -44,7 +44,7 @@ csvwrite(fullfile(tmpDir, 'z_projcor.csv'), z(:));
 
 % call the R function
 pgraphRdir = getPGraphPackagePath();
-retCode = system(['R CMD BATCH ' pgraphRdir '/projcor_matlab.R 0' ]);
+retCode = system(['R CMD BATCH ' pgraphRdir '/projcor_matlab.R' ]);
 if(retCode==0)
     projcor_val = csvread(fullfile(tmpDir, 'projcor_matlab_output.csv'));
 else

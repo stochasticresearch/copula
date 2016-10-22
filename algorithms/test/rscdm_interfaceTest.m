@@ -37,4 +37,4 @@ x = rand(1,M);
 y = rand(1,M);
 z = rand(1,M);
 
-pdcor_val = projcorr_R(x,y,z)
+projcor_val = projcorr_R(x,y,z)

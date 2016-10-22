@@ -28,6 +28,11 @@ function [metric] = lnn_CD(x, y, z)
 %*                                                                        *
 %**************************************************************************
 
+% ensure that x,y,z are row vectors
+% TODO; the below is super inefficient, we can fix later ...
+x = x(:); y = y(:); z = z(:);
+x = x'; y = y'; z = z';
+
 % concatenate x,y,z and create split sizes so that we can disambiguate in
 % python
 

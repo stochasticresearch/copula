@@ -288,16 +288,13 @@ alpha = 0.05;
 
 % Generate data from     Y<--X-->Z
 x = rand(M,1);
-% y = 4*(x-0.5).^2 + noise*randn(M,1);
-% z = 4*(x-0.5).^2 + noise*randn(M,1);
-% y = x + noise*randn(M,1);
-% z = x + noise*randn(M,1);
-y = sin(2*pi*x) + noise*randn(M,1);
-z = 4*(x-0.5).^2 + noise*randn(M,1);
+% y = x + noise*randn(M,1); z = x + noise*randn(M,1);
+% y = 4*(x-0.5).^2 + noise*randn(M,1); z = 4*(x-0.5).^2 + noise*randn(M,1);
+y = sin(2*pi*x) + noise*randn(M,1); z = 4*(x-0.5).^2 + noise*randn(M,1);
 
-rsdm1 = rsdm(x, y);
-rsdm2 = rsdm(x, z);
-rsdm3 = rsdm(y, z);
+rsdm1 = rsdm_2(x, y);
+rsdm2 = rsdm_2(x, z);
+rsdm3 = rsdm_2(y, z);
 % RSCDM conditions X on Y and Z, and sees how related Y and Z
 % are to each other ... in this graphical model, they should be UNRELATED
 % after the effect of X is removed... i.e. close to independent.  To see
@@ -305,8 +302,10 @@ rsdm3 = rsdm(y, z);
 % d-separation.  So if we condition upon X (i.e. remove teh effect of X on
 % Y and Z separately), then we should get independence.
 [rscdmVal, RxStacked, RyStacked, RxPtsStacked, RyPtsStacked] = rscdm(y,z,x);
-rscdmVal_Z = sqrt(M-4)*abs(rscdmVal);
-testVal = norminv(1-alpha/2);
+pdCorr_val = abs(pdcorr_R(y,z,x));
+partialCorrVal = abs(partialcorr(y,z,x));
+data.X = y; data.Y = z; data.Z = x;
+cassorVal = abs(cassor(data));
 
 subplot(3,12,1:3);
 scatter(x,y); grid on; xlabel('x', 'FontSize', 20); ylabel('y', 'FontSize', 20); 
@@ -331,7 +330,8 @@ xlabel('x', 'FontSize', 20); ylabel('r_z', 'FontSize', 20);
 subplot(3,12,25:29);
 scatter(RxStacked,RyStacked); grid on; 
 xlabel('r_y', 'FontSize', 20); ylabel('r_z', 'FontSize', 20);  
-title(sprintf('rscdm=%0.2f', rscdmVal), 'FontSize', 20);
+title(sprintf('%0.02f/%0.02f/%0.02f/%0.02f', ...
+    rscdmVal, pdCorr_val, partialCorrVal, cassorVal), 'FontSize', 20);
 
 subplot(3,12,32:36);
 scatter(pobs(RxStacked),pobs(RyStacked), 'r'); grid on; 
@@ -346,7 +346,7 @@ xlabel('F_{r_y}', 'FontSize', 20); ylabel('F_{r_z}', 'FontSize', 20);
 clear;
 clc;
 
-rng(123);
+% rng(123);
 
 M = 500;
 noise = 0;
@@ -356,21 +356,23 @@ alpha = 0.05;
 y = rand(M,1);
 z = rand(M,1);
 % x = y + z + noise*randn(M,1);
-% x = (y-0.5).^2+(z-0.5).^2 + noise*randn(M,1);
+x = (y-0.5).^2 + (z-0.5).^2 + noise*randn(M,1);
 % x = sin(4*pi*y)+cos(4*pi*z) + noise*randn(M,1);
 % x = nthroot(y,4)+nthroot(z,4) + noise*randn(M,1);
 % x = y + (z-0.5).^2 + noise*randn(M,1);
-x = (y-0.5).^2 + cos(4*pi*z) + noise*randn(M,1);
+% x = (y-0.5).^2 + cos(4*pi*z) + noise*randn(M,1);
 
-rsdm1 = rsdm(x, y);
-rsdm2 = rsdm(x, z);
-rsdm3 = rsdm(y, z);
+rsdm1 = rsdm_2(x, y);
+rsdm2 = rsdm_2(x, z);
+rsdm3 = rsdm_2(y, z);
 % In this graphical model, Y and Z are independent of each other, but when
 % conditioned upon X, they become dependent.  Refer to the rules of
 % d-separation to see why, this is a V-Structure!
 [rscdmVal, RxStacked, RyStacked, RxPtsStacked, RyPtsStacked] = rscdm(y,z,x);
-rscdmVal_Z = sqrt(M-4)*abs(rscdmVal);
-testVal = norminv(1-alpha/2);
+pdCorr_val = abs(pdcorr_R(y,z,x));
+partialCorrVal = abs(partialcorr(y,z,x));
+data.X = y; data.Y = z; data.Z = x;
+cassorVal = abs(cassor(data));
 
 subplot(3,12,1:3);
 scatter(x,y); grid on; xlabel('x', 'FontSize', 20); ylabel('y', 'FontSize', 20); 
@@ -394,7 +396,8 @@ xlabel('x', 'FontSize', 20); title('r_z', 'FontSize', 20);
 
 subplot(3,12,25:29);
 scatter(RxStacked,RyStacked); grid on; xlabel('r_y', 'FontSize', 20); ylabel('r_z', 'FontSize', 20);  
-title(sprintf('rscdm=%0.2f', rscdmVal), 'FontSize', 20);
+title(sprintf('%0.02f/%0.02f/%0.02f/%0.02f', ...
+    rscdmVal, pdCorr_val, partialCorrVal, cassorVal), 'FontSize', 20);
 
 subplot(3,12,32:36);
 scatter(pobs(RxStacked),pobs(RyStacked), 'r'); grid on; xlabel('F_{r_y}'); ylabel('F_{r_z}');
