@@ -34,32 +34,17 @@ nsim = 500;
 
 % CFG-1 OPTIMIZATION TEST
 cfg = 1;
-minscanincrVec = 0.025;
+minscanincrVec = [0.025 0.05 0.1];
 diffthreshVec = 20:20:200;
 alphaVec = 0.01:0.01:0.1;
-boostFactorVec = [1 2 3];
 
-% % CFG-2 OPTIMIZATION TEST
-% cfg = 2;
-% minscanincrVec = 0.05;
-% diffthreshVec = 20:20:200;
-% alphaVec = 0.01:0.01:0.1;
-% boostFactorVec = [1 2 3];
-
-% % CFG-3 OPTIMIZATION TEST
-% cfg = 3;
-% minscanincrVec = 0.1;
-% diffthreshVec = 20:20:200;
-% alphaVec = 0.01:0.01:0.1;
-% boostFactorVec = [1 2 3];
-
-results = zeros(length(depsToOptimize), length(minscanincrVec), length(diffthreshVec), length(alphaVec), length(boostFactorVec) );
+results = zeros(length(depsToOptimize), length(minscanincrVec), length(diffthreshVec), length(alphaVec) );
 
 M = 500;
 dispstat('','init'); % One time only initialization
 dispstat(sprintf('Begining the simulation...\n'),'keepthis','timestamp');
 
-numLoopsPerDep = length(minscanincrVec)*length(diffthreshVec)*length(alphaVec)*length(boostFactorVec)*nsim;
+numLoopsPerDep = length(minscanincrVec)*length(diffthreshVec)*length(alphaVec)*nsim;
 jj = 1;
 for depToOptimize=depsToOptimize
     dispstat(sprintf('Simulating Dependency Type %s -- %0.02f', char(depToOptimize), jj/length(depsToOptimize)*100 ),'keepthis','timestamp');
@@ -71,49 +56,46 @@ for depToOptimize=depsToOptimize
             mm = 1;
             for alpha=alphaVec
                 nn = 1;
-                for boostFactor=boostFactorVec
-                    metricVec = zeros(1,nsim);
-                    parfor ii=1:nsim
+                metricVec = zeros(1,nsim);
+                parfor ii=1:nsim
 %                         dispstat(sprintf('Monte-Carlo -- %0.02f', progressIdx/numLoopsPerDep*100),'timestamp');
 
-                        % generate X & Y
-                        x = rand(M,1);
-                        noise = 1.5*randn(M,1);
-                        switch(char(depToOptimize))
-                            case 'independence'
-                                y = rand(M,1) + noise;
-                            case 'linear'
-                                y = x + noise; 
-                            case 'quadratic'
-                                y = 4*(x-.5).^2 + noise;
-                            case 'cubic'
-                                y = 128*(x-1/3).^3-48*(x-1/3).^3-12*(x-1/3) + noise;
-                            case 'sine-1'
-                                y = sin(4*pi*x) + 2*noise;      % noise scaling factor same as above .. not 100% sure why though
-                            case 'sine-2'
-                                y = sin(16*pi*x) + noise;
-                            case 'fourth-root'
-                                y = x.^(1/4) + noise;
-                            case 'circular'
-                                y=(2*binornd(1,0.5,M,1)-1) .* (sqrt(1 - (2*x - 1).^2)) + 3/4*15/30*randn(M,1);  % noise=3, num_noise=30, l=15
-                            case 'step'
-                                y = (x > 0.5) + 3*5*15/30*randn(M,1); % noise=3, num_noise=30, l=15
-                            otherwise
-                                error('unrecognized dep!');
-                        end
-                        % compute a running average of the copula metric
-                        metricVec(ii) = rsdm_4(x,y, minscanincr, diffthresh, alpha);
-                        progressIdx = progressIdx + 1;
-                    end
+                    % generate X & Y
+                    x = rand(M,1);
+                    noise = 1.5*randn(M,1);
                     switch(char(depToOptimize))
                         case 'independence'
-                            metric = quantile(metricVec, 0.95);
+                            y = rand(M,1) + noise;
+                        case 'linear'
+                            y = x + noise; 
+                        case 'quadratic'
+                            y = 4*(x-.5).^2 + noise;
+                        case 'cubic'
+                            y = 128*(x-1/3).^3-48*(x-1/3).^3-12*(x-1/3) + noise;
+                        case 'sine-1'
+                            y = sin(4*pi*x) + 2*noise;      % noise scaling factor same as above .. not 100% sure why though
+                        case 'sine-2'
+                            y = sin(16*pi*x) + noise;
+                        case 'fourth-root'
+                            y = x.^(1/4) + noise;
+                        case 'circular'
+                            y=(2*binornd(1,0.5,M,1)-1) .* (sqrt(1 - (2*x - 1).^2)) + 3/4*15/30*randn(M,1);  % noise=3, num_noise=30, l=15
+                        case 'step'
+                            y = (x > 0.5) + 3*5*15/30*randn(M,1); % noise=3, num_noise=30, l=15
                         otherwise
-                            metric = quantile(metricVec, 0.05);
+                            error('unrecognized dep!');
                     end
-                    results(jj,kk,ll,mm,nn) = metric;
-                    nn = nn + 1;
+                    % compute a running average of the copula metric
+                    metricVec(ii) = rsdm_4(x,y, minscanincr, diffthresh, alpha);
+                    progressIdx = progressIdx + 1;
                 end
+                switch(char(depToOptimize))
+                    case 'independence'
+                        metric = quantile(metricVec, 0.95);
+                    otherwise
+                        metric = quantile(metricVec, 0.05);
+                end
+                results(jj,kk,ll,mm) = metric;
                 mm = mm + 1;
             end
             ll = ll + 1;
@@ -127,14 +109,14 @@ end
 % different types of dependencies
 
 % define some convenience variables
-linearResults = squeeze(results(2,:,:,:,:)-results(1,:,:,:,:));
-quadraticResults = squeeze(results(3,:,:,:,:)-results(1,:,:,:,:));
-cubicResults = squeeze(results(4,:,:,:,:)-results(1,:,:,:,:));
-sine1Results = squeeze(results(5,:,:,:,:)-results(1,:,:,:,:));
-sine2Results = squeeze(results(6,:,:,:,:)-results(1,:,:,:,:));
-fourthRootResults = squeeze(results(7,:,:,:,:)-results(1,:,:,:,:));
-circularResults = squeeze(results(8,:,:,:,:)-results(1,:,:,:,:));
-stepResults = squeeze(results(9,:,:,:,:)-results(1,:,:,:,:));
+linearResults = squeeze(results(2,:,:,:)-results(1,:,:,:));
+quadraticResults = squeeze(results(3,:,:,:)-results(1,:,:,:));
+cubicResults = squeeze(results(4,:,:,:)-results(1,:,:,:));
+sine1Results = squeeze(results(5,:,:,:)-results(1,:,:,:));
+sine2Results = squeeze(results(6,:,:,:)-results(1,:,:,:));
+fourthRootResults = squeeze(results(7,:,:,:)-results(1,:,:,:));
+circularResults = squeeze(results(8,:,:,:)-results(1,:,:,:));
+stepResults = squeeze(results(9,:,:,:)-results(1,:,:,:));
 
 optimfound = 0;
 thresh = 0;
@@ -161,24 +143,24 @@ end
 
 if(ispc)
     save(sprintf('C:\\Users\\Kiran\\ownCloud\\PhD\\sim_results\\independence\\rsdm4_optimal_params_cfg%d.mat',cfg));
-elseif(isunix)
-    save(sprintf('/home/kiran/ownCloud/PhD/sim_results/independence/rsdm4_optimal_params_cfg%d.mat',cfg));
-else
+elseif(ismac)
     save(sprintf('/Users/kiran/ownCloud/PhD/sim_results/independence/rsdm4_optimal_params_cfg%d.mat',cfg));
+else
+    save(sprintf('/home/kiran/ownCloud/PhD/sim_results/independence/rsdm4_optimal_params_cfg%d.mat',cfg));
 end
 
 for ii=1:length(bestIdxs)
-    [I1,I2,I3] = ind2sub(size(squeeze(results(1,:,:,:,:))),bestIdxs(ii));
-    fprintf('Best Idx = [%d %d %d]\n', I1, I2, I3);
+    [I1,I2] = ind2sub(size(squeeze(results(1,:,:,:))),bestIdxs(ii));
+    fprintf('Best Idx = [%d %d]\n', I1, I2);
     % print the expected "power" for each of these configurations so we can
     % choose the best one manually
-    fprintf('Linear = %0.03f\n', results(2,1,I1,I2,I3)-results(1,1,I1,I2,I3));
-    fprintf('Quadratic = %0.03f\n', results(3,1,I1,I2,I3)-results(1,1,I1,I2,I3));
-    fprintf('Cubic = %0.03f\n', results(4,1,I1,I2,I3)-results(1,1,I1,I2,I3));
-    fprintf('Sine-1 = %0.03f\n', results(5,1,I1,I2,I3)-results(1,1,I1,I2,I3));
-    fprintf('Sine-2 = %0.03f\n', results(6,1,I1,I2,I3)-results(1,1,I1,I2,I3));
-    fprintf('FourthRoot = %0.03f\n', results(7,1,I1,I2,I3)-results(1,1,I1,I2,I3));
-    fprintf('Circular = %0.03f\n', results(8,1,I1,I2,I3)-results(1,1,I1,I2,I3));
-    fprintf('Step = %0.03f\n', results(9,1,I1,I2,I3)-results(1,1,I1,I2,I3));
+    fprintf('Linear = %0.03f\n', results(2,1,I1,I2)-results(1,1,I1,I2));
+    fprintf('Quadratic = %0.03f\n', results(3,1,I1,I2)-results(1,1,I1,I2));
+    fprintf('Cubic = %0.03f\n', results(4,1,I1,I2)-results(1,1,I1,I2));
+    fprintf('Sine-1 = %0.03f\n', results(5,1,I1,I2)-results(1,1,I1,I2));
+    fprintf('Sine-2 = %0.03f\n', results(6,1,I1,I2)-results(1,1,I1,I2));
+    fprintf('FourthRoot = %0.03f\n', results(7,1,I1,I2)-results(1,1,I1,I2));
+    fprintf('Circular = %0.03f\n', results(8,1,I1,I2)-results(1,1,I1,I2));
+    fprintf('Step = %0.03f\n', results(9,1,I1,I2,I3)-results(1,1,I1,I2));
     fprintf('------------------------------------------------------\n\n');
 end
