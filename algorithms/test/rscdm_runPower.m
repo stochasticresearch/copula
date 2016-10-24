@@ -290,7 +290,8 @@ alpha = 0.05;
 x = rand(M,1);
 % y = x + noise*randn(M,1); z = x + noise*randn(M,1);
 % y = 4*(x-0.5).^2 + noise*randn(M,1); z = 4*(x-0.5).^2 + noise*randn(M,1);
-y = sin(2*pi*x) + noise*randn(M,1); z = 4*(x-0.5).^2 + noise*randn(M,1);
+y = sin(2*pi*x) + noise*randn(M,1); z = sin(4*pi*x) + noise*randn(M,1);
+% y = sin(2*pi*x) + noise*randn(M,1); z = 4*(x-0.5).^2 + noise*randn(M,1);
 
 rsdm1 = rsdm_2(x, y);
 rsdm2 = rsdm_2(x, z);
@@ -301,7 +302,7 @@ rsdm3 = rsdm_2(y, z);
 % why, look at the graphical model, Y indep Z | X according to
 % d-separation.  So if we condition upon X (i.e. remove teh effect of X on
 % Y and Z separately), then we should get independence.
-[rscdmVal, RxStacked, RyStacked, RxPtsStacked, RyPtsStacked] = rscdm(y,z,x);
+[rscdmVal, RxAligned, RyAligned] = rscdm_2(y,z,x);
 pdCorr_val = abs(pdcorr_R(y,z,x));
 partialCorrVal = abs(partialcorr(y,z,x));
 data.X = y; data.Y = z; data.Z = x;
@@ -320,21 +321,21 @@ scatter(x,z); grid on; xlabel('x', 'FontSize', 20); ylabel('z', 'FontSize', 20);
 title(sprintf('RSDM=%0.2f', rsdm2), 'FontSize', 20);
 
 subplot(3,12,13:17);
-scatter(RxPtsStacked, RxStacked); grid on;
+scatter(1:M, RxAligned); grid on;
 xlabel('x', 'FontSize', 20); ylabel('r_y', 'FontSize', 20);
 
 subplot(3,12,20:24);
-scatter(RyPtsStacked, RyStacked); grid on;
+scatter(1:M, RyAligned); grid on;
 xlabel('x', 'FontSize', 20); ylabel('r_z', 'FontSize', 20);
 
 subplot(3,12,25:29);
-scatter(RxStacked,RyStacked); grid on; 
+scatter(RxAligned,RyAligned); grid on; 
 xlabel('r_y', 'FontSize', 20); ylabel('r_z', 'FontSize', 20);  
 title(sprintf('%0.02f/%0.02f/%0.02f/%0.02f', ...
     rscdmVal, pdCorr_val, partialCorrVal, cassorVal), 'FontSize', 20);
 
 subplot(3,12,32:36);
-scatter(pobs(RxStacked),pobs(RyStacked), 'r'); grid on; 
+scatter(pobs(RxAligned),pobs(RyAligned), 'r'); grid on; 
 xlabel('F_{r_y}', 'FontSize', 20); ylabel('F_{r_z}', 'FontSize', 20);
 
 
@@ -356,11 +357,11 @@ alpha = 0.05;
 y = rand(M,1);
 z = rand(M,1);
 % x = y + z + noise*randn(M,1);
-x = (y-0.5).^2 + (z-0.5).^2 + noise*randn(M,1);
+% x = (y-0.5).^2 + (z-0.5).^2 + noise*randn(M,1);
 % x = sin(4*pi*y)+cos(4*pi*z) + noise*randn(M,1);
 % x = nthroot(y,4)+nthroot(z,4) + noise*randn(M,1);
 % x = y + (z-0.5).^2 + noise*randn(M,1);
-% x = (y-0.5).^2 + cos(4*pi*z) + noise*randn(M,1);
+x = (y-0.5).^2 + cos(4*pi*z) + noise*randn(M,1);
 
 rsdm1 = rsdm_2(x, y);
 rsdm2 = rsdm_2(x, z);
@@ -368,7 +369,7 @@ rsdm3 = rsdm_2(y, z);
 % In this graphical model, Y and Z are independent of each other, but when
 % conditioned upon X, they become dependent.  Refer to the rules of
 % d-separation to see why, this is a V-Structure!
-[rscdmVal, RxStacked, RyStacked, RxPtsStacked, RyPtsStacked] = rscdm(y,z,x);
+[rscdmVal, RxAligned, RyAligned] = rscdm_2(y,z,x);
 pdCorr_val = abs(pdcorr_R(y,z,x));
 partialCorrVal = abs(partialcorr(y,z,x));
 data.X = y; data.Y = z; data.Z = x;
@@ -387,19 +388,19 @@ scatter(x,z); grid on; xlabel('x', 'FontSize', 20); ylabel('z', 'FontSize', 20);
 title(sprintf('RSDM=%0.2f', rsdm2), 'FontSize', 20);
 
 subplot(3,12,13:17);
-scatter(RxPtsStacked, RxStacked); grid on;
+scatter(1:M, RxAligned); grid on;
 xlabel('x', 'FontSize', 20); title('r_y', 'FontSize', 20);
 
 subplot(3,12,20:24);
-scatter(RyPtsStacked, RyStacked); grid on;
+scatter(1:M, RyAligned); grid on;
 xlabel('x', 'FontSize', 20); title('r_z', 'FontSize', 20);
 
 subplot(3,12,25:29);
-scatter(RxStacked,RyStacked); grid on; xlabel('r_y', 'FontSize', 20); ylabel('r_z', 'FontSize', 20);  
+scatter(RxAligned,RyAligned); grid on; xlabel('r_y', 'FontSize', 20); ylabel('r_z', 'FontSize', 20);  
 title(sprintf('%0.02f/%0.02f/%0.02f/%0.02f', ...
     rscdmVal, pdCorr_val, partialCorrVal, cassorVal), 'FontSize', 20);
 
 subplot(3,12,32:36);
-scatter(pobs(RxStacked),pobs(RyStacked), 'r'); grid on; xlabel('F_{r_y}'); ylabel('F_{r_z}');
+scatter(pobs(RxAligned),pobs(RyAligned), 'r'); grid on; xlabel('F_{r_y}'); ylabel('F_{r_z}');
 
 %% Characterize null distribution {Y indep Z} | X

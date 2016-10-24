@@ -121,7 +121,7 @@ stepResults = squeeze(results(9,:,:,:)-results(1,:,:,:));
 optimfound = 0;
 thresh = 0;
 threshdecr = 0.0125;
-minthresh = -0.02;
+minthresh = 0;
 while(~optimfound || thresh>=minthresh)
     lIdx = find(linearResults>thresh);
     qIdx = find(quadraticResults>thresh);
@@ -144,23 +144,23 @@ end
 if(ispc)
     save(sprintf('C:\\Users\\Kiran\\ownCloud\\PhD\\sim_results\\independence\\rsdm2_optimal_params_cfg%d.mat',cfg));
 elseif(ismac)
-    save(sprintf('/Users/kiran/ownCloud/PhD/sim_results/independence/rsdm2_optimal_params_cfg%d.mat',cfg));
+    save(sprintf('/Users/Kiran/ownCloud/PhD/sim_results/independence/rsdm2_optimal_params_cfg%d.mat',cfg));
 else
     save(sprintf('/home/kiran/ownCloud/PhD/sim_results/independence/rsdm2_optimal_params_cfg%d.mat',cfg));
 end
 
 for ii=1:length(bestIdxs)
-    [I1,I2] = ind2sub(size(squeeze(results(1,:,:,:))),bestIdxs(ii));
-    fprintf('Best Idx = [%d %d]\n', I1, I2);
+    [I1,I2,I3] = ind2sub(size(squeeze(results(1,:,:,:))),bestIdxs(ii));
+    fprintf('Best Idx = [%d %d %d]\n', I1, I2, I3);
     % print the expected "power" for each of these configurations so we can
     % choose the best one manually
-    fprintf('Linear = %0.03f\n', results(2,1,I1,I2)-results(1,1,I1,I2));
-    fprintf('Quadratic = %0.03f\n', results(3,1,I1,I2)-results(1,1,I1,I2));
-    fprintf('Cubic = %0.03f\n', results(4,1,I1,I2)-results(1,1,I1,I2));
-    fprintf('Sine-1 = %0.03f\n', results(5,1,I1,I2)-results(1,1,I1,I2));
-    fprintf('Sine-2 = %0.03f\n', results(6,1,I1,I2)-results(1,1,I1,I2));
-    fprintf('FourthRoot = %0.03f\n', results(7,1,I1,I2)-results(1,1,I1,I2));
-    fprintf('Circular = %0.03f\n', results(8,1,I1,I2)-results(1,1,I1,I2));
-    fprintf('Step = %0.03f\n', results(9,1,I1,I2,I3)-results(1,1,I1,I2));
+    fprintf('Linear = %0.03f\n', results(2,I1,I2,I3)-results(1,I1,I2,I3));
+    fprintf('Quadratic = %0.03f\n', results(3,I1,I2,I3)-results(1,I1,I2,I3));
+    fprintf('Cubic = %0.03f\n', results(4,I1,I2,I3)-results(1,I1,I2,I3));
+    fprintf('Sine-1 = %0.03f\n', results(5,I1,I2,I3)-results(1,I1,I2,I3));
+    fprintf('Sine-2 = %0.03f\n', results(6,I1,I2,I3)-results(1,I1,I2,I3));
+    fprintf('FourthRoot = %0.03f\n', results(7,I1,I2,I3)-results(1,I1,I2,I3));
+    fprintf('Circular = %0.03f\n', results(8,I1,I2,I3)-results(1,I1,I2,I3));
+    fprintf('Step = %0.03f\n', results(9,I1,I2,I3)-results(1,I1,I2,I3));
     fprintf('------------------------------------------------------\n\n');
 end
