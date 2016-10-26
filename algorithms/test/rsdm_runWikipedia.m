@@ -39,7 +39,7 @@ rsdm2_alpha = 0.1;
 
 rsdm4_minscanincr = 0.025;
 rsdm4_diffthresh = 160;
-rsdm4_alpha = 0.8;
+rsdm4_alpha = 0.08;
 
 % configure RDC
 rdc_k = 20;

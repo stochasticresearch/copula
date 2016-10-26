@@ -85,7 +85,7 @@ rsdm2_alpha = 0.1;
 % Optimal parameters for RSDM4 -- CFG1 - 1,8,8
 rsdm4_minscanincr = 0.025;
 rsdm4_diffthresh = 160;
-rsdm4_alpha = 0.8;
+rsdm4_alpha = 0.08;
 
 % Optimal parameters for RDC
 rdc_k = 20;
