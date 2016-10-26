@@ -29,9 +29,17 @@ rhos = [1.0, -1.0, 0.8, 0.4, 0.0, -0.4, -0.8];
 nCases = 18;
 
 % configure RSDM
-rsdm_minscanincr = 0.025;
-rsdm_diffthresh = 100;
-rsdm_alpha = 0.08;
+rsdm1_minscanincr = 0.025;
+rsdm1_diffthresh = 100;
+rsdm1_alpha = 0.08;
+
+rsdm2_minscanincr = 0.05;
+rsdm2_diffthresh = 120;
+rsdm2_alpha = 0.1;
+
+rsdm4_minscanincr = 0.025;
+rsdm4_diffthresh = 160;
+rsdm4_alpha = 0.8;
 
 % configure RDC
 rdc_k = 20;
@@ -51,7 +59,9 @@ x = rand(n, 1)*2-1; % uniform between +/- 1
 y = rand(n, 1)*2-1;
 xy{xyIdx} = [x y]; xyIdx = xyIdx + 1;
 
-rsdmBias = rsdm(x, y, rsdm_minscanincr, rsdm_diffthresh, rsdm_alpha);
+rsdm1Bias = rsdm_1(x, y, rsdm1_minscanincr, rsdm1_diffthresh, rsdm1_alpha);
+rsdm2Bias = rsdm_2(x, y, rsdm2_minscanincr, rsdm2_diffthresh, rsdm2_alpha);
+rsdm4Bias = rsdm_4(x, y, rsdm4_minscanincr, rsdm4_diffthresh, rsdm4_alpha);
 rdcBias = rdc(x,y,rdc_k,rdc_s);
 dcorrBias = dcorr(x, y);
 corrBias = corr(x,y);
@@ -98,7 +108,7 @@ xy4 = mvnrnd([-3 -3], [1 spread; spread 1], n/4);
 xy{xyIdx} = [xy1; xy2; xy3; xy4]; xyIdx = xyIdx + 1;
 
 x = rand(n,1);
-y = sin(2*pi*x);
+y = sin(4*pi*x);
 xy{xyIdx} = [x y]; xyIdx = xyIdx + 1;
 
 x = rand(n,1);
@@ -130,14 +140,18 @@ for ii=1:nCases
     data = xy{dataIdx(ii)};
     x = data(:,1); y = data(:,2);
     
-    rsdmVal = rsdm(x, y, rsdm_minscanincr, rsdm_diffthresh, rsdm_alpha);
+    rsdm1Val = rsdm_1(x, y, rsdm1_minscanincr, rsdm1_diffthresh, rsdm1_alpha);
+    rsdm2Val = rsdm_2(x, y, rsdm2_minscanincr, rsdm2_diffthresh, rsdm2_alpha);
+    rsdm4Val = rsdm_4(x, y, rsdm4_minscanincr, rsdm4_diffthresh, rsdm4_alpha);
     rdcVal = rdc(x,y,rdc_k,rdc_s);
     minestats = mine(x',y',mine_alpha,mine_c,'mic_e');
     mic_e_val = minestats.mic;
     dcorrVal = dcorr(x,y);
     corrVal = corr(x,y);
     
-    rsdmPrint = rsdmVal-rsdmBias;
+    rsdm1Print = rsdm1Val-rsdm1Bias;
+    rsdm2Print = rsdm2Val-rsdm2Bias;
+    rsdm4Print = rsdm4Val-rsdm4Bias;
     rdcPrint = rdcVal-rdcBias;
     dcorrPrint = dcorrVal-dcorrBias;
     mic_e_print = mic_e_val-mic_e_bias;
@@ -145,18 +159,20 @@ for ii=1:nCases
     
     % show the bias for the independence plot
     if(dataIdx(ii)==1)
-        rsdmPrint = rsdmBias;
+        rsdm1Print = rsdm1Bias;
+        rsdm2Print = rsdm2Bias;
+        rsdm4Print = rsdm4Bias;
         rdcPrint = rdcBias;
         dcorrPrint = dcorrBias;
         mic_e_print = mic_e_bias;
         corrPrint = corrBias;
     end
     
-    b = bar([rsdmPrint rdcPrint dcorrPrint mic_e_print corrPrint]);
+    b = bar([rsdm1Print rsdm2Print rsdm4Print rdcPrint dcorrPrint mic_e_print corrPrint]);
     b.BarWidth = 0.6;
     ylim([0 1])
-    Labels = {'RSDM', 'RDC', 'MIC_e', 'dCorr', '|corr|'};
-    set(gca, 'XTick', 1:5, 'XTickLabel', Labels, 'FontSize', 20);
+    Labels = {'RSDM1', 'RSDM2', 'RSDM4', 'RDC', 'MIC_e', 'dCorr', '|corr|'};
+    set(gca, 'XTick', 1:7, 'XTickLabel', Labels, 'FontSize', 20);
     rotateXLabels( gca(), 80 )
     
 %     loc_inset = [h.Position(1)+h.Position(3)-inset_bufX h.Position(2)+h.Position(4)-inset_bufY inset_width inset_height];
@@ -184,7 +200,7 @@ for ii=1:nCases
     set(h,'XTick',[],'YTick',[],'XColor','w','YColor','w','box','off')
     
     % compute the dependency and put as title
-    rsdmVal = rsdm(x, y, rsdm_minscanincr, rsdm_diffthresh, rsdm_alpha);
+    rsdm1Val = rsdm(x, y, rsdm1_minscanincr, rsdm1_diffthresh, rsdm1_alpha);
     rdcVal = rdc(x,y,rdc_k,rdc_s);
     minestats = mine(x',y',mine_alpha,mine_c,'mic_e');
     mic_e_val = minestats.mic;
@@ -192,20 +208,20 @@ for ii=1:nCases
     corrVal = corr(x,y);
 
     if(ii==1)
-        rsdmPrint = rsdmVal;
+        rsdm1Print = rsdm1Val;
         rdcPrint = rdcVal;
         dcorrPrint = dcorrVal;
         mic_e_print = mic_e_val;
         corrPrint = corrVal;
     else
-        rsdmPrint = rsdmVal-rsdmBias;
+        rsdm1Print = rsdm1Val-rsdm1Bias;
         rdcPrint = rdcVal-rdcBias;
         dcorrPrint = mic_e_val-mic_e_bias;
         mic_e_print = mic_e_val-mic_e_bias;
         corrPrint = corrVal - corrBias;
     end
     
-    title({[strcat('\fontsize{22} {\color{blue}', sprintf('%1.2f}|',rsdmPrint)), ...
+    title({[strcat('\fontsize{22} {\color{blue}', sprintf('%1.2f}|',rsdm1Print)), ...
            strcat('{\color{red}', sprintf('%1.2f}|', dcorrPrint)), ...       
            strcat('{\color{orange}', sprintf('%1.2f}|', mic_e_print))]; ...
            [strcat('{\color{magenta}', sprintf('%1.2f}|', corrPrint)), ...
@@ -227,7 +243,7 @@ for ii=1:nCases
     set(h,'XTick',[],'YTick',[],'XColor','w','YColor','w','box','off')
     
     % compute the dependency and put as title
-    rsdmVal = rsdm(x, y, rsdm_minscanincr, rsdm_diffthresh, rsdm_alpha);
+    rsdm1Val = rsdm(x, y, rsdm1_minscanincr, rsdm1_diffthresh, rsdm1_alpha);
     rdcVal = rdc(x,y,rdc_k,rdc_s);
     minestats = mine(x',y',mine_alpha,mine_c,'mic_e');
     mic_e_val = minestats.mic;
@@ -235,20 +251,20 @@ for ii=1:nCases
     corrVal = corr(x,y);
 
     if(ii==1)
-        rsdmPrint = rsdmVal;
+        rsdm1Print = rsdm1Val;
         rdcPrint = rdcVal;
         dcorrPrint = dcorrVal;
         mic_e_print = mic_e_val;
         corrPrint = corrVal;
     else
-        rsdmPrint = rsdmVal-rsdmBias;
+        rsdm1Print = rsdm1Val-rsdm1Bias;
         rdcPrint = rdcVal-rdcBias;
         dcorrPrint = mic_e_val-mic_e_bias;
         mic_e_print = mic_e_val-mic_e_bias;
         corrPrint = corrVal - corrBias;
     end
     
-    title({[strcat('\fontsize{22} {\color{blue}', sprintf('%1.2f}|',rsdmPrint)), ...
+    title({[strcat('\fontsize{22} {\color{blue}', sprintf('%1.2f}|',rsdm1Print)), ...
            strcat('{\color{red}', sprintf('%1.2f}|', dcorrPrint)), ...       
            strcat('{\color{orange}', sprintf('%1.2f}|', mic_e_print))]; ...
            [strcat('{\color{magenta}', sprintf('%1.2f}|', corrPrint)), ...

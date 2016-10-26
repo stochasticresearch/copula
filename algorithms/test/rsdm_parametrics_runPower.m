@@ -72,10 +72,20 @@ rdcPower  = zeros(numDepTests, num_noise);
 mine_c = 15;
 mine_alpha = 0.6;
 
-% Optimal parameters for RSDM -- CFG1 - 5,8,1
-rsdm_minscanincr = 0.025;
-rsdm_diffthresh = 100;
-rsdm_alpha = 0.08;
+% Optimal parameters for RSDM1 -- CFG1 - 1,5,6
+rsdm1_minscanincr = 0.025;
+rsdm1_diffthresh = 100;
+rsdm1_alpha = 0.06;
+
+% Optimal parameters for RSDM2 -- CFG1 - 2,6,10
+rsdm2_minscanincr = 0.05;
+rsdm2_diffthresh = 120;
+rsdm2_alpha = 0.1;
+
+% Optimal parameters for RSDM4 -- CFG1 - 1,8,8
+rsdm4_minscanincr = 0.025;
+rsdm4_diffthresh = 160;
+rsdm4_alpha = 0.8;
 
 % Optimal parameters for RDC
 rdc_k = 20;
@@ -135,9 +145,9 @@ for l=num_noise_test_min:num_noise_test_max
             x = rand(M,1)*(xMax-xMin)+xMin;
             
             % calculate the metrics
-            rsdm1Null(ii) = rsdm_1(x, y, rsdm_minscanincr, rsdm_diffthresh, rsdm_alpha);
-            rsdm2Null(ii) = rsdm_2(x, y, rsdm_minscanincr, rsdm_diffthresh, rsdm_alpha);
-            rsdm4Null(ii) = rsdm_4(x, y, rsdm_minscanincr, rsdm_diffthresh, rsdm_alpha);
+            rsdm1Null(ii) = rsdm_1(x, y, rsdm1_minscanincr, rsdm1_diffthresh, rsdm1_alpha);
+            rsdm2Null(ii) = rsdm_2(x, y, rsdm2_minscanincr, rsdm2_diffthresh, rsdm2_alpha);
+            rsdm4Null(ii) = rsdm_4(x, y, rsdm4_minscanincr, rsdm4_diffthresh, rsdm4_alpha);
             dcorrNull(ii) = dcorr(x, y);
             % compute MICe
             minestats = mine(x',y',mine_alpha,mine_c,'mic_e');
@@ -191,9 +201,9 @@ for l=num_noise_test_min:num_noise_test_max
             end
             
             % calculate the metrics
-            rsdm1Alt(ii) = rsdm_1(x, y, rsdm_minscanincr, rsdm_diffthresh, rsdm_alpha);
-            rsdm2Alt(ii) = rsdm_2(x, y, rsdm_minscanincr, rsdm_diffthresh, rsdm_alpha);
-            rsdm4Alt(ii) = rsdm_4(x, y, rsdm_minscanincr, rsdm_diffthresh, rsdm_alpha);
+            rsdm1Alt(ii) = rsdm_1(x, y, rsdm1_minscanincr, rsdm1_diffthresh, rsdm1_alpha);
+            rsdm2Alt(ii) = rsdm_2(x, y, rsdm2_minscanincr, rsdm2_diffthresh, rsdm2_alpha);
+            rsdm4Alt(ii) = rsdm_4(x, y, rsdm4_minscanincr, rsdm4_diffthresh, rsdm4_alpha);
             dcorrAlt(ii) = dcorr(x, y);
             % compute MICe
             minestats = mine(x',y',mine_alpha,mine_c,'mic_e');
