@@ -31,15 +31,15 @@ gammaVec = 0:0.1:1;
 numDepTypes = 6;
 rscdmResultsMat = zeros(length(gammaVec), numDepTypes);
 cmaResultsMat = zeros(length(gammaVec), numDepTypes);
-cmiResultsMat = zeros(length(gammaVec), numDepTypes);
 hdResultsMat = zeros(length(gammaVec), numDepTypes);
-hsncicResultsMat = zeros(length(gammaVec), numDepTypes);
+pdcorrResultsMat = zeros(length(gammaVec), numDepTypes);
+pcorrResultsMat = zeros(length(gammaVec), numDepTypes);
 
 rscdmResultsVec = zeros(1,nsim);
 cmaResultsVec = zeros(1,nsim);
-cmiResultsVec = zeros(1,nsim);
 hdResultsVec = zeros(1,nsim);
-hsncicResultsVec = zeros(1,nsim);
+pdcorrResultsVec = zeros(1,nsim);
+pcorrResultsVec = zeros(1,nsim);
 
 dispstat('','init'); % One time only initialization
 dispstat(sprintf('Begining the simulation...\n'),'keepthis','timestamp');
@@ -69,31 +69,31 @@ for gammaIdx=1:length(gammaVec)
             end
             
             rscdmVal = rscdm(Y,Z,X);
+            
             data.X = Y; data.Y = Z; data.Z = X;
             cmaVal = cassor(data);
-            cmiVal = cmi(data);
             hdVal = hd(Y,Z,X);
-            hsncicVal = hsncic(Y,Z,X);
+            pdcorrVal = pdcorr_R(Y, Z, X);
+            pcorrVal = partialcorr(Y, Z, X);
             
             rscdmResultsVec(ii) = rscdmVal;
             cmaResultsVec(ii) = cmaVal;
-            cmiResultsVec(ii) = cmiVal;
             hdResultsVec(ii) = hdVal;
-            hsncicResultsVec(ii) = hsncicVal;
-            
+            pdcorrResultsVec(ii) = pdcorrVal;
+            pcorrResultsVec(ii) = pcorrVal;
         end
         
         rscdmMean = mean(rscdmResultsVec); rscdmSTD = std(rscdmResultsVec);
         cmaMean = mean(cmaResultsVec); cmaSTD = std(cmaResultsVec);
-        cmiMean = mean(cmiResultsVec); cmiSTD = std(cmiResultsVec);
         hdMean = mean(hdResultsVec); hdSTD = std(hdResultsVec);
-        hsncicMean = mean(hsncicResultsVec); hsncicSTD = std(hsncicResultsVec);
+        pdcorrMean = mean(pdcorrResultsVec); pdcorrSTD = std(pdcorrResultsVec);
+        pcorrMean = mean(pcorrResultsVec); pcorrSTD = std(pcorrResultsVec);
         
         rscdmResultsMat(gammaIdx, jj) = rscdmMean;
         cmaResultsMat(gammaIdx, jj) = cmaMean;
-        cmiResultsMat(gammaIdx, jj) = cmiMean;
         hdResultsMat(gammaIdx, jj) = hdMean;
-        hsncicResultsMat(gammaIdx, jj) = hsncicMean;
+        pdcorrResultsMat(gammaIdx, jj) = pdcorrMean;
+        pcorrResultsMat(gammaIdx, jj) = pcorrMean;
         
     end
 end
@@ -110,41 +110,57 @@ end
 % plot the dependence metric results versus gamma for each dep type
 figure;
 
-h1 = subplot(2,2,1);
+h1 = subplot(3,2,1);
 plot(gammaVec, rscdmResultsMat(:,1), 'o-.', ...
+     gammaVec, pdcorrResultsMat(:,1), 'x-.', ...
+     gammaVec, pcorrResultsMat(:,1), 'd-.', ...
      gammaVec, cmaResultsMat(:,1), '+-.', ...
-     gammaVec, cmiResultsMat(:,1), 'd-.', ...
-     gammaVec, hdResultsMat(:,1),  '^-', ...
-     gammaVec, hsncicResultsMat(:,1), 'v-.');
+     gammaVec, hdResultsMat(:,1),  '^-');
 xlabel('\gamma', 'FontSize', 20); ylabel('DEP({X,Y}|Z)', 'FontSize', 20); grid on;
  
-h2 = subplot(2,2,2);
+h2 = subplot(3,2,2);
 plot(gammaVec, rscdmResultsMat(:,2), 'o-.', ...
+     gammaVec, pdcorrResultsMat(:,2), 'x-.', ...
+     gammaVec, pcorrResultsMat(:,2), 'd-.', ...
      gammaVec, cmaResultsMat(:,2), '+-.', ...
-     gammaVec, cmiResultsMat(:,2), 'd-.', ...
-     gammaVec, hdResultsMat(:,2),  '^-', ...
-     gammaVec, hsncicResultsMat(:,2), 'v-.');
+     gammaVec, hdResultsMat(:,2),  '^-');
 xlabel('\gamma', 'FontSize', 20); ylabel('DEP({X,Y}|Z)', 'FontSize', 20); grid on;
 
-h3 = subplot(2,2,3);
+h3 = subplot(3,2,3);
 plot(gammaVec, rscdmResultsMat(:,3), 'o-.', ...
+     gammaVec, pdcorrResultsMat(:,3), 'x-.', ...
+     gammaVec, pcorrResultsMat(:,3), 'd-.', ...
      gammaVec, cmaResultsMat(:,3), '+-.', ...
-     gammaVec, cmiResultsMat(:,3), 'd-.', ...
-     gammaVec, hdResultsMat(:,3),  '^-', ...
-     gammaVec, hsncicResultsMat(:,3), 'v-.');
+     gammaVec, hdResultsMat(:,3),  '^-');
 xlabel('\gamma', 'FontSize', 20); ylabel('DEP({X,Y}|Z)', 'FontSize', 20); grid on;
 
-h4 = subplot(2,2,4);
+h4 = subplot(3,2,4);
 plot(gammaVec, rscdmResultsMat(:,4), 'o-.', ...
+     gammaVec, pdcorrResultsMat(:,4), 'x-.', ...
+     gammaVec, pcorrResultsMat(:,4), 'd-.', ...
      gammaVec, cmaResultsMat(:,4), '+-.', ...
-     gammaVec, cmiResultsMat(:,4), 'd-.', ...
-     gammaVec, hdResultsMat(:,4),  '^-', ...
-     gammaVec, hsncicResultsMat(:,4), 'v-.');
+     gammaVec, hdResultsMat(:,4),  '^-');
 xlabel('\gamma', 'FontSize', 20); ylabel('DEP({X,Y}|Z)', 'FontSize', 20); grid on;
 
-h4.FontSize = 20; 
-legend('RSCDM', 'CMA', 'CMI', 'HD', 'HSNCIC');  % manually move this using the mouse to a
-                                                % good location
+h5 = subplot(3,2,5);
+plot(gammaVec, rscdmResultsMat(:,5), 'o-.', ...
+     gammaVec, pdcorrResultsMat(:,5), 'x-.', ...
+     gammaVec, pcorrResultsMat(:,5), 'd-.', ...
+     gammaVec, cmaResultsMat(:,5), '+-.', ...
+     gammaVec, hdResultsMat(:,5),  '^-');
+xlabel('\gamma', 'FontSize', 20); ylabel('DEP({X,Y}|Z)', 'FontSize', 20); grid on;
+
+h6 = subplot(3,2,6);
+plot(gammaVec, rscdmResultsMat(:,6), 'o-.', ...
+     gammaVec, pdcorrResultsMat(:,6), 'x-.', ...
+     gammaVec, pcorrResultsMat(:,6), 'd-.', ...
+     gammaVec, cmaResultsMat(:,6), '+-.', ...
+     gammaVec, hdResultsMat(:,6),  '^-');
+xlabel('\gamma', 'FontSize', 20); ylabel('DEP({X,Y}|Z)', 'FontSize', 20); grid on;
+
+h6.FontSize = 20; 
+legend('RSCDM', 'PDCORR', 'PCORR', 'CMA', 'HD');  % manually move this using the mouse to a
+                                                  % good location
 
 %% Conditional Independence Test
 
@@ -162,15 +178,15 @@ gammaVec = 0:0.1:1;
 numDepTypes = 6;
 rscdmResultsMat = zeros(length(gammaVec), numDepTypes);
 cmaResultsMat = zeros(length(gammaVec), numDepTypes);
-cmiResultsMat = zeros(length(gammaVec), numDepTypes);
 hdResultsMat = zeros(length(gammaVec), numDepTypes);
-hsncicResultsMat = zeros(length(gammaVec), numDepTypes);
+pdcorrResultsMat = zeros(length(gammaVec), numDepTypes);
+pcorrResultsMat = zeros(length(gammaVec), numDepTypes);
 
 rscdmResultsVec = zeros(1,nsim);
 cmaResultsVec = zeros(1,nsim);
-cmiResultsVec = zeros(1,nsim);
 hdResultsVec = zeros(1,nsim);
-hsncicResultsVec = zeros(1,nsim);
+pdcorrResultsVec = zeros(1,nsim);
+pcorrResultsVec = zeros(1,nsim);
 
 dispstat('','init'); % One time only initialization
 dispstat(sprintf('Begining the simulation...\n'),'keepthis','timestamp');
@@ -206,31 +222,30 @@ for gammaIdx=1:length(gammaVec)
             end
             
             rscdmVal = rscdm(Y,Z,X);
-            data.X = Y; data.Y = Z; data.Z = X;
-            cmaVal = cassor(data);
-            cmiVal = cmi(data);
+            data.X = Y; data.Y = Z; data.Z = X; cmaVal = cassor(data);
             hdVal = hd(Y,Z,X);
-            hsncicVal = hsncic(Y,Z,X);
+            pdcorrVal = pdcorr_R(Y, Z, X);
+            pcorrVal = partialcorr(Y, Z, X);
             
             rscdmResultsVec(ii) = rscdmVal;
             cmaResultsVec(ii) = cmaVal;
-            cmiResultsVec(ii) = cmiVal;
             hdResultsVec(ii) = hdVal;
-            hsncicResultsVec(ii) = hsncicVal;
+            pdcorrResultsVec(ii) = pdcorrVal;
+            pcorrResultsVec(ii) = pcorrVal;
             
         end
         
         rscdmMean = mean(rscdmResultsVec); rscdmSTD = std(rscdmResultsVec);
         cmaMean = mean(cmaResultsVec); cmaSTD = std(cmaResultsVec);
-        cmiMean = mean(cmiResultsVec); cmiSTD = std(cmiResultsVec);
         hdMean = mean(hdResultsVec); hdSTD = std(hdResultsVec);
-        hsncicMean = mean(hsncicResultsVec); hsncicSTD = std(hsncicResultsVec);
+        pdcorrMean = mean(pdcorrResultsVec); pdcorrSTD = std(pdcorrResultsVec);
+        pcorrMean = mean(pcorrResultsVec); pcorrSTD = std(pcorrResultsVec);
         
         rscdmResultsMat(gammaIdx, jj) = rscdmMean;
         cmaResultsMat(gammaIdx, jj) = cmaMean;
-        cmiResultsMat(gammaIdx, jj) = cmiMean;
         hdResultsMat(gammaIdx, jj) = hdMean;
-        hsncicResultsMat(gammaIdx, jj) = hsncicMean;
+        pdcorrResultsMat(gammaIdx, jj) = pdcorrMean;
+        pcorrResultsMat(gammaIdx, jj) = pcorrMean;
         
     end
 end
@@ -249,31 +264,54 @@ figure;
 
 h1 = subplot(2,2,1);
 plot(gammaVec, rscdmResultsMat(:,1), 'o-.', ...
+     gammaVec, pdcorrResultsMat(:,1), 'x-.', ...
+     gammaVec, pcorrResultsMat(:,1), 'd-.', ...
      gammaVec, cmaResultsMat(:,1), '+-.', ...
-     gammaVec, cmiResultsMat(:,1), 'd-.', ...
      gammaVec, hdResultsMat(:,1),  '^-');
 xlabel('\gamma', 'FontSize', '20'); ylabel('DEP({X,Y}|Z)'); grid on;
  
 h2 = subplot(2,2,2);
 plot(gammaVec, rscdmResultsMat(:,2), 'o-.', ...
+     gammaVec, pdcorrResultsMat(:,2), 'x-.', ...
+     gammaVec, pcorrResultsMat(:,2), 'd-.', ...
      gammaVec, cmaResultsMat(:,2), '+-.', ...
-     gammaVec, cmiResultsMat(:,2), 'd-.', ...
      gammaVec, hdResultsMat(:,2),  '^-');
 xlabel('\gamma', 'FontSize', '20'); ylabel('DEP({X,Y}|Z)'); grid on;
 
 h3 = subplot(2,2,3);
 plot(gammaVec, rscdmResultsMat(:,3), 'o-.', ...
+     gammaVec, pdcorrResultsMat(:,3), 'x-.', ...
+     gammaVec, pcorrResultsMat(:,3), 'd-.', ...
      gammaVec, cmaResultsMat(:,3), '+-.', ...
-     gammaVec, cmiResultsMat(:,3), 'd-.', ...
      gammaVec, hdResultsMat(:,3),  '^-');
 xlabel('\gamma', 'FontSize', '20'); ylabel('DEP({X,Y}|Z)'); grid on;
 
 h4 = subplot(2,2,4);
 plot(gammaVec, rscdmResultsMat(:,4), 'o-.', ...
+     gammaVec, pdcorrResultsMat(:,4), 'x-.', ...
+     gammaVec, pcorrResultsMat(:,4), 'd-.', ...
      gammaVec, cmaResultsMat(:,4), '+-.', ...
-     gammaVec, cmiResultsMat(:,4), 'd-.', ...
      gammaVec, hdResultsMat(:,4),  '^-');
 xlabel('\gamma', 'FontSize', '20'); ylabel('DEP({X,Y}|Z)'); grid on;
+
+h5 = subplot(3,2,5);
+plot(gammaVec, rscdmResultsMat(:,5), 'o-.', ...
+     gammaVec, pdcorrResultsMat(:,5), 'x-.', ...
+     gammaVec, pcorrResultsMat(:,5), 'd-.', ...
+     gammaVec, cmaResultsMat(:,5), '+-.', ...
+     gammaVec, hdResultsMat(:,5),  '^-');
+xlabel('\gamma', 'FontSize', 20); ylabel('DEP({X,Y}|Z)', 'FontSize', 20); grid on;
+
+h6 = subplot(3,2,6);
+plot(gammaVec, rscdmResultsMat(:,6), 'o-.', ...
+     gammaVec, pdcorrResultsMat(:,6), 'x-.', ...
+     gammaVec, pcorrResultsMat(:,6), 'd-.', ...
+     gammaVec, cmaResultsMat(:,6), '+-.', ...
+     gammaVec, hdResultsMat(:,6),  '^-');
+xlabel('\gamma', 'FontSize', 20); ylabel('DEP({X,Y}|Z)', 'FontSize', 20); grid on;
+
+legend('RSCDM', 'PDCORR', 'PCORR', 'CMA', 'HD');  % manually move this using the mouse to a
+                                                  % good location
 
 %% Do a conditionally independent test
 
@@ -290,8 +328,10 @@ alpha = 0.05;
 x = rand(M,1);
 % y = x + noise*randn(M,1); z = x + noise*randn(M,1);
 % y = 4*(x-0.5).^2 + noise*randn(M,1); z = 4*(x-0.5).^2 + noise*randn(M,1);
-y = sin(2*pi*x) + noise*randn(M,1); z = sin(4*pi*x) + noise*randn(M,1);
-% y = sin(2*pi*x) + noise*randn(M,1); z = 4*(x-0.5).^2 + noise*randn(M,1);
+y = sin(4*pi*x) + noise*randn(M,1); z = cos(4*pi*x) + noise*randn(M,1);
+% y = nthroot(x, 4) + noise*randn(M,1); z = nthroot(x, 4) + noise*randn(M,1);
+% y = x + noise*randn(M,1); z = 4*(x-0.5).^2 + noise*randn(M,1);
+% y = 4*(x-0.5).^2 + noise*randn(M,1); z = cos(4*pi*x) + noise*randn(M,1);
 
 rsdm1 = rsdm_2(x, y);
 rsdm2 = rsdm_2(x, z);
@@ -305,38 +345,40 @@ rsdm3 = rsdm_2(y, z);
 [rscdmVal, RxAligned, RyAligned] = rscdm_2(y,z,x);
 pdCorr_val = abs(pdcorr_R(y,z,x));
 partialCorrVal = abs(partialcorr(y,z,x));
-data.X = y; data.Y = z; data.Z = x;
-cassorVal = abs(cassor(data));
+data.X = y; data.Y = z; data.Z = x; cassorVal = abs(cassor(data));
+hdVal = abs(hd(y, z, x));
+
+fontSize = 10;
 
 subplot(3,12,1:3);
-scatter(x,y); grid on; xlabel('x', 'FontSize', 20); ylabel('y', 'FontSize', 20); 
-title(sprintf('RSDM=%0.2f', rsdm1), 'FontSize', 20);
+scatter(x,y); grid on; xlabel('x', 'FontSize', fontSize); ylabel('y', 'FontSize', fontSize); 
+title(sprintf('RSDM=%0.2f', rsdm1), 'FontSize', fontSize);
 
 subplot(3,12,5:8);
-scatter(y,z); grid on; xlabel('y', 'FontSize', 20); ylabel('z', 'FontSize', 20); 
-title(sprintf('RSDM=%0.2f', rsdm3), 'FontSize', 20);
+scatter(y,z); grid on; xlabel('y', 'FontSize', fontSize); ylabel('z', 'FontSize', fontSize); 
+title(sprintf('RSDM=%0.2f', rsdm3), 'FontSize', fontSize);
 
 subplot(3,12,10:12);
-scatter(x,z); grid on; xlabel('x', 'FontSize', 20); ylabel('z', 'FontSize', 20); 
-title(sprintf('RSDM=%0.2f', rsdm2), 'FontSize', 20);
+scatter(x,z); grid on; xlabel('x', 'FontSize', fontSize); ylabel('z', 'FontSize', fontSize); 
+title(sprintf('RSDM=%0.2f', rsdm2), 'FontSize', fontSize);
 
 subplot(3,12,13:17);
 scatter(1:M, RxAligned); grid on;
-xlabel('x', 'FontSize', 20); ylabel('r_y', 'FontSize', 20);
+xlabel('x', 'FontSize', fontSize); ylabel('r_y', 'FontSize', fontSize);
 
 subplot(3,12,20:24);
 scatter(1:M, RyAligned); grid on;
-xlabel('x', 'FontSize', 20); ylabel('r_z', 'FontSize', 20);
+xlabel('x', 'FontSize', fontSize); ylabel('r_z', 'FontSize', fontSize);
 
 subplot(3,12,25:29);
 scatter(RxAligned,RyAligned); grid on; 
-xlabel('r_y', 'FontSize', 20); ylabel('r_z', 'FontSize', 20);  
-title(sprintf('%0.02f/%0.02f/%0.02f/%0.02f', ...
-    rscdmVal, pdCorr_val, partialCorrVal, cassorVal), 'FontSize', 20);
+xlabel('r_y', 'FontSize', fontSize); ylabel('r_z', 'FontSize', fontSize);  
+title(sprintf('%0.02f/%0.02f/%0.02f/%0.02f/%0.02f', ...
+    rscdmVal, pdCorr_val, partialCorrVal, cassorVal, hdVal), 'FontSize', fontSize);
 
 subplot(3,12,32:36);
 scatter(pobs(RxAligned),pobs(RyAligned), 'r'); grid on; 
-xlabel('F_{r_y}', 'FontSize', 20); ylabel('F_{r_z}', 'FontSize', 20);
+xlabel('F_{r_y}', 'FontSize', fontSize); ylabel('F_{r_z}', 'FontSize', fontSize);
 
 
 %% Do a conditionally dependent test
@@ -356,12 +398,12 @@ alpha = 0.05;
 % Generate data from     Y-->X<--Z
 y = rand(M,1);
 z = rand(M,1);
-% x = y + z + noise*randn(M,1);
+x = y + z + noise*randn(M,1);
 % x = (y-0.5).^2 + (z-0.5).^2 + noise*randn(M,1);
 % x = sin(4*pi*y)+cos(4*pi*z) + noise*randn(M,1);
 % x = nthroot(y,4)+nthroot(z,4) + noise*randn(M,1);
 % x = y + (z-0.5).^2 + noise*randn(M,1);
-x = (y-0.5).^2 + cos(4*pi*z) + noise*randn(M,1);
+% x = (y-0.5).^2 + cos(4*pi*z) + noise*randn(M,1);
 
 rsdm1 = rsdm_2(x, y);
 rsdm2 = rsdm_2(x, z);
@@ -372,35 +414,39 @@ rsdm3 = rsdm_2(y, z);
 [rscdmVal, RxAligned, RyAligned] = rscdm_2(y,z,x);
 pdCorr_val = abs(pdcorr_R(y,z,x));
 partialCorrVal = abs(partialcorr(y,z,x));
-data.X = y; data.Y = z; data.Z = x;
-cassorVal = abs(cassor(data));
+data.X = y; data.Y = z; data.Z = x; cassorVal = abs(cassor(data));
+hdVal = abs(hd(y, z, x));
+
+fontSize = 10;
 
 subplot(3,12,1:3);
-scatter(x,y); grid on; xlabel('x', 'FontSize', 20); ylabel('y', 'FontSize', 20); 
-title(sprintf('RSDM=%0.2f', rsdm1), 'FontSize', 20);
+scatter(x,y); grid on; xlabel('x', 'FontSize', fontSize); ylabel('y', 'FontSize', fontSize); 
+title(sprintf('RSDM=%0.2f', rsdm1), 'FontSize', fontSize);
 
 subplot(3,12,5:8);
-scatter(y,z); grid on; xlabel('y', 'FontSize', 20); ylabel('z', 'FontSize', 20); 
-title(sprintf('RSDM=%0.2f', rsdm3), 'FontSize', 20);
+scatter(y,z); grid on; xlabel('y', 'FontSize', fontSize); ylabel('z', 'FontSize', fontSize); 
+title(sprintf('RSDM=%0.2f', rsdm3), 'FontSize', fontSize);
 
 subplot(3,12,10:12);
-scatter(x,z); grid on; xlabel('x', 'FontSize', 20); ylabel('z', 'FontSize', 20); 
-title(sprintf('RSDM=%0.2f', rsdm2), 'FontSize', 20);
+scatter(x,z); grid on; xlabel('x', 'FontSize', fontSize); ylabel('z', 'FontSize', fontSize); 
+title(sprintf('RSDM=%0.2f', rsdm2), 'FontSize', fontSize);
 
 subplot(3,12,13:17);
 scatter(1:M, RxAligned); grid on;
-xlabel('x', 'FontSize', 20); title('r_y', 'FontSize', 20);
+xlabel('x', 'FontSize', fontSize); ylabel('r_y', 'FontSize', fontSize);
 
 subplot(3,12,20:24);
 scatter(1:M, RyAligned); grid on;
-xlabel('x', 'FontSize', 20); title('r_z', 'FontSize', 20);
+xlabel('x', 'FontSize', fontSize); ylabel('r_z', 'FontSize', fontSize);
 
 subplot(3,12,25:29);
-scatter(RxAligned,RyAligned); grid on; xlabel('r_y', 'FontSize', 20); ylabel('r_z', 'FontSize', 20);  
-title(sprintf('%0.02f/%0.02f/%0.02f/%0.02f', ...
-    rscdmVal, pdCorr_val, partialCorrVal, cassorVal), 'FontSize', 20);
+scatter(RxAligned,RyAligned); grid on; 
+xlabel('r_y', 'FontSize', fontSize); ylabel('r_z', 'FontSize', fontSize);  
+title(sprintf('%0.02f/%0.02f/%0.02f/%0.02f/%0.02f', ...
+    rscdmVal, pdCorr_val, partialCorrVal, cassorVal, hdVal), 'FontSize', fontSize);
 
 subplot(3,12,32:36);
-scatter(pobs(RxAligned),pobs(RyAligned), 'r'); grid on; xlabel('F_{r_y}'); ylabel('F_{r_z}');
+scatter(pobs(RxAligned),pobs(RyAligned), 'r'); grid on; 
+xlabel('F_{r_y}', 'FontSize', fontSize); ylabel('F_{r_z}', 'FontSize', fontSize);
 
 %% Characterize null distribution {Y indep Z} | X
