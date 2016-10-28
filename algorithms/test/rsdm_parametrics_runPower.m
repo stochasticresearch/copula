@@ -24,11 +24,6 @@
 clear;
 clc;
 
-% try to get 8 workers :D
-myCluster = parcluster('local');
-myCluster.NumWorkers = 8;
-saveProfile(myCluster);
-
 % WARNING: ENSURE THAT minepy/matlab/ is in the matlab path for MIC to
 % work!
 

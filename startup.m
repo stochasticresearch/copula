@@ -27,6 +27,11 @@ addpath('../minepy/matlab');
 
 addpath('./python');
 
+% try to get 8 parallel workers
+myCluster = parcluster('local');
+myCluster.NumWorkers = 8;
+saveProfile(myCluster);
+
 % setup Python in Matlab if it isn't already loaded
 try
     pyversion 2.7   % assume you have Python 2.7 :D
