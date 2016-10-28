@@ -328,21 +328,21 @@ alpha = 0.05;
 x = rand(M,1);
 % y = x + noise*randn(M,1); z = x + noise*randn(M,1);
 % y = 4*(x-0.5).^2 + noise*randn(M,1); z = 4*(x-0.5).^2 + noise*randn(M,1);
-y = sin(4*pi*x) + noise*randn(M,1); z = cos(4*pi*x) + noise*randn(M,1);
+% y = sin(4*pi*x) + noise*randn(M,1); z = cos(4*pi*x) + noise*randn(M,1);
 % y = nthroot(x, 4) + noise*randn(M,1); z = nthroot(x, 4) + noise*randn(M,1);
 % y = x + noise*randn(M,1); z = 4*(x-0.5).^2 + noise*randn(M,1);
 % y = 4*(x-0.5).^2 + noise*randn(M,1); z = cos(4*pi*x) + noise*randn(M,1);
 
-rsdm1 = rsdm_2(x, y);
-rsdm2 = rsdm_2(x, z);
-rsdm3 = rsdm_2(y, z);
+rsdm1 = rsdm(x, y);
+rsdm2 = rsdm(x, z);
+rsdm3 = rsdm(y, z);
 % RSCDM conditions X on Y and Z, and sees how related Y and Z
 % are to each other ... in this graphical model, they should be UNRELATED
 % after the effect of X is removed... i.e. close to independent.  To see
 % why, look at the graphical model, Y indep Z | X according to
 % d-separation.  So if we condition upon X (i.e. remove teh effect of X on
 % Y and Z separately), then we should get independence.
-[rscdmVal, RxAligned, RyAligned] = rscdm_2(y,z,x);
+[rscdmVal, RxAligned, RyAligned] = rscdm(y,z,x);
 pdCorr_val = abs(pdcorr_R(y,z,x));
 partialCorrVal = abs(partialcorr(y,z,x));
 data.X = y; data.Y = z; data.Z = x; cassorVal = abs(cassor(data));
@@ -398,20 +398,20 @@ alpha = 0.05;
 % Generate data from     Y-->X<--Z
 y = rand(M,1);
 z = rand(M,1);
-x = y + z + noise*randn(M,1);
+% x = y + z + noise*randn(M,1);
 % x = (y-0.5).^2 + (z-0.5).^2 + noise*randn(M,1);
 % x = sin(4*pi*y)+cos(4*pi*z) + noise*randn(M,1);
 % x = nthroot(y,4)+nthroot(z,4) + noise*randn(M,1);
 % x = y + (z-0.5).^2 + noise*randn(M,1);
 % x = (y-0.5).^2 + cos(4*pi*z) + noise*randn(M,1);
 
-rsdm1 = rsdm_2(x, y);
-rsdm2 = rsdm_2(x, z);
-rsdm3 = rsdm_2(y, z);
+rsdm1 = rsdm(x, y);
+rsdm2 = rsdm(x, z);
+rsdm3 = rsdm(y, z);
 % In this graphical model, Y and Z are independent of each other, but when
 % conditioned upon X, they become dependent.  Refer to the rules of
 % d-separation to see why, this is a V-Structure!
-[rscdmVal, RxAligned, RyAligned] = rscdm_2(y,z,x);
+[rscdmVal, RxAligned, RyAligned] = rscdm(y,z,x);
 pdCorr_val = abs(pdcorr_R(y,z,x));
 partialCorrVal = abs(partialcorr(y,z,x));
 data.X = y; data.Y = z; data.Z = x; cassorVal = abs(cassor(data));

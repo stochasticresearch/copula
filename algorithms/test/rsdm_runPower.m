@@ -24,6 +24,11 @@
 clear;
 clc;
 
+% try to get 8 workers :D
+myCluster = parcluster('local');
+myCluster.NumWorkers = 8;
+saveProfile(myCluster);
+
 % WARNING: ENSURE THAT minepy/matlab/ is in the matlab path for MIC to
 % work!
 
@@ -65,11 +70,6 @@ rdcPower  = zeros(numDepTests, num_noise);
 % Optimal parameters for MICe
 mine_c = 15;
 mine_alpha = 0.6;
-
-% Optimal parameters for RSDM -- CFG1 - 5,8,1
-rsdm_minscanincr = 0.025;
-rsdm_diffthresh = 100;
-rsdm_alpha = 0.08;
 
 % Optimal parameters for RDC
 rdc_k = 20;
@@ -129,7 +129,7 @@ for l=num_noise_test_min:num_noise_test_max
             x = rand(M,1)*(xMax-xMin)+xMin;
             
             % calculate the metrics
-            rsdmNull(ii) = rsdm(x, y, rsdm_minscanincr, rsdm_diffthresh, rsdm_alpha);
+            rsdmNull(ii) = rsdm(x, y);
             dcorrNull(ii) = dcorr(x, y);
             % compute MICe
             minestats = mine(x',y',mine_alpha,mine_c,'mic_e');
@@ -181,7 +181,7 @@ for l=num_noise_test_min:num_noise_test_max
             end
             
             % calculate the metrics
-            rsdmAlt(ii) = rsdm(x, y, rsdm_minscanincr, rsdm_diffthresh, rsdm_alpha);
+            rsdmAlt(ii) = rsdm(x, y);
             dcorrAlt(ii) = dcorr(x, y);
             % compute MICe
             minestats = mine(x',y',mine_alpha,mine_c,'mic_e');
@@ -418,11 +418,6 @@ rdcPower  = zeros(numDepTests, num_noise, length(M_vec));
 mine_c = 15;
 mine_alpha = 0.6;
 
-% Optimal parameters for RSDM -- CFG1 - 5,8,1
-rsdm_minscanincr = 0.025;
-rsdm_diffthresh = 100;
-rsdm_alpha = 0.08;
-
 % Optimal parameters for RDC
 rdc_k = 20;
 rdc_s = 1/6;
@@ -487,7 +482,7 @@ for m=1:length(M_vec)
                 x = rand(M,1)*(xMax-xMin)+xMin;
 
                 % calculate the metrics
-                rsdmNull(ii) = rsdm(x, y, rsdm_minscanincr, rsdm_diffthresh, rsdm_alpha);
+                rsdmNull(ii) = rsdm(x, y);
                 dcorrNull(ii) = dcorr(x, y);
                 % compute MICe
                 minestats = mine(x',y',mine_alpha,mine_c,'mic_e');
@@ -539,7 +534,7 @@ for m=1:length(M_vec)
                 end
 
                 % calculate the metrics
-                rsdmAlt(ii) = rsdm(x, y, rsdm_minscanincr, rsdm_diffthresh, rsdm_alpha);
+                rsdmAlt(ii) = rsdm(x, y);
                 dcorrAlt(ii) = dcorr(x, y);
                 % compute MICe
                 minestats = mine(x',y',mine_alpha,mine_c,'mic_e');
@@ -784,11 +779,6 @@ FIT_PLOTS = 0;
 
 rsdmNullDistributionResults = zeros(nsim, length(M_vec));
 
-% Optimal parameters for RSDM -- CFG1 - 5,8,1
-rsdm_minscanincr = 0.025;
-rsdm_diffthresh = 100;
-rsdm_alpha = 0.08;
-
 for ii=1:nsim
     parfor jj=1:length(M_vec)
         M = M_vec(jj);
@@ -797,7 +787,7 @@ for ii=1:nsim
         y = rand(M,1)*(yMax-yMin)+yMin;
     
         % compute RSDM
-        rsdmNullDistributionResults(ii,jj) = rsdm(x, y, rsdm_minscanincr, rsdm_diffthresh, rsdm_alpha);
+        rsdmNullDistributionResults(ii,jj) = rsdm(x, y);
     end
 end
 

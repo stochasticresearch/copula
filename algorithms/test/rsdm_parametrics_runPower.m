@@ -387,7 +387,7 @@ hh8 = plot(noiseVec, rsdm1Power(8,num_noise_test_min:num_noise_test_max), 'o-.',
      noiseVec, rdcPower(8,num_noise_test_min:num_noise_test_max), 'v-.');  
 axis([min(noiseVec) max(noiseVec) 0 1]);
 h8.FontSize = 20; 
-legend('RSDM_1', 'RSDM_2', 'dcorr', 'MIC_e', 'corr', 'RDC');  % manually move this using the mouse to a
+legend('RSDM_1', 'RSDM_2', 'RSDM_4', 'dcorr', 'MIC_e', 'corr', 'RDC');  % manually move this using the mouse to a
                                                   % good location
 xlabel('Noise Level'); ylabel('Power'); grid on;
 loc_inset = [h8.Position(1)+inset_bufX h8.Position(2)+inset_bufY inset_width inset_height];
