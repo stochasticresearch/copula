@@ -20,6 +20,25 @@
 clear;
 clc;
 
+% load the arcane data --
+% Each row contains a microarray experiment and each column contains a gene
 X = csvread('arcane.data',1,1);
 R = pairrsdm(X);
+
+% save the data
+if(ispc)
+    save('C:\\Users\\Kiran\\ownCloud\\PhD\\sim_results\\independence\\arcaneRSDM.mat');
+elseif(ismac)
+    save('/Users/Kiran/ownCloud/PhD/sim_results/independence/arcaneRSDM.mat');
+else
+    save('/home/kiran/ownCloud/PhD/sim_results/independence/arcaneRSDM.mat');
+end
+
+% load the results from data for ARACNE algorithm
+arcaneResults = csvread('arcane.res', 1, 1);
+
+subplot(1,2,1);
 myheatmap(R)
+title('RSDM');
+subplot(1,2,2);
+myheatmap(arcaneResults);
