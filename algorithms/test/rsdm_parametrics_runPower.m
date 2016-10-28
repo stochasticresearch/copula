@@ -158,7 +158,6 @@ for l=num_noise_test_min:num_noise_test_max
         
         % resimulate the data under the alternative hypothesis
         parfor ii=1:nsim_alt
-            dispstat(sprintf('Simulating Alt -- %0.02f', ii/nsim_alt*100),'timestamp');
             x = rand(M,1)*(xMax-xMin)+xMin;
             switch(typ)
                 case 1
