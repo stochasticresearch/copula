@@ -48,6 +48,46 @@ else
     load('/home/kiran/ownCloud/PhD/sim_results/independence/arcaneRSDM.mat');
 end
 
+M = size(X,1);
+N = size(R_rsdm,2);
+
+% compute the structure using an aracne style algorithm, but instead of the
+% data processing inequality, we use conditional (in)dependence as a
+% surrogate
+alpha = 0.95;       % significance level for independence testing
+edges_rsdm = R_rsdm;
+for ii=1:N
+    for jj=1:N
+        rsdm_val = R_rsdm(ii,jj);
+%         pval = rsdm_pval(rsdm_val, M);
+%         thresh = alpa*3;        % TODO; query the GEV distribution for thresh
+%         if(pval > thres)
+%             rsdm_indep = 1;
+%         else
+%             rsdm_indep = 0;
+%         end
+        
+        % TODO: a p-value based test!
+        if(rsdm_val < 0.1)
+            rsdm_indep = 1;
+            edges_rsdm(ii,jj) = 0; edges_rsdm(jj,ii) = 0;
+        else
+            rsdm_indep = 0;
+        end
+        if(~rsdm_indep)
+            for kk=1:N
+                if(kk~=ii && kk~=jj)
+                    rscdm_val = rscdm(X(:,ii), X(:,jj), X(:,kk));
+                    % test for the conditional independence scenario
+                    if(rsdm_val > rscdm_val)    % TODO: need a p-value based test
+                        edges_rsdm(ii,jj) = 0; edges_rsdm(jj,ii) = 0;
+                    end
+                end
+            end
+        end
+    end
+end
+
 I = (arcaneResults==0);
 % R_rsdm(I) = 0;
 % R_rdc(I) = 0;

@@ -782,15 +782,6 @@ for ii=1:nsim
     end
 end
 
-% save the data
-if(ispc)
-    save('C:\\Users\\Kiran\\ownCloud\\PhD\\sim_results\\independence\\rsdmNullDistribution.mat');
-elseif(ismac)
-    save('/Users/Kiran/ownCloud/PhD/sim_results/independence/rsdmNullDistribution.mat');
-else
-    save('/home/kiran/ownCloud/PhD/sim_results/independence/rsdmNullDistribution.mat');
-end
-
 % plot distribution of RSDM under the null distribution 
 legendCell = cell(1,length(M_vec));
 for ii=1:length(M_vec)
@@ -855,6 +846,15 @@ for ii=1:length(distributions)
     distScores(4,ii) = AICc;
 end
 
+% save the data
+if(ispc)
+    save('C:\\Users\\Kiran\\ownCloud\\PhD\\sim_results\\independence\\rsdmNullDistribution.mat');
+elseif(ismac)
+    save('/Users/Kiran/ownCloud/PhD/sim_results/independence/rsdmNullDistribution.mat');
+else
+    save('/home/kiran/ownCloud/PhD/sim_results/independence/rsdmNullDistribution.mat');
+end
+
 % Sort by NLogL
 [~,I] = sort(distScores(1,:), 'ascend');
 fprintf('NLogL\n');
@@ -877,8 +877,17 @@ distributions{I(1)}
 
 %%
 
-% From the above analysis, the Inverse Gaussian distribution seems to fit
-% best ... Do Q-Q Plots of the Inverse Gaussian Distribution Fit
+if(ispc)
+    load('C:\\Users\\Kiran\\ownCloud\\PhD\\sim_results\\independence\\rsdmNullDistribution.mat');
+elseif(ismac)
+    load('/Users/Kiran/ownCloud/PhD/sim_results/independence/rsdmNullDistribution.mat');
+else
+    load('/home/kiran/ownCloud/PhD/sim_results/independence/rsdmNullDistribution.mat');
+end
+
+
+% From the above analysis, the Generalized Extreme Value distribution seems 
+% to fit best ... Q-Q Plots
 
 % QQ Plot w/ best fit for M=100 and M=1000
 pdObjs = cell(1,length(M_vec));
@@ -902,18 +911,18 @@ for ii=1:length(M_vec)
 end
 
 % do the Q-Q plot
-pd = pdObjs{1};
+pd = pdObjs{5};
 subplot(2,2,1); qqplot(rsdmNullDistributionResults(:,1), pd); grid on;
 xlabel(sprintf('Quantiles of GEV(%0.02f,%0.02f, %0.02f)', pd.k, pd.mu, pd.sigma), 'FontSize', 20);
 ylabel('Quantiles of Input Samples', 'FontSize', 20);
-title('M = 100', 'FontSize', 24);
+title('M = 500', 'FontSize', 24);
 
-pd = pdObjs{10};
-subplot(2,2,3); qqplot(rsdmNullDistributionResults(:,1), pd); grid on;
-xlabel(sprintf('Quantiles of GEV(%0.02f,%0.02f, %0.02f)', pd.k, pd.mu, pd.sigma), 'FontSize', 20);
-ylabel('Quantiles of Input Samples', 'FontSize', 20);
-title('M = 1000', 'FontSize', 24);
+% plot how mu and lambda change as M goes from 100 --> 1000
+subplot(2,2,2); plot(M_vec, kVec);     
+grid on; xlabel('M', 'FontSize', 20); ylabel('k', 'FontSize', 20);
 
-% % plot how mu and lambda change as M goes from 100 --> 1000
-% subplot(2,2,2); plot(M_vec, muVec); grid on; xlabel('M', 'FontSize', 20); ylabel('\mu', 'FontSize', 20); grid on;
-% subplot(2,2,4); plot(M_vec, sigmaVec); grid on; xlabel('M', 'FontSize', 20); ylabel('\lambda', 'FontSize', 20); grid on;
+subplot(2,2,3); plot(M_vec, muVec);    
+grid on; xlabel('M', 'FontSize', 20); ylabel('\mu', 'FontSize', 20);
+
+subplot(2,2,4); plot(M_vec, sigmaVec); 
+grid on; xlabel('M', 'FontSize', 20); ylabel('\lambda', 'FontSize', 20);
