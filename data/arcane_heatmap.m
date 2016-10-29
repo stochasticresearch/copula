@@ -16,14 +16,19 @@
 %* along with this program.  If not, see <http://www.gnu.org/licenses/>.  *
 %*                                                                        *
 %**************************************************************************
-%%  plot a heatmap of the test ARCANE gene expression data
+%%  process a heatmap of the test ARCANE gene expression data
 clear;
 clc;
 
 % load the arcane data --
 % Each row contains a microarray experiment and each column contains a gene
 X = csvread('arcane.data',1,1);
-R = pairrsdm(X);
+R_rsdm = pairrsdm(X);
+R_rdc = pairrdc(X);
+R_mice = pairmice(X);
+
+% load the results from data for ARACNE algorithm
+arcaneResults = csvread('arcane.res', 1, 1);
 
 % save the data
 if(ispc)
@@ -34,11 +39,45 @@ else
     save('/home/kiran/ownCloud/PhD/sim_results/independence/arcaneRSDM.mat');
 end
 
-% load the results from data for ARACNE algorithm
-arcaneResults = csvread('arcane.res', 1, 1);
+%% Load the data for plotting
+if(ispc)
+    load('C:\\Users\\Kiran\\ownCloud\\PhD\\sim_results\\independence\\arcaneRSDM.mat');
+elseif(ismac)
+    load('/Users/Kiran/ownCloud/PhD/sim_results/independence/arcaneRSDM.mat');
+else
+    load('/home/kiran/ownCloud/PhD/sim_results/independence/arcaneRSDM.mat');
+end
 
-subplot(1,2,1);
-myheatmap(R)
-title('RSDM');
-subplot(1,2,2);
-myheatmap(arcaneResults);
+I = (arcaneResults==0);
+% R_rsdm(I) = 0;
+% R_rdc(I) = 0;
+% R_mice(I) = 0;
+R_rsdm(R_rsdm==0) = eps;
+R_rdc(R_rdc==0) = eps;
+R_mice(R_mice==0) = eps;
+
+colormap('jet');
+
+subplot(2,2,1);
+im = imagesc(arcaneResults);        % draw image and scale colormap to values range
+im.AlphaData = .8;
+colorbar;          % show color scale
+title('ARACNe');
+
+subplot(2,2,2);
+im = imagesc(R_rsdm./R_rdc);        % draw image and scale colormap to values range
+im.AlphaData = .8;
+colorbar;          % show color scale
+title('RSDM/RDC');
+
+subplot(2,2,3);
+im = imagesc(R_rsdm./R_mice);        % draw image and scale colormap to values range
+im.AlphaData = .8;
+colorbar;          % show color scale
+title('RSDM/MICe');
+
+subplot(2,2,4);
+im = imagesc(R_rdc./R_mice);        % draw image and scale colormap to values range
+im.AlphaData = .8;
+colorbar;          % show color scale
+title('RDC/MICe');

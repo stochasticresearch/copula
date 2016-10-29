@@ -1,5 +1,5 @@
-function [R] = pairrsdm( X )
-%PAIRRSDM - computes pairwise dependency metrics of a given vector
+function [R] = pairrdc( X )
+%PAIRRDC - computes pairwise dependency metrics of a given vector
 % Inputs:
 %  X - a matrix of observations from which pairwise RSDM metrics are
 %  computed.
@@ -31,8 +31,8 @@ for ii=1:n
     x = X(:,ii);
     parfor jj=ii+1:n
         y = X(:,jj);        
-        rsdmVal = rsdm(x,y);
-        R(ii,jj) = rsdmVal;
+        rdcVal = rdc(x,y);
+        R(ii,jj) = rdcVal;
     end
 end
 

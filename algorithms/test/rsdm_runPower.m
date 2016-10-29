@@ -875,41 +875,45 @@ distributions{I(1)}
 fprintf('AICc\n');
 distributions{I(1)}
 
+%%
+
 % From the above analysis, the Inverse Gaussian distribution seems to fit
 % best ... Do Q-Q Plots of the Inverse Gaussian Distribution Fit
 
 % QQ Plot w/ best fit for M=100 and M=1000
 pdObjs = cell(1,length(M_vec));
+kVec = zeros(1,length(M_vec));
 muVec = zeros(1,length(M_vec));
-lambdaVec = zeros(1,length(M_vec));
+sigmaVec = zeros(1,length(M_vec));
 for ii=1:length(M_vec)
     M = M_vec(ii);
     % look for the Inverse Gaussian Distribution in the correct cell array
     D = D_cell(ii);
     PD = PD_cell(ii); PD = PD{1};
     for jj=1:length(PD)
-        if(strcmpi('Inverse Gaussian', PD{jj}.DistributionName))
+        if(strcmpi('Generalized extreme value', PD{jj}.DistributionName))
             pd = PD{jj};
         end
     end
     pdObjs{ii} = pd;
+    kVec(ii) = pd.k;
     muVec(ii) = pd.mu;
-    lambdaVec(ii) = pd.lambda;
+    sigmaVec(ii) = pd.sigma;
 end
 
 % do the Q-Q plot
 pd = pdObjs{1};
 subplot(2,2,1); qqplot(rsdmNullDistributionResults(:,1), pd); grid on;
-xlabel(sprintf('Quantiles of IG(%0.02f,%0.02f)', pd.mu, pd.lambda), 'FontSize', 20);
+xlabel(sprintf('Quantiles of GEV(%0.02f,%0.02f, %0.02f)', pd.k, pd.mu, pd.sigma), 'FontSize', 20);
 ylabel('Quantiles of Input Samples', 'FontSize', 20);
 title('M = 100', 'FontSize', 24);
 
 pd = pdObjs{10};
 subplot(2,2,3); qqplot(rsdmNullDistributionResults(:,1), pd); grid on;
-xlabel(sprintf('Quantiles of IG(%0.02f,%0.02f)', pd.mu, pd.lambda), 'FontSize', 20);
+xlabel(sprintf('Quantiles of GEV(%0.02f,%0.02f, %0.02f)', pd.k, pd.mu, pd.sigma), 'FontSize', 20);
 ylabel('Quantiles of Input Samples', 'FontSize', 20);
 title('M = 1000', 'FontSize', 24);
 
-% plot how mu and lambda change as M goes from 100 --> 1000
-subplot(2,2,2); plot(M_vec, muVec); grid on; xlabel('M', 'FontSize', 20); ylabel('\mu', 'FontSize', 20); grid on;
-subplot(2,2,4); plot(M_vec, lambdaVec); grid on; xlabel('M', 'FontSize', 20); ylabel('\lambda', 'FontSize', 20); grid on;
+% % plot how mu and lambda change as M goes from 100 --> 1000
+% subplot(2,2,2); plot(M_vec, muVec); grid on; xlabel('M', 'FontSize', 20); ylabel('\mu', 'FontSize', 20); grid on;
+% subplot(2,2,4); plot(M_vec, sigmaVec); grid on; xlabel('M', 'FontSize', 20); ylabel('\lambda', 'FontSize', 20); grid on;
