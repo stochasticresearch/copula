@@ -195,7 +195,7 @@ for gammaIdx=1:length(gammaVec)
     gamma = gammaVec(gammaIdx);
     dispstat(sprintf('Computing for gamma=%0.02f',gamma),'keepthis', 'timestamp');
     for jj=1:numDepTypes
-        parfor ii=1:nsim
+        for ii=1:nsim
             dispstat(sprintf('Simulating -- %0.02f %%', ii/nsim*100),'timestamp');
             
             X = rand(M,1);
