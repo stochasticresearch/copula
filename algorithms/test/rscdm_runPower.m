@@ -47,7 +47,7 @@ for gammaIdx=1:length(gammaVec)
     gamma = gammaVec(gammaIdx);
     dispstat(sprintf('Computing for gamma=%0.02f',gamma),'keepthis', 'timestamp');
     for jj=1:numDepTypes
-        for ii=1:nsim
+        parfor ii=1:nsim
             dispstat(sprintf('Simulating -- %0.02f %%', ii/nsim*100),'timestamp');
             Y = rand(M,1);
             Z = rand(M,1);
@@ -70,6 +70,7 @@ for gammaIdx=1:length(gammaVec)
             
             rscdmVal = rscdm(Y,Z,X);
             
+            data = struct();
             data.X = Y; data.Y = Z; data.Z = X;
             cmaVal = cassor(data);
             hdVal = hd(Y,Z,X);
@@ -194,7 +195,7 @@ for gammaIdx=1:length(gammaVec)
     gamma = gammaVec(gammaIdx);
     dispstat(sprintf('Computing for gamma=%0.02f',gamma),'keepthis', 'timestamp');
     for jj=1:numDepTypes
-        for ii=1:nsim
+        parfor ii=1:nsim
             dispstat(sprintf('Simulating -- %0.02f %%', ii/nsim*100),'timestamp');
             
             X = rand(M,1);
@@ -222,6 +223,7 @@ for gammaIdx=1:length(gammaVec)
             end
             
             rscdmVal = rscdm(Y,Z,X);
+            data = struct();
             data.X = Y; data.Y = Z; data.Z = X; cmaVal = cassor(data);
             hdVal = hd(Y,Z,X);
             pdcorrVal = pdcorr_R(Y, Z, X);
