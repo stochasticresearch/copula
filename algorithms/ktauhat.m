@@ -61,6 +61,11 @@ for k = 1:len-1
     K = K + sum( sign(U(k)-U(k+1:len)) .* sign(V(k)-V(k+1:len)) );
 end
 
+if(K==0)
+    tau = 0;
+    return;
+end
+
 % compute the denominator ... compute the # of unique values of U and V and
 % how many times each of those unique values occur
 uniqueU = unique(U);
@@ -172,7 +177,7 @@ end
 
 function [cf] = correctionFactor4(numOverlapPtsVec)
     meanVal = floor(mean(numOverlapPtsVec));
-    if(meanVal==0)
+    if(meanVal<2)
         cf = 0;
     else
         cf = nchoosek(meanVal,2)*length(numOverlapPtsVec);
