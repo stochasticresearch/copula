@@ -543,16 +543,15 @@ for m=1:length(M_vec)
             corrPower(typ, l, m)   = sum(corrAlt > corr_cut)/nsim_alt;
             rdcPower(typ, l, m)    = sum(rdcAlt > rdc_cut)/nsim_alt;
         end
-        
-        % save intermediate results just in case things crash :(
-        if(ispc)
-            save('C:\\Users\\Kiran\\ownCloud\\PhD\\sim_results\\independence\\rsdmPower.mat');
-        elseif(ismac)
-            save('/Users/Kiran/ownCloud/PhD/sim_results/independence/rsdmPower.mat');
-        else
-            save('/home/kiran/ownCloud/PhD/sim_results/independence/rsdmPower.mat');
-        end
-
+    end
+    
+    % save intermediate results just in case things crash :(
+    if(ispc)
+        save('C:\\Users\\Kiran\\ownCloud\\PhD\\sim_results\\independence\\rsdmPower.mat');
+    elseif(ismac)
+        save('/Users/Kiran/ownCloud/PhD/sim_results/independence/rsdmPower.mat');
+    else
+        save('/home/kiran/ownCloud/PhD/sim_results/independence/rsdmPower.mat');
     end
 end
 % save the data
