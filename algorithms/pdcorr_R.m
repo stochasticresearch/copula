@@ -1,4 +1,4 @@
-function [pdcor_val] = pdcorr_R(x, y, z)
+function [pdcor_val, pval] = pdcorr_R(x, y, z, R)
 %PDCORR_R computes the partial distance correlation of {x,y}|z.
 %Underneath, it calls the R function pdcor from Matlab using a CSV file
 %interface.
@@ -32,6 +32,18 @@ function [pdcor_val] = pdcorr_R(x, y, z)
 %*                                                                        *
 %**************************************************************************
 
+if(nargout>1)
+    function_call = '/pdcor_pval_matlab.R';
+else
+    % we only need the pdcorr value here
+    function_call = '/pdcor_matlab.R';
+end
+
+if(nargin<4)
+    R = 199;    % the number of replicates for the permutation test to generate
+                % a p-value
+end
+
 if(ismac || isunix)
     tmpDir = '/tmp';
 else
@@ -41,18 +53,27 @@ end
 csvwrite(fullfile(tmpDir, 'x_pdcor.csv'), x(:));
 csvwrite(fullfile(tmpDir, 'y_pdcor.csv'), y(:));
 csvwrite(fullfile(tmpDir, 'z_pdcor.csv'), z(:));
+csvwrite(fullfile(tmpDir, 'pdcorr_replicates.csv'), R(:));
 
 % call the R function
 energyRdir = getEnergyPackagePath();
-retCode = system(['R CMD BATCH ' energyRdir '/pdcor_matlab.R' ]);
+retCode = system(['R CMD BATCH ' energyRdir function_call ]);
 if(retCode==0)
-    pdcor_val = csvread(fullfile(tmpDir, 'pdcor_matlab_output.csv'));
+    oo = csvread(fullfile(tmpDir, 'pdcor_matlab_output.csv'));
+    pdcor_val = oo(1); 
+    if(nargout>1)
+        pval = oo(2);
+    end
 else
     warning('Calling R pdcor function failed!');
-    pdcor_val = -999;
+    pdcor_val = -999; pval = -999;
 end
 
 % clean up temporary files
-delete('pdcor_matlab.Rout');
+if(nargout>1)
+    delete('pdcor_pval_matlab.Rout');
+else
+    delete('pdcor_matlab.Rout');
+end
 
 end

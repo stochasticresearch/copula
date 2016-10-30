@@ -37,7 +37,9 @@ cmaResultsMat = zeros(length(gammaVec), numDepTypes, nsim);
 hdResultsMat = zeros(length(gammaVec), numDepTypes, nsim);
 hsicResultsMat = zeros(length(gammaVec), numDepTypes, nsim);
 pdcorrResultsMat = zeros(length(gammaVec), numDepTypes, nsim);
+pdcorrPValMat = zeros(length(gammaVec), numDepTypes, nsim);
 pcorrResultsMat = zeros(length(gammaVec), numDepTypes, nsim);
+pcorrPValMat = zeros(length(gammaVec), numDepTypes, nsim);
 
 rsdmResultsVec = zeros(1,nsim);
 rscdmResultsVec = zeros(1,nsim);
@@ -46,7 +48,9 @@ cmaResultsVec = zeros(1,nsim);
 hdResultsVec = zeros(1,nsim);
 hsicResultsVec = zeros(1,nsim);
 pdcorrResultsVec = zeros(1,nsim);
+pdcorrPValVec = zeros(1,nsim);
 pcorrResultsVec = zeros(1,nsim);
+pcorrPValVec = zeros(1,nsim);
 
 dispstat('','init'); % One time only initialization
 dispstat(sprintf('Begining the simulation...\n'),'keepthis','timestamp');
@@ -85,8 +89,8 @@ for gammaIdx=1:length(gammaVec)
             
             hdVal = hd(Y,Z,X);
             hsicVal = hsncic(Y,Z,X);
-            pdcorrVal = pdcorr_R(Y, Z, X);
-            pcorrVal = partialcorr(Y, Z, X);
+            [pdcorrVal, pdcorr_pval] = pdcorr_R(Y, Z, X);
+            [pcorrVal, pcorr_pval] = partialcorr(Y, Z, X);
             
             rsdmResultsVec(ii) = rsdmVal;
             rscdmResultsVec(ii) = rscdmVal;
@@ -97,7 +101,10 @@ for gammaIdx=1:length(gammaVec)
             hdResultsVec(ii) = hdVal;
             hsicResultsVec(ii) = hsicVal;
             pdcorrResultsVec(ii) = pdcorrVal;
+            pdcorrPValVec(ii) = pdcorr_pval;
+            
             pcorrResultsVec(ii) = pcorrVal;
+            pcorrPValVec(ii) = pcorr_pval;
         end
         
         rsdmResultsMat(gammaIdx, jj, :) = rsdmResultsVec;
@@ -108,14 +115,21 @@ for gammaIdx=1:length(gammaVec)
         
         hdResultsMat(gammaIdx, jj, :) = hdResultsVec;
         hsicResultsMat(gammaIdx, jj, :) = hsicResultsVec;
-        pdcorrResultsMat(gammaIdx, jj, :) = pdcorrResultsVec;
-        pcorrResultsMat(gammaIdx, jj, :) = pcorrResultsVec;
         
+        pdcorrResultsMat(gammaIdx, jj, :) = pdcorrResultsVec;
+        pdcorrPValMat(gammaIdx, jj, :) = pdcorrPValVec;
+        
+        pcorrResultsMat(gammaIdx, jj, :) = pcorrResultsVec;
+        pcorrPValMat(gammaIdx, jj, :) = pcorrPValVec;
     end
 end
 
 % TODO: calculate acceptace rates for RSDM/RSCDM based on calculating the
 % test statistic ...
+
+% To understand the acceptance for CMA, look at demo.m in the cmi folder to
+% see how to use the "surrogate" versus the actual test statistic to see if
+% there is an accept or reject.
 
 % save the results
 if(ispc)
