@@ -30,26 +30,6 @@ R_mice = pairmice(X);
 % load the results from data for ARACNE algorithm
 aracneResults = csvread('aracne.res', 1, 1);
 
-% save the data
-if(ispc)
-    save('C:\\Users\\Kiran\\ownCloud\\PhD\\sim_results\\independence\\aracneRSDM.mat');
-elseif(ismac)
-    save('/Users/Kiran/ownCloud/PhD/sim_results/independence/aracneRSDM.mat');
-else
-    save('/home/kiran/ownCloud/PhD/sim_results/independence/aracneRSDM.mat');
-end
-
-%% Load the data for plotting
-clear;
-clc;
-
-if(ispc)
-    load('C:\\Users\\Kiran\\ownCloud\\PhD\\sim_results\\independence\\aracneRSDM.mat');
-elseif(ismac)
-    load('/Users/Kiran/ownCloud/PhD/sim_results/independence/aracneRSDM.mat');
-else
-    load('/home/kiran/ownCloud/PhD/sim_results/independence/aracneRSDM.mat');
-end
 
 M = size(X,1);
 N = size(R_rsdm,2);
@@ -85,6 +65,27 @@ for ii=1:N
             end
         end
     end
+end
+
+% save the data
+if(ispc)
+    save('C:\\Users\\Kiran\\ownCloud\\PhD\\sim_results\\independence\\aracneRSDM.mat');
+elseif(ismac)
+    save('/Users/Kiran/ownCloud/PhD/sim_results/independence/aracneRSDM.mat');
+else
+    save('/home/kiran/ownCloud/PhD/sim_results/independence/aracneRSDM.mat');
+end
+
+%% Load the data for plotting
+clear;
+clc;
+
+if(ispc)
+    load('C:\\Users\\Kiran\\ownCloud\\PhD\\sim_results\\independence\\aracneRSDM.mat');
+elseif(ismac)
+    load('/Users/Kiran/ownCloud/PhD/sim_results/independence/aracneRSDM.mat');
+else
+    load('/home/kiran/ownCloud/PhD/sim_results/independence/aracneRSDM.mat');
 end
 
 % I = (aracneResults==0);
