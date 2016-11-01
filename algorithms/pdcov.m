@@ -75,7 +75,7 @@ if(nargout>1)
         Tk_vec(kk) = uproduct(P_xz_perm,P_yz);
     end
     Tk_vec = n*Tk_vec;
-    pval = (1 + sum(Tk_vec>=teststat))/(1+replicates);
+    pval = (1 + sum(Tk_vec>teststat))/(1+replicates);
 end
 
 end
