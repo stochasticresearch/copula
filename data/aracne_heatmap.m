@@ -40,30 +40,19 @@ dispstat(sprintf('Begining the simulation...\n'),'keepthis','timestamp');
 % compute the structure using an aracne style algorithm, but instead of the
 % data processing inequality, we use conditional (in)dependence as a
 % surrogate
-alpha = 0.05;       % significance level for independence testing
-edges_rsdm = R_rsdm;
+R_rscdm = cell(N,N);
 for ii=1:N
     for jj=1:N
         dispstat(sprintf('[ii,jj]=[%d,%d]/%d\n', ii, jj, N),'keepthis', 'timestamp');
-        rsdm_val = R_rsdm(ii,jj);
-        pval = rsdmpval(rsdm_val, M);
-        if(pval >= alpha)
-            rsdm_indep = 0;
-        else
-            rsdm_indep = 1;
-            edges_rsdm(ii,jj) = 0; edges_rsdm(jj,ii) = 0;
-        end
-        if(~rsdm_indep)
-            for kk=1:N
-                if(kk~=ii && kk~=jj)
-                    rscdm_val = rscdm(X(:,ii), X(:,jj), X(:,kk));
-                    % test for the conditional independence scenario
-                    if(rsdm_val > rscdm_val)    % TODO: need a p-value based test
-                        edges_rsdm(ii,jj) = 0; edges_rsdm(jj,ii) = 0;
-                    end
-                end
+        rscdm_vec = zeros(1,N);
+        x = X(:,ii); y = X(:,jj);
+        parfor kk=1:N
+            if(kk~=ii && kk~=jj)
+                rscdm_val = rscdm(x, y, X(:,kk));
+                rscdm_vec(kk) = rscdm_val;
             end
         end
+        R_rscdm{ii,jj} = rscdm_vec;
     end
 end
 
@@ -107,7 +96,7 @@ colorbar;          % show color scale
 title('ARACNe');
 
 subplot(2,2,2);
-im = imagesc(edges);        % draw image and scale colormap to values range
+im = imagesc(edges_rsdm);        % draw image and scale colormap to values range
 im.AlphaData = .8;
 colorbar;          % show color scale
 title('RSDM');
@@ -118,7 +107,7 @@ im.AlphaData = .8;
 colorbar;          % show color scale
 title('RSDM/RDC');
 
-subplot(2,2,3);
+subplot(2,2,4);
 im = imagesc(R_rsdm./R_mice);        % draw image and scale colormap to values range
 im.AlphaData = .8;
 colorbar;          % show color scale

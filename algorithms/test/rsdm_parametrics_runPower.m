@@ -147,7 +147,7 @@ for l=num_noise_test_min:num_noise_test_max
             end
             
             % calculate the metrics
-            rsdmAlt(ii) = rsdm_1(x, y);
+            rsdmAlt(ii) = rsdm(x, y);
             rsdm2Alt(ii) = rsdm_2(x, y);
         end
         
