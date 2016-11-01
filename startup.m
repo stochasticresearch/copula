@@ -3,6 +3,7 @@
 addpath('./algorithms');
 addpath('./algorithms/test');
 addpath('./algorithms/mex');
+addpath('./algorithms/ref');
 
 addpath('./bn');
 addpath('./bn/test');
@@ -34,18 +35,29 @@ if(ispc)
     saveProfile(myCluster);
 elseif(ismac)
     myCluster = parcluster('local');
-    myCluster.NumWorkers = 2;
+    myCluster.NumWorkers = 3;
     saveProfile(myCluster);
 elseif(isunix)
     myCluster = parcluster('local');
-    myCluster.NumWorkers = 4;
+    myCluster.NumWorkers = 3;
     saveProfile(myCluster);
 end
 
 % setup Python in Matlab if it isn't already loaded
-try
-    pyversion 2.7   % assume you have Python 2.7 :D
-catch
+if(isunix)
+    try
+        pyversion /usr/bin/python   % assume python installed in default path
+    catch
+        try
+            pyversion 2.7
+        catch
+        end
+    end
+else
+    try
+        pyversion 2.7   % assume you have Python 2.7 :D
+    catch
+    end
 end
 
 % add the python folder to the PYTHON search path
