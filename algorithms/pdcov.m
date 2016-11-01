@@ -1,4 +1,4 @@
-function [pdcov_val, pval] = pdcov( X, Y, Z, replicates )
+function [pdcov_val, pdcor_val, cov_pval, cor_pval] = pdcov( X, Y, Z, replicates )
 %PDCORR computes the partial distance covariance between two random 
 % variables X and Y, given Z. Rows represent the examples, and columns 
 % the variables.  This implementation somewhat based on of dcorr.m here:
@@ -41,6 +41,7 @@ AC = uproduct(A,C);
 BC = uproduct(B,C);
 CC = uproduct(C,C);
 
+% TODO: divide by 0 protection here
 c1 = AC./CC;
 c2 = BC./CC;
 
@@ -48,23 +49,22 @@ P_xz = A-c1.*C;
 P_yz = B-c2.*C;
 
 pdcov_val = uproduct(P_xz,P_yz);
-
-if(nargout>1)
+n = size(X,1);
+teststat = n*pdcov_val;
+den = sqrt(uproduct(P_xz, P_xz) * uproduct(P_yz, P_yz));
+if(den>0)
+    pdcor_val = teststat/(n*den);
+else
+    pdcor_val = 0;
+end
+    
+if(nargout>2)
     
     if(nargin<4)
         replicates = 199;
     end
 
-    n = size(X,1);
-    teststat = n*pdcov_val;
-    den = sqrt(uproduct(P_xz, P_xz) * uproduct(P_yz, P_yz));
-    if(den>0)
-        estimate = teststat/(n*den);        % this is actually the pdcor value!
-    else
-        estimate = 0;
-    end
-    
-    % compute the p-value also
+    % compute the p-value for the covariance value
     Tk_vec = zeros(1,replicates);
     parfor kk=1:replicates
         % permute Y
@@ -75,7 +75,16 @@ if(nargout>1)
         Tk_vec(kk) = uproduct(P_xz_perm,P_yz);
     end
     Tk_vec = n*Tk_vec;
-    pval = (1 + sum(Tk_vec>teststat))/(1+replicates);
+    cov_pval = (1 + sum(Tk_vec>teststat))/(1+replicates);
+    
+    if(pdcor_val>0)
+        nRootV = teststat/pdcor_val;
+    else
+        nRootV = 1;
+    end
+    teststat = pdcor_val;
+    pdcor_reps = Tk_vec/nRootV;
+    cor_pval   = (1 + sum(pdcor_reps > teststat))/(1 + replicates);
 end
 
 end
