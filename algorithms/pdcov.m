@@ -2,14 +2,23 @@ function [pdcov_val, pdcor_val, cov_pval, cor_pval] = pdcov( X, Y, Z, replicates
 %PDCORR computes the partial distance covariance between two random 
 % variables X and Y, given Z. Rows represent the examples, and columns 
 % the variables.  This implementation somewhat based on of dcorr.m here:
-%  https://www.mathworks.com/matlabcentral/fileexchange/49968-dcorr--x--y--
+% https://www.mathworks.com/matlabcentral/fileexchange/49968-dcorr--x--y--
+% and the impelmentation of pdcov.test in the "energy" package in R. 
 % Reference: https://arxiv.org/pdf/1310.2926.pdf
 % Inputs:
-%  X - 
-%  Y -
-%  Z - 
+%  X - input matrix X
+%  Y - input matrix Y
+%  Z - input matrix Z
+%  replicates - the number of permutation tests to run to determine the
+%               p-value.  Larger numbers take longer to run, but are more
+%               accurate.  Defaults to 999 if not provided.
 % Outputs:
-%  metric - the partial distance correlation of {X & Y}|Z
+%  pdcov_val - the partial distance covariance of {X & Y}|Z
+%  pdcor_val - the partial distance correlation of {X & Y}|Z
+%  cov_pval  - the p-value associated with the partial distance covariance
+%              estimate
+%  cor_pval  - the p-val associated with the partial distance correlation
+%              estimate
 %**************************************************************************
 %* 
 %* Copyright (C) 2016  Kiran Karra <kiran.karra@gmail.com>
@@ -41,9 +50,11 @@ AC = uproduct(A,C);
 BC = uproduct(B,C);
 CC = uproduct(C,C);
 
-% TODO: divide by 0 protection here
-c1 = AC./CC;
-c2 = BC./CC;
+c1 = 0; c2 = 0;
+if(abs(CC)>eps)
+    c1 = AC./CC;
+    c2 = BC./CC;
+end
 
 P_xz = A-c1.*C;
 P_yz = B-c2.*C;
@@ -59,9 +70,8 @@ else
 end
     
 if(nargout>2)
-    
     if(nargin<4)
-        replicates = 199;
+        replicates = 999;
     end
 
     % compute the p-value for the covariance value
