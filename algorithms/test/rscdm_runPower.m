@@ -33,9 +33,9 @@ rsdmResultsMat = zeros(length(gammaVec), numDepTypes, nsim);        % for compar
 rscdmResultsMat = zeros(length(gammaVec), numDepTypes, nsim);
 cmaSurrResultsMat = zeros(length(gammaVec), numDepTypes, nsim);     % for comparision of aceptance rate
 cmaResultsMat = zeros(length(gammaVec), numDepTypes, nsim);
-
 hdResultsMat = zeros(length(gammaVec), numDepTypes, nsim);
 hsicResultsMat = zeros(length(gammaVec), numDepTypes, nsim);
+hsicPValMat = zeros(length(gammaVec), numDepTypes, nsim);
 pdcorrResultsMat = zeros(length(gammaVec), numDepTypes, nsim);
 pdcorrPValMat = zeros(length(gammaVec), numDepTypes, nsim);
 pcorrResultsMat = zeros(length(gammaVec), numDepTypes, nsim);
@@ -47,6 +47,7 @@ cmaSurrResultsVec = zeros(1,nsim);
 cmaResultsVec = zeros(1,nsim);
 hdResultsVec = zeros(1,nsim);
 hsicResultsVec = zeros(1,nsim);
+hsicPValVec = zeros(1,nsim);
 pdcorrResultsVec = zeros(1,nsim);
 pdcorrPValVec = zeros(1,nsim);
 pcorrResultsVec = zeros(1,nsim);
@@ -88,7 +89,8 @@ for gammaIdx=1:length(gammaVec)
             cmaSurrVal = gensurr(data);
             
             hdVal = hd(Y,Z,X);
-            hsicVal = hsncic(Y,Z,X);
+
+            [hsicVal, hsicpval] = hsic(Y,Z,X);
             [pdcorrVal, pdcorr_pval] = pdcorr_R(Y, Z, X);
             [pcorrVal, pcorr_pval] = partialcorr(Y, Z, X);
             
@@ -99,7 +101,10 @@ for gammaIdx=1:length(gammaVec)
             cmaResultsVec(ii) = cmaVal;
             
             hdResultsVec(ii) = hdVal;
+            
             hsicResultsVec(ii) = hsicVal;
+            hsicPValVec(ii) = hsicPVal;
+            
             pdcorrResultsVec(ii) = pdcorrVal;
             pdcorrPValVec(ii) = pdcorr_pval;
             
@@ -114,7 +119,9 @@ for gammaIdx=1:length(gammaVec)
         cmaResultsMat(gammaIdx, jj, :) = cmaResultsVec;
         
         hdResultsMat(gammaIdx, jj, :) = hdResultsVec;
+        
         hsicResultsMat(gammaIdx, jj, :) = hsicResultsVec;
+        hsicPValMat(gammaIdx, jj, :) = hsicPValVec;
         
         pdcorrResultsMat(gammaIdx, jj, :) = pdcorrResultsVec;
         pdcorrPValMat(gammaIdx, jj, :) = pdcorrPValVec;
@@ -394,7 +401,7 @@ x = rand(M,1);
 % y = sin(4*pi*x) + noise*randn(M,1); z = cos(4*pi*x) + noise*randn(M,1);
 % y = nthroot(x, 4) + noise*randn(M,1); z = nthroot(x, 4) + noise*randn(M,1);
 % y = x + noise*randn(M,1); z = 4*(x-0.5).^2 + noise*randn(M,1);
-% y = 4*(x-0.5).^2 + noise*randn(M,1); z = cos(4*pi*x) + noise*randn(M,1);
+y = 4*(x-0.5).^2 + noise*randn(M,1); z = cos(4*pi*x) + noise*randn(M,1);
 
 rsdm1 = rsdm(x, y);
 rsdm2 = rsdm(x, z);
@@ -462,7 +469,7 @@ alpha = 0.05;
 y = rand(M,1);
 z = rand(M,1);
 % x = y + z + noise*randn(M,1);
-% x = (y-0.5).^2 + (z-0.5).^2 + noise*randn(M,1);
+x = (y-0.5).^2 + (z-0.5).^2 + noise*randn(M,1);
 % x = sin(4*pi*y)+cos(4*pi*z) + noise*randn(M,1);
 % x = nthroot(y,4)+nthroot(z,4) + noise*randn(M,1);
 % x = y + (z-0.5).^2 + noise*randn(M,1);
