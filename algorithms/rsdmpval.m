@@ -1,4 +1,9 @@
 function [pval] = rsdmpval(rsdmVal, M)
+%RSDMPVAL - computes the p-value of a given RSDM measure and the number of
+%samples upon which that RSDM measure was calculated
+% Inputs:
+%  rsdmVal - the rsdm measure
+%  M - the sample size used to compute this rsdm measure
 
 % values are hard-coded, look at the 3rd and 4th execution cells to see how
 % these vectors were generated
@@ -12,10 +17,10 @@ M_vec = 100:100:1000;
 
 % iterpolate for each value of k, mu, sigma for the given M
 
-k = interp1(M_vec, kVec, M);
-mu = interp1(M_vec, muVec, M);
-sigma = interp1(M_vec, sigmaVec, M);
+k = interp1(M_vec, kVec, M, 'spline');
+mu = interp1(M_vec, muVec, M, 'spline');
+sigma = interp1(M_vec, sigmaVec, M, 'spline');
 
-pval = gevcdf(rsdmVal, k, sigma, mu);
+pval = 1-gevcdf(rsdmVal, k, sigma, mu);
 
 end

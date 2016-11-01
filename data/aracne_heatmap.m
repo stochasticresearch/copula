@@ -82,6 +82,43 @@ end
 % R_rdc(I) = 0;
 % R_mice(I) = 0;
 
+% build the RSDM/RSCDM network
+alpha = 0.05;
+M = size(X,1);
+N = size(R_rsdm, 2);    % this is a square matrix, shouldn't matter
+rsdm_network = R_rsdm;
+thresh = .01;
+for ii=1:N
+    for jj=1:N
+        rsdm_X_Z = R_rsdm(ii,jj);
+        if(rsdmpval(rsdm_X_Z, M)<alpha)  % means reject H0 that {X indep. Y}
+            rscdm_ii_jj = R_rscdm{ii,jj};
+            for kk=1:N
+                rscdm_ii_kk = R_rscdm{ii,kk};
+                rscdm_jj_kk = R_rscdm{jj,kk};
+                
+                rscdm_X_Z_Y = rscdm_ii_jj(kk);
+                rscdm_X_Y_Z = rscdm_ii_kk(jj);
+                rscdm_Y_Z_X = rscdm_jj_kk(ii);
+                
+                rsdm_X_Y = R_rsdm(ii,kk);
+                rsdm_Y_Z = R_rsdm(jj,kk);
+                
+                if(rscdm_X_Z_Y < rsdm_X_Z && ...
+                   abs( (rscdm_X_Y_Z-rsdm_X_Y) < thresh ) && ...
+                   abs( (rscdm_Y_Z_X-rsdm_Y_Z) < thresh ) )
+                    rsdm_network(ii,jj) = 0; 
+                    rsdm_network(jj,ii) = 0;
+                end
+            end
+        else
+            rsdm_network(ii,jj) = 0;
+            rsdm_network(jj,ii) = 0;
+        end
+        
+    end
+end
+
 % prevent divide by 0's
 R_rsdm(R_rsdm==0) = eps;
 R_rdc(R_rdc==0) = eps;
@@ -96,7 +133,7 @@ colorbar;          % show color scale
 title('ARACNe');
 
 subplot(2,2,2);
-im = imagesc(edges_rsdm);        % draw image and scale colormap to values range
+im = imagesc(rsdm_network);        % draw image and scale colormap to values range
 im.AlphaData = .8;
 colorbar;          % show color scale
 title('RSDM');
