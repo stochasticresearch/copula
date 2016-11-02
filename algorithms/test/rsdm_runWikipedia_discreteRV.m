@@ -26,11 +26,6 @@ clc;
 n = 800;
 nCases = 9;
 
-% configure RSDM
-rsdm_minscanincr = 0.025;
-rsdm_diffthresh = 100;
-rsdm_alpha = 0.08;
-
 % configure RDC
 rdc_k = 20;
 rdc_s = 1/6;
@@ -52,7 +47,7 @@ x = discretizeRv(x, numDiscreteIntervals)';
 y = discretizeRv(y, numDiscreteIntervals)';
 xy{1} = [x y];
 
-rsdmBias = rsdm(x, y, rsdm_minscanincr, rsdm_diffthresh, rsdm_alpha);
+rsdmBias = rsdm(x, y);
 rdcBias = rdc(x,y,rdc_k,rdc_s);
 dcorrBias = dcorr(x, y);
 corrBias = corr(x,y);
@@ -110,32 +105,42 @@ dataIdx = [2 1 3 4 5 6 7 8 9];
 inset_width = 0.075; inset_height = 0.075;
 inset_bufX = 0.05; inset_bufY = 0.02;
 
+printBiasCorrected = 0;
+
 for ii=1:nCases
     h = subplot(3,3,ii);
     h.Position
     data = xy{dataIdx(ii)};
     x = data(:,1); y = data(:,2);
     
-    rsdmVal = rsdm(x, y, rsdm_minscanincr, rsdm_diffthresh, rsdm_alpha);
+    rsdmVal = rsdm(x, y);
     rdcVal = rdc(x,y,rdc_k,rdc_s);
     minestats = mine(x',y',mine_alpha,mine_c,'mic_e');
     mic_e_val = minestats.mic;
     dcorrVal = dcorr(x,y);
     corrVal = corr(x,y);
     
-    rsdmPrint = rsdmVal-rsdmBias;
-    rdcPrint = rdcVal-rdcBias;
-    dcorrPrint = dcorrVal-dcorrBias;
-    mic_e_print = mic_e_val-mic_e_bias;
-    corrPrint = abs(corrVal) - corrBias;
-    
-    % show the bias for the independence plot
-    if(dataIdx(ii)==1)
-        rsdmPrint = rsdmBias;
-        rdcPrint = rdcBias;
-        dcorrPrint = dcorrBias;
-        mic_e_print = mic_e_bias;
-        corrPrint = corrBias;
+    if(printBiasCorrected)
+        rsdmPrint = rsdmVal-rsdmBias;
+        rdcPrint = rdcVal-rdcBias;
+        dcorrPrint = dcorrVal-dcorrBias;
+        mic_e_print = mic_e_val-mic_e_bias;
+        corrPrint = abs(corrVal) - corrBias;
+
+        % show the bias for the independence plot
+        if(dataIdx(ii)==1)
+            rsdmPrint = rsdmBias;
+            rdcPrint = rdcBias;
+            dcorrPrint = dcorrBias;
+            mic_e_print = mic_e_bias;
+            corrPrint = corrBias;
+        end
+    else
+        rsdmPrint = rsdmVal;
+        rdcPrint = rdcVal;
+        dcorrPrint = dcorrVal;
+        mic_e_print = mic_e_val;
+        corrPrint = corrVal;
     end
     
     b = bar([rsdmPrint rdcPrint dcorrPrint mic_e_print corrPrint]);

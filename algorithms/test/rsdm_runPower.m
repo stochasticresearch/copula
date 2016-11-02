@@ -919,19 +919,25 @@ for ii=1:length(M_vec)
     sigmaVec(ii) = pd.sigma;
 end
 
+fontSize = 20;
+
 % do the Q-Q plot
 pd = pdObjs{5};
-subplot(2,2,1); qqplot(rsdmNullDistributionResults(:,1), pd); grid on;
+h1 = subplot(2,2,1); qqplot(rsdmNullDistributionResults(:,1), pd); grid on;
 xlabel(sprintf('Quantiles of GEV(%0.02f,%0.02f, %0.02f)', pd.k, pd.mu, pd.sigma), 'FontSize', 20);
-ylabel('Quantiles of Input Samples', 'FontSize', 20);
-title('M = 500', 'FontSize', 24);
+ylabel('Quantiles of Input Samples', 'FontSize', fontSize);
+title('M = 500', 'FontSize', fontSize);
+h1.FontSize = fontSize;
 
 % plot how mu and lambda change as M goes from 100 --> 1000
-subplot(2,2,2); plot(M_vec, kVec);     
-grid on; xlabel('M', 'FontSize', 20); ylabel('k', 'FontSize', 20);
+h2 = subplot(2,2,2); plot(M_vec, kVec);     
+grid on; xlabel('M', 'FontSize', fontSize); ylabel('k', 'FontSize', fontSize);
+h2.FontSize = fontSize;
 
-subplot(2,2,3); plot(M_vec, muVec);    
-grid on; xlabel('M', 'FontSize', 20); ylabel('\mu', 'FontSize', 20);
+h3 = subplot(2,2,3); plot(M_vec, muVec);    
+grid on; xlabel('M', 'FontSize', fontSize); ylabel('\mu', 'FontSize', fontSize);
+h3.FontSize = fontSize;
 
-subplot(2,2,4); plot(M_vec, sigmaVec); 
-grid on; xlabel('M', 'FontSize', 20); ylabel('\lambda', 'FontSize', 20);
+h4 = subplot(2,2,4); plot(M_vec, sigmaVec); 
+grid on; xlabel('M', 'FontSize', fontSize); ylabel('\lambda', 'FontSize', fontSize);
+h4.FontSize = fontSize;

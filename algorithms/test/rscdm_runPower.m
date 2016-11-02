@@ -91,7 +91,7 @@ for gammaIdx=1:length(gammaVec)
             hdVal = hd(Y,Z,X);
 
             [hsicVal, hsicpval] = hsic(Y,Z,X);
-            [pdcorrVal, pdcorr_pval] = pdcorr_R(Y, Z, X);
+            [~, pdcorVal, ~, pdcor_pval] = pdcov(Y, Z, X);
             [pcorrVal, pcorr_pval] = partialcorr(Y, Z, X);
             
             rsdmResultsVec(ii) = rsdmVal;
@@ -105,8 +105,8 @@ for gammaIdx=1:length(gammaVec)
             hsicResultsVec(ii) = hsicVal;
             hsicPValVec(ii) = hsicPVal;
             
-            pdcorrResultsVec(ii) = pdcorrVal;
-            pdcorrPValVec(ii) = pdcorr_pval;
+            pdcorrResultsVec(ii) = pdcorVal;
+            pdcorrPValVec(ii) = pdcor_pval;
             
             pcorrResultsVec(ii) = pcorrVal;
             pcorrPValVec(ii) = pcorr_pval;
@@ -294,13 +294,13 @@ for gammaIdx=1:length(gammaVec)
             data = struct();
             data.X = Y; data.Y = Z; data.Z = X; cmaVal = cassor(data);
             hdVal = hd(Y,Z,X);
-            pdcorrVal = pdcorr_R(Y, Z, X);
+            [~, pdcorVal, ~, pdcor_pval] = pdcov(Y, Z, X);
             pcorrVal = partialcorr(Y, Z, X);
             
             rscdmResultsVec(ii) = rscdmVal;
             cmaResultsVec(ii) = cmaVal;
             hdResultsVec(ii) = hdVal;
-            pdcorrResultsVec(ii) = pdcorrVal;
+            pdcorrResultsVec(ii) = pdcorVal;
             pcorrResultsVec(ii) = pcorrVal;
             
         end
@@ -413,12 +413,12 @@ rsdm3 = rsdm(y, z);
 % d-separation.  So if we condition upon X (i.e. remove teh effect of X on
 % Y and Z separately), then we should get independence.
 [rscdmVal, RxAligned, RyAligned] = rscdm(y,z,x);
-pdCorr_val = abs(pdcorr_R(y,z,x));
+[~, pdcorVal] = pdcov(y, z, x); pdcorVal = abs(pdcorVal);
 partialCorrVal = abs(partialcorr(y,z,x));
 data.X = y; data.Y = z; data.Z = x; cassorVal = abs(cassor(data));
 hdVal = abs(hd(y, z, x));
 
-fontSize = 10;
+fontSize = 20;
 
 subplot(3,12,1:3);
 scatter(x,y); grid on; xlabel('x', 'FontSize', fontSize); ylabel('y', 'FontSize', fontSize); 
@@ -433,18 +433,19 @@ scatter(x,z); grid on; xlabel('x', 'FontSize', fontSize); ylabel('z', 'FontSize'
 title(sprintf('RSDM=%0.2f', rsdm2), 'FontSize', fontSize);
 
 subplot(3,12,13:17);
-scatter(1:M, RxAligned); grid on;
-xlabel('x', 'FontSize', fontSize); ylabel('r_y', 'FontSize', fontSize);
+scatter(linspace(0,1,M), RxAligned); grid on;
+xlabel('x', 'FontSize', fontSize); ylabel('r_{y|x}', 'FontSize', fontSize);
 
 subplot(3,12,20:24);
-scatter(1:M, RyAligned); grid on;
-xlabel('x', 'FontSize', fontSize); ylabel('r_z', 'FontSize', fontSize);
+scatter(linspace(0,1,M), RyAligned); grid on;
+xlabel('x', 'FontSize', fontSize); ylabel('r_{z|x}', 'FontSize', fontSize);
 
 subplot(3,12,25:29);
 scatter(RxAligned,RyAligned); grid on; 
-xlabel('r_y', 'FontSize', fontSize); ylabel('r_z', 'FontSize', fontSize);  
-title(sprintf('%0.02f/%0.02f/%0.02f/%0.02f/%0.02f', ...
-    rscdmVal, pdCorr_val, partialCorrVal, cassorVal, hdVal), 'FontSize', fontSize);
+xlabel('r_{y|x}', 'FontSize', fontSize); ylabel('r_{z|x}', 'FontSize', fontSize);  
+% title(sprintf('%0.02f/%0.02f/%0.02f/%0.02f/%0.02f', ...
+%     rscdmVal, pdcorVal, partialCorrVal, cassorVal, hdVal), 'FontSize', fontSize);
+title(sprintf('RSCDM=%0.02f', rscdmVal), 'FontSize', fontSize);
 
 subplot(3,12,32:36);
 scatter(pobs(RxAligned),pobs(RyAligned), 'r'); grid on; 
@@ -469,10 +470,10 @@ alpha = 0.05;
 y = rand(M,1);
 z = rand(M,1);
 % x = y + z + noise*randn(M,1);
-x = (y-0.5).^2 + (z-0.5).^2 + noise*randn(M,1);
+% x = (y-0.5).^2 + (z-0.5).^2 + noise*randn(M,1);
 % x = sin(4*pi*y)+cos(4*pi*z) + noise*randn(M,1);
 % x = nthroot(y,4)+nthroot(z,4) + noise*randn(M,1);
-% x = y + (z-0.5).^2 + noise*randn(M,1);
+x = y + (z-0.5).^2 + noise*randn(M,1);
 % x = (y-0.5).^2 + cos(4*pi*z) + noise*randn(M,1);
 
 rsdm1 = rsdm(x, y);
@@ -482,12 +483,12 @@ rsdm3 = rsdm(y, z);
 % conditioned upon X, they become dependent.  Refer to the rules of
 % d-separation to see why, this is a V-Structure!
 [rscdmVal, RxAligned, RyAligned] = rscdm(y,z,x);
-pdCorr_val = abs(pdcorr_R(y,z,x));
+[~, pdcorVal] = pdcov(y, z, x); pdcorVal = abs(pdcorVal);
 partialCorrVal = abs(partialcorr(y,z,x));
 data.X = y; data.Y = z; data.Z = x; cassorVal = abs(cassor(data));
 hdVal = abs(hd(y, z, x));
 
-fontSize = 10;
+fontSize = 20;
 
 subplot(3,12,1:3);
 scatter(x,y); grid on; xlabel('x', 'FontSize', fontSize); ylabel('y', 'FontSize', fontSize); 
@@ -512,8 +513,9 @@ xlabel('x', 'FontSize', fontSize); ylabel('r_z', 'FontSize', fontSize);
 subplot(3,12,25:29);
 scatter(RxAligned,RyAligned); grid on; 
 xlabel('r_y', 'FontSize', fontSize); ylabel('r_z', 'FontSize', fontSize);  
-title(sprintf('%0.02f/%0.02f/%0.02f/%0.02f/%0.02f', ...
-    rscdmVal, pdCorr_val, partialCorrVal, cassorVal, hdVal), 'FontSize', fontSize);
+% title(sprintf('%0.02f/%0.02f/%0.02f/%0.02f/%0.02f', ...
+%     rscdmVal, pdcor_val, partialCorrVal, cassorVal, hdVal), 'FontSize', fontSize);
+title(sprintf('RSCDM=%0.02f', rscdmVal), 'FontSize', fontSize);
 
 subplot(3,12,32:36);
 scatter(pobs(RxAligned),pobs(RyAligned), 'r'); grid on; 
