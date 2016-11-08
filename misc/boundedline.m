@@ -346,7 +346,7 @@ for iln = 1:nline
 end
 
 for iln = 1:nline
-    hl(iln) = line(xl{iln}, yl{iln}, 'marker', marker{iln}, 'linestyle', lnsty{iln}, 'color', lncol{iln}, 'parent', hax);
+    hl(iln) = line(xl{iln}, yl{iln}, 'marker', marker{iln}, 'linestyle', lnsty{iln}, 'color', lncol{iln}, 'parent', hax, 'LineWidth', 4);
 end
 
 %--------------------

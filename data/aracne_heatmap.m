@@ -87,7 +87,7 @@ alpha = 0.05;
 M = size(X,1);
 N = size(R_rsdm, 2);    % this is a square matrix, shouldn't matter
 rsdm_network = R_rsdm;
-thresh = .01;
+thresh = .04;
 for ii=1:N
     for jj=1:N
         rsdm_X_Z = R_rsdm(ii,jj);
@@ -104,14 +104,25 @@ for ii=1:N
                 rsdm_X_Y = R_rsdm(ii,kk);
                 rsdm_Y_Z = R_rsdm(jj,kk);
                 
-                if(rscdm_X_Z_Y < rsdm_X_Z && ...
-                   abs( (rscdm_X_Y_Z-rsdm_X_Y) < thresh ) && ...
-                   abs( (rscdm_Y_Z_X-rsdm_Y_Z) < thresh ) )
+%                 fprintf('RSCDM(X,Z,Y)=%0.02f RSDM(X,Z)=%0.02f RSCDM(X,Y,Z)=%0.02f RDSM(X,Y)=%0.02f RSCDM(Y,Z,X)=%0.02f RSDM(Y,Z)=%0.02f\n', ...
+%                     rscdm_X_Z_Y, rsdm_X_Z, rscdm_X_Y_Z, rsdm_X_Y, ...
+%                     rscdm_Y_Z_X, rsdm_Y_Z);
+                
+                if(( (rscdm_X_Z_Y-rsdm_X_Z) < 0.5) && ...
+                   ( abs(rscdm_X_Y_Z-rsdm_X_Y) < thresh) && ...
+                   ( abs(rscdm_Y_Z_X-rsdm_Y_Z) < thresh) )
                     rsdm_network(ii,jj) = 0; 
                     rsdm_network(jj,ii) = 0;
+
+%                     fprintf('RSCDM(X,Z,Y)=%0.02f RSDM(X,Z)=%0.02f RSCDM(X,Y,Z)=%0.02f RDSM(X,Y)=%0.02f RSCDM(Y,Z,X)=%0.02f RSDM(Y,Z)=%0.02f\n', ...
+%                         rscdm_X_Z_Y, rsdm_X_Z, rscdm_X_Y_Z, rsdm_X_Y, ...
+%                         rscdm_Y_Z_X, rsdm_Y_Z);
+% 
+%                     fprintf('Setting [%d,%d]=[%d,%d]=0\n', ii,jj, jj, ii);
                 end
             end
         else
+%             fprintf('INDEP: [%d,%d]=[%d,%d]\n', ii, jj, jj, ii);
             rsdm_network(ii,jj) = 0;
             rsdm_network(jj,ii) = 0;
         end

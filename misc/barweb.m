@@ -220,7 +220,11 @@ else
 		xlabel(bw_xlabel, 'fontsize',labelTextSize);
 	end
 	if ~isempty(bw_ylabel)
-		ylabel(bw_ylabel, 'fontsize',labelTextSize);
+        if(~isempty(strfind(bw_ylabel, '$')))
+            ylabel(bw_ylabel, 'fontsize',labelTextSize, 'Interpreter', 'Latex');
+        else
+            ylabel(bw_ylabel, 'fontsize',labelTextSize);
+        end
 	end
 	
 	set(gca, 'xticklabel', groupnames, 'box', 'off', 'ticklength', [0 0], 'fontsize', groupTextSize, 'xtick',1:numgroups, 'linewidth', 2,'xgrid','off','ygrid','off');

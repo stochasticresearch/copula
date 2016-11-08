@@ -437,9 +437,13 @@ end
 % save the results
 if(ispc)
     save('C:\\Users\\Kiran\\ownCloud\\PhD\\sim_results\\independence\\ktauhat_biasData.mat');
+elseif(ismac)
+    save('/Users/kiran/ownCloud/PhD/sim_results/independence/ktauhat_biasData');
 else
     save('/home/kiran/ownCloud/PhD/sim_results/independence/ktauhat_biasData');
 end
+
+f = figure(1);
 
 % plot the data
 metricsToPlot = [7 6 4];        % 7 = tau-b, 6 = tau, 4 = tau-h
@@ -450,7 +454,7 @@ cmap = winter(3);
 transparencyFactor = 0.15;
 
 % Gaussian Copula Data
-subplot(3,2,1);
+h1 = subplot(3,2,1);
 depTypeIdx = 1;
 x = subDependenciesVec(depTypeIdx,:);
 y = squeeze(resultsXYCopula_bias(depTypeIdx,:,metricsToPlot))';
@@ -459,12 +463,17 @@ e = zeros(size(subDependenciesVec,2), 2, length(metricsToPlot));
 for ii=1:length(metricsToPlot)
     e(:,1,ii) = y(ii,:)-varTmp(ii,:)/2; e(:,2,ii) = y(ii,:)+varTmp(ii,:)/2;
 end
-boundedline(x,y,e,'cmap', cmap, 'transparency', transparencyFactor);
-grid on; xlabel('$\rho$', 'Interpreter', 'Latex'); ylabel('$E[\hat{\tau}-\tau]$', 'Interpreter', 'Latex'); 
-title('Gaussian Copula');
+boundedline(x,y,e, 'cmap', cmap, 'transparency', transparencyFactor);
+grid on; xlabel('{\boldmath$\rho$}', 'Interpreter', 'Latex', 'FontSize', 20); 
+ylabel('{\boldmath$E[\hat{\tau}-\tau]$}', 'Interpreter', 'Latex', 'FontSize', 20); 
+title('Gaussian Copula', 'FontSize', 24);
+a = get(h1,'XTickLabel');
+set(h1,'XTickLabel',a,'FontSize',20)
+a = get(h1,'YTickLabel');
+set(h1,'YTickLabel',a,'FontSize',20)
 
 % Frank Copula Data
-subplot(3,2,2);
+h2 = subplot(3,2,2);
 depTypeIdx = 2;
 x = subDependenciesVec(depTypeIdx,:);
 y = squeeze(resultsXYCopula_bias(depTypeIdx,:,metricsToPlot))';
@@ -474,11 +483,16 @@ for ii=1:length(metricsToPlot)
     e(:,1,ii) = y(ii,:)-varTmp(ii,:)/2; e(:,2,ii) = y(ii,:)+varTmp(ii,:)/2;
 end
 boundedline(x,y,e,'cmap', cmap, 'transparency', transparencyFactor);
-grid on; xlabel('$\alpha$', 'Interpreter', 'Latex'); ylabel('$E[\hat{\tau}-\tau]$', 'Interpreter', 'Latex'); 
-title('Frank Copula');
+grid on; xlabel('{\boldmath$\alpha$}', 'Interpreter', 'Latex', 'FontSize', 20); 
+ylabel('{\boldmath$E[\hat{\tau}-\tau]$}', 'Interpreter', 'Latex', 'FontSize', 20); 
+title('Frank Copula', 'FontSize', 24); 
+a = get(h2,'XTickLabel');
+set(h2,'XTickLabel',a,'FontSize',20)
+a = get(h2,'YTickLabel');
+set(h2,'YTickLabel',a,'FontSize',20)
 
 % Gumbel Copula Data
-subplot(3,2,3);
+h3 = subplot(3,2,3);
 depTypeIdx = 3;
 x = subDependenciesVec(depTypeIdx,:);
 y = squeeze(resultsXYCopula_bias(depTypeIdx,:,metricsToPlot))';
@@ -488,11 +502,16 @@ for ii=1:length(metricsToPlot)
     e(:,1,ii) = y(ii,:)-varTmp(ii,:)/2; e(:,2,ii) = y(ii,:)+varTmp(ii,:)/2;
 end
 boundedline(x,y,e,'cmap', cmap, 'transparency', transparencyFactor);
-grid on; xlabel('$\alpha$', 'Interpreter', 'Latex'); ylabel('$E[\hat{\tau}-\tau]$', 'Interpreter', 'Latex'); 
-title('Gumbel Copula');
+grid on; xlabel('{\boldmath$\alpha$}', 'Interpreter', 'Latex', 'FontSize', 20); 
+ylabel('{\boldmath$E[\hat{\tau}-\tau]$}', 'Interpreter', 'Latex', 'FontSize', 20); 
+title('Gumbel Copula', 'FontSize', 24); 
+a = get(h3,'XTickLabel');
+set(h3,'XTickLabel',a,'FontSize',20)
+a = get(h3,'YTickLabel');
+set(h3,'YTickLabel',a,'FontSize',20)
 
 % Clayton Copula Data
-subplot(3,2,4);
+h4 = subplot(3,2,4);
 depTypeIdx = 4;
 x = subDependenciesVec(depTypeIdx,:);
 y = squeeze(resultsXYCopula_bias(depTypeIdx,:,metricsToPlot))';
@@ -502,8 +521,13 @@ for ii=1:length(metricsToPlot)
     e(:,1,ii) = y(ii,:)-varTmp(ii,:)/2; e(:,2,ii) = y(ii,:)+varTmp(ii,:)/2;
 end
 boundedline(x,y,e,'cmap', cmap, 'transparency', transparencyFactor);
-grid on; xlabel('$\alpha$', 'Interpreter', 'Latex'); ylabel('$E[\hat{\tau}-\tau]$', 'Interpreter', 'Latex'); 
-title('Clayton Copula');
+grid on; xlabel('{\boldmath$\alpha$}', 'Interpreter', 'Latex', 'FontSize', 20); 
+ylabel('{\boldmath$E[\hat{\tau}-\tau]$}', 'Interpreter', 'Latex', 'FontSize', 20); 
+title('Clayton Copula', 'FontSize', 24); 
+a = get(h4,'XTickLabel');
+set(h4,'XTickLabel',a,'FontSize',20)
+a = get(h4,'YTickLabel');
+set(h4,'YTickLabel',a,'FontSize',20)
 
 subplot(3,2,5);
 biasValsMonotonicXY = abs(squeeze(resultsXYFunctional_bias(1,:,metricsToPlot)));
@@ -522,15 +546,19 @@ width = 1;
 groupnames = {'Linear', 'Quadratic', 'Exponential'};
 bw_title = 'Monotonic Dependency';
 bw_xlabel = [];
-bw_ylabel = '|E[\tau-\tau_t]|';
-bw_colormap = winter;
+bw_ylabel = '{\boldmath$|E[\hat{\tau}-\tau]|$}';
+bw_colormap = winter(3);
 gridstatus = 'xy';
 bw_legend = legendCell;
 error_sides = 2;        % change to 1 if you want 1-sided error-bars, but doesn't seem to work properly
 legend_type = 'plot';
+legendTextSize = 20;
+labelTextSize = 20;
+groupTextSize = 20;
 
 barweb(biasValsMonotonicXY,stddevXY,width,groupnames,bw_title, bw_xlabel, bw_ylabel, ...
-       bw_colormap, gridstatus, bw_legend, error_sides, legend_type);
+       bw_colormap, gridstatus, bw_legend, error_sides, legend_type, ...
+       legendTextSize, labelTextSize, groupTextSize);
 
 subplot(3,2,6);
 biasValsComonotonicXY = abs(squeeze(resultsXYFunctional_bias(2,:,metricsToPlot)));
@@ -540,4 +568,7 @@ stddevXY = sqrt(varValsComonotonicXY);
 
 bw_title = 'Comonotonic Dependency';
 barweb(biasValsComonotonicXY,stddevXY,width,groupnames,bw_title, bw_xlabel, bw_ylabel, ...
-       bw_colormap, gridstatus, bw_legend, error_sides, legend_type);
+       bw_colormap, gridstatus, bw_legend, error_sides, legend_type, ...
+       legendTextSize, labelTextSize, groupTextSize);
+   
+%subplotsqueeze(f,1.1);

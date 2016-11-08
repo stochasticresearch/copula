@@ -420,37 +420,43 @@ hdVal = abs(hd(y, z, x));
 
 fontSize = 20;
 
-subplot(3,12,1:3);
+h1 = subplot(3,12,1:3);
 scatter(x,y); grid on; xlabel('x', 'FontSize', fontSize); ylabel('y', 'FontSize', fontSize); 
 title(sprintf('RSDM=%0.2f', rsdm1), 'FontSize', fontSize);
+h1.FontSize = fontSize;
 
-subplot(3,12,5:8);
+h2 = subplot(3,12,5:8);
 scatter(y,z); grid on; xlabel('y', 'FontSize', fontSize); ylabel('z', 'FontSize', fontSize); 
 title(sprintf('RSDM=%0.2f', rsdm3), 'FontSize', fontSize);
+h2.FontSize = fontSize;
 
-subplot(3,12,10:12);
+h3 = subplot(3,12,10:12);
 scatter(x,z); grid on; xlabel('x', 'FontSize', fontSize); ylabel('z', 'FontSize', fontSize); 
 title(sprintf('RSDM=%0.2f', rsdm2), 'FontSize', fontSize);
+h3.FontSize = fontSize;
 
-subplot(3,12,13:17);
+h4 = subplot(3,12,13:17);
 scatter(linspace(0,1,M), RxAligned); grid on;
 xlabel('x', 'FontSize', fontSize); ylabel('r_{y|x}', 'FontSize', fontSize);
+h4.FontSize = fontSize;
 
-subplot(3,12,20:24);
+h5 = subplot(3,12,20:24);
 scatter(linspace(0,1,M), RyAligned); grid on;
 xlabel('x', 'FontSize', fontSize); ylabel('r_{z|x}', 'FontSize', fontSize);
+h5.FontSize = fontSize;
 
-subplot(3,12,25:29);
+h6 = subplot(3,12,25:29);
 scatter(RxAligned,RyAligned); grid on; 
 xlabel('r_{y|x}', 'FontSize', fontSize); ylabel('r_{z|x}', 'FontSize', fontSize);  
 % title(sprintf('%0.02f/%0.02f/%0.02f/%0.02f/%0.02f', ...
 %     rscdmVal, pdcorVal, partialCorrVal, cassorVal, hdVal), 'FontSize', fontSize);
 title(sprintf('RSCDM=%0.02f', rscdmVal), 'FontSize', fontSize);
+h6.FontSize = fontSize;
 
-subplot(3,12,32:36);
+h7 = subplot(3,12,32:36);
 scatter(pobs(RxAligned),pobs(RyAligned), 'r'); grid on; 
 xlabel('F_{r_y}', 'FontSize', fontSize); ylabel('F_{r_z}', 'FontSize', fontSize);
-
+h7.FontSize = fontSize;
 
 %% Do a conditionally dependent test
 
@@ -490,35 +496,42 @@ hdVal = abs(hd(y, z, x));
 
 fontSize = 20;
 
-subplot(3,12,1:3);
+h1 = subplot(3,12,1:3);
 scatter(x,y); grid on; xlabel('x', 'FontSize', fontSize); ylabel('y', 'FontSize', fontSize); 
 title(sprintf('RSDM=%0.2f', rsdm1), 'FontSize', fontSize);
+h1.FontSize = fontSize;
 
-subplot(3,12,5:8);
+h2 = subplot(3,12,5:8);
 scatter(y,z); grid on; xlabel('y', 'FontSize', fontSize); ylabel('z', 'FontSize', fontSize); 
 title(sprintf('RSDM=%0.2f', rsdm3), 'FontSize', fontSize);
+h2.FontSize = fontSize;
 
-subplot(3,12,10:12);
+h3 = subplot(3,12,10:12);
 scatter(x,z); grid on; xlabel('x', 'FontSize', fontSize); ylabel('z', 'FontSize', fontSize); 
 title(sprintf('RSDM=%0.2f', rsdm2), 'FontSize', fontSize);
+h3.FontSize = fontSize;
 
-subplot(3,12,13:17);
+h4 = subplot(3,12,13:17);
 scatter(1:M, RxAligned); grid on;
 xlabel('x', 'FontSize', fontSize); ylabel('r_y', 'FontSize', fontSize);
+h4.FontSize = fontSize;
 
-subplot(3,12,20:24);
+h5 = subplot(3,12,20:24);
 scatter(1:M, RyAligned); grid on;
 xlabel('x', 'FontSize', fontSize); ylabel('r_z', 'FontSize', fontSize);
+h5.FontSize = fontSize;
 
-subplot(3,12,25:29);
+h6 = subplot(3,12,25:29);
 scatter(RxAligned,RyAligned); grid on; 
 xlabel('r_y', 'FontSize', fontSize); ylabel('r_z', 'FontSize', fontSize);  
 % title(sprintf('%0.02f/%0.02f/%0.02f/%0.02f/%0.02f', ...
 %     rscdmVal, pdcor_val, partialCorrVal, cassorVal, hdVal), 'FontSize', fontSize);
 title(sprintf('RSCDM=%0.02f', rscdmVal), 'FontSize', fontSize);
+h6.FontSize = fontSize;
 
 subplot(3,12,32:36);
 scatter(pobs(RxAligned),pobs(RyAligned), 'r'); grid on; 
 xlabel('F_{r_y}', 'FontSize', fontSize); ylabel('F_{r_z}', 'FontSize', fontSize);
+h7.FontSize = fontSize;
 
 %% Characterize null distribution {Y indep Z} | X
