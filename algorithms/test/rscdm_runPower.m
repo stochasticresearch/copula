@@ -535,3 +535,57 @@ xlabel('F_{r_y}', 'FontSize', fontSize); ylabel('F_{r_z}', 'FontSize', fontSize)
 h7.FontSize = fontSize;
 
 %% Characterize null distribution {Y indep Z} | X
+
+%% Huawei Plot
+clear;
+clc;
+
+rng(123);
+
+M = 500;
+noise = 0.01;
+alpha = 0.05;
+
+% Generate data from     Y<--X-->Z
+x = rand(M,1);
+% y = x + noise*randn(M,1); z = x + noise*randn(M,1);
+% y = 4*(x-0.5).^2 + noise*randn(M,1); z = 4*(x-0.5).^2 + noise*randn(M,1);
+% y = sin(4*pi*x) + noise*randn(M,1); z = cos(4*pi*x) + noise*randn(M,1);
+% y = nthroot(x, 4) + noise*randn(M,1); z = nthroot(x, 4) + noise*randn(M,1);
+% y = x + noise*randn(M,1); z = 4*(x-0.5).^2 + noise*randn(M,1);
+y = 4*(x-0.5).^2 + noise*randn(M,1); z = cos(4*pi*x) + noise*randn(M,1);
+
+rsdm1 = rsdm(x, y);
+rsdm2 = rsdm(x, z);
+rsdm3 = rsdm(y, z);
+% RSCDM conditions X on Y and Z, and sees how related Y and Z
+% are to each other ... in this graphical model, they should be UNRELATED
+% after the effect of X is removed... i.e. close to independent.  To see
+% why, look at the graphical model, Y indep Z | X according to
+% d-separation.  So if we condition upon X (i.e. remove teh effect of X on
+% Y and Z separately), then we should get independence.
+[rscdmVal, RxAligned, RyAligned] = rscdm(y,z,x);
+fontSize = 20;
+
+h1 = subplot(2,2,1);
+scatter(x,y); grid on; xlabel('x', 'FontSize', fontSize); ylabel('y', 'FontSize', fontSize); 
+title(sprintf('RSDM=%0.2f', rsdm1), 'FontSize', fontSize);
+h1.FontSize = fontSize;
+
+h2 = subplot(2,2,3);
+scatter(y,z); grid on; xlabel('y', 'FontSize', fontSize); ylabel('z', 'FontSize', fontSize); 
+title(sprintf('RSDM=%0.2f', rsdm3), 'FontSize', fontSize);
+h2.FontSize = fontSize;
+
+h3 = subplot(2,2,2);
+scatter(x,z); grid on; xlabel('x', 'FontSize', fontSize); ylabel('z', 'FontSize', fontSize); 
+title(sprintf('RSDM=%0.2f', rsdm2), 'FontSize', fontSize);
+h3.FontSize = fontSize;
+
+h4 = subplot(2,2,4);
+scatter(RxAligned,RyAligned); grid on; 
+xlabel('r_{y|x}', 'FontSize', fontSize); ylabel('r_{z|x}', 'FontSize', fontSize);  
+% title(sprintf('%0.02f/%0.02f/%0.02f/%0.02f/%0.02f', ...
+%     rscdmVal, pdcorVal, partialCorrVal, cassorVal, hdVal), 'FontSize', fontSize);
+title(sprintf('RSCDM=%0.02f', rscdmVal), 'FontSize', fontSize);
+h4.FontSize = fontSize;

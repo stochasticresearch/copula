@@ -44,23 +44,29 @@ numDepTests = 8;        % the number of different dependency tests we will condu
 % for each of the nsim null datasets at a given noise level
 rsdmNull = zeros(1,nsim_null);
 dcorrNull = zeros(1,nsim_null);
-miceNull = zeros(1,nsim_null);
+ticeNull = zeros(1,nsim_null);
 corrNull = zeros(1,nsim_null);
 rdcNull  = zeros(1,nsim_null);
+cosNull  = zeros(1,nsim_null);
+ccorrNull = zeros(1,nsim_null);
 
 rsdmAlt  = zeros(1,nsim_alt);
 dcorrAlt = zeros(1,nsim_alt);
-miceAlt = zeros(1,nsim_alt);
+ticeAlt = zeros(1,nsim_alt);
 corrAlt = zeros(1,nsim_alt);
 rdcAlt  = zeros(1,nsim_alt);
+cosAlt  = zeros(1,nsim_alt);
+ccorrAlt = zeros(1,nsim_alt);
 
 % Arrays holding the estimated power for each of the "correlation" types, 
 % for each data type (linear, parabolic, etc...) with each noise level
 rsdmPower = zeros(numDepTests, num_noise);
 dcorrPower = zeros(numDepTests, num_noise);
-micePower = zeros(numDepTests, num_noise);
+ticePower = zeros(numDepTests, num_noise);
 corrPower = zeros(numDepTests, num_noise);
 rdcPower  = zeros(numDepTests, num_noise);
+cosPower  = zeros(numDepTests, num_noise);
+ccorrPower = zeros(numDepTests, num_noise);
 
 % Optimal parameters for MICe
 mine_c = 15;
@@ -127,19 +133,25 @@ for l=num_noise_test_min:num_noise_test_max
             dcorrNull(ii) = dcorr(x, y);
             % compute MICe
             minestats = mine(x',y',mine_alpha,mine_c,'mic_e');
-            miceNull(ii) = minestats.mic;
+            ticeNull(ii) = minestats.tic;
             % compute correlation
             corrNull(ii) = corr(x,y);
             % compute RDC
             rdcNull(ii) = rdc(x,y,rdc_k,rdc_s);
+            % compute CoS
+            cosNull(ii) = cosf(x,y);
+            % compute cCorr
+            ccorrNull(ii) = cCorr(x,y);
         end
         
         % compute the rejection cutoffs
         rsdm_cut = quantile(rsdmNull, 0.95);
         dcorr_cut = quantile(dcorrNull, 0.95);
-        mice_cut = quantile(miceNull, 0.95);
+        tice_cut = quantile(ticeNull, 0.95);
         corr_cut = quantile(corrNull, 0.95);
         rdc_cut  = quantile(rdcNull, 0.95);
+        cos_cut  = quantile(cosNull, 0.95);
+        ccorr_cut = quantile(ccorrNull, 0.95);
         
         % resimulate the data under the alternative hypothesis
         parfor ii=1:nsim_alt
@@ -178,19 +190,25 @@ for l=num_noise_test_min:num_noise_test_max
             dcorrAlt(ii) = dcorr(x, y);
             % compute MICe
             minestats = mine(x',y',mine_alpha,mine_c,'mic_e');
-            miceAlt(ii) = minestats.mic;
+            ticeAlt(ii) = minestats.tic;
             % compute corr
             corrAlt(ii) = corr(x, y);
             % compute RDC
             rdcAlt(ii) = rdc(x,y,rdc_k,rdc_s);
+            % compute CoS
+            cosAlt(ii) = cosf(x,y);
+            % compute cCorr
+            ccorrAlt(ii) = cCorr(x,y);
         end
         
         % compute the power
-        rsdmPower(typ, l)  = sum(rsdmAlt > rsdm_cut)/nsim_alt;
+        rsdmPower(typ, l)   = sum(rsdmAlt > rsdm_cut)/nsim_alt;
         dcorrPower(typ, l)  = sum(dcorrAlt > dcorr_cut)/nsim_alt;
-        micePower(typ, l)   = sum(miceAlt > mice_cut)/nsim_alt;
+        ticePower(typ, l)   = sum(ticeAlt > tice_cut)/nsim_alt;
         corrPower(typ, l)   = sum(corrAlt > corr_cut)/nsim_alt;
         rdcPower(typ, l)    = sum(rdcAlt > rdc_cut)/nsim_alt;
+        cosPower(typ, l)    = sum(cosAlt > cos_cut)/nsim_alt;
+        ccorrPower(typ, l)  = sum(ccorrAlt > ccorr_cut)/nsim_alt;
     end
 end
 
@@ -218,9 +236,10 @@ figure;
 h1 = subplot(2,2,1);
 hh1 = plot(noiseVec, rsdmPower(1,num_noise_test_min:num_noise_test_max), 'o-.', ...
      noiseVec, dcorrPower(1,num_noise_test_min:num_noise_test_max), '+-.', ...
-     noiseVec, micePower(1,num_noise_test_min:num_noise_test_max), 'd-.', ...
-     noiseVec, corrPower(1,num_noise_test_min:num_noise_test_max), '^-.', ...
-     noiseVec, rdcPower(1,num_noise_test_min:num_noise_test_max), 'v-.'); 
+     noiseVec, ticePower(1,num_noise_test_min:num_noise_test_max), 'd-.', ...
+     noiseVec, rdcPower(1,num_noise_test_min:num_noise_test_max), 'v-.', ...
+     noiseVec, cosPower(1,num_nosie_test_min:num_noise_test_max), 's-.', ...
+     noiseVec, ccorrPower(1,num_nosie_test_min:num_noise_test_max), 'p-.'); 
 axis([min(noiseVec) max(noiseVec) 0 1]);
 xlabel('Noise Level', 'FontSize', 20); ylabel('Power', 'FontSize', 20); grid on;
 h1.FontSize = 20; 
@@ -232,13 +251,20 @@ plot(tmp1,tmp2, 'k', 'LineWidth', 2);
 ax1.Box = 'on'; ax1.XTick = []; ax1.YTick = [];
 ax1.XLim = [min(tmp1) max(tmp1)];
 ax1.YLim = [min(tmp2) max(tmp2)];
+hh1(1).LineWidth = 6; 
+hh1(2).LineWidth = 2; 
+hh1(3).LineWidth = 2; 
+hh1(4).LineWidth = 2; 
+hh1(5).LineWidth = 2;
+hh1(6).LineWidth = 2;
 
 h2 = subplot(2,2,2);
 hh2 = plot(noiseVec, rsdmPower(2,num_noise_test_min:num_noise_test_max), 'o-.', ...
      noiseVec, dcorrPower(2,num_noise_test_min:num_noise_test_max), '+-.', ...
-     noiseVec, micePower(2,num_noise_test_min:num_noise_test_max), 'd-.', ...
-     noiseVec, corrPower(2,num_noise_test_min:num_noise_test_max), '^-.', ...
-     noiseVec, rdcPower(2,num_noise_test_min:num_noise_test_max), 'v-.'); 
+     noiseVec, ticePower(2,num_noise_test_min:num_noise_test_max), 'd-.', ...
+     noiseVec, rdcPower(2,num_noise_test_min:num_noise_test_max), 'v-.', ...
+     noiseVec, cosPower(2,num_nosie_test_min:num_noise_test_max), 's-.', ...
+     noiseVec, ccorrPower(2,num_nosie_test_min:num_noise_test_max), 'p-.'); 
 axis([min(noiseVec) max(noiseVec) 0 1]);
 xlabel('Noise Level', 'FontSize', 20); ylabel('Power', 'FontSize', 20); grid on;
 h2.FontSize = 20; 
@@ -250,13 +276,20 @@ plot(tmp1,tmp2, 'k', 'LineWidth', 2);
 ax2.Box = 'on'; ax2.XTick = []; ax2.YTick = [];
 ax2.XLim = [min(tmp1) max(tmp1)];
 ax2.YLim = [min(tmp2) max(tmp2)];
+hh2(1).LineWidth = 6; 
+hh2(2).LineWidth = 2; 
+hh2(3).LineWidth = 2; 
+hh2(4).LineWidth = 2; 
+hh2(5).LineWidth = 2;
+hh2(6).LineWidth = 2;
 
 h3 = subplot(2,2,3); 
 hh3 = plot(noiseVec, rsdmPower(3,num_noise_test_min:num_noise_test_max), 'o-.', ...
      noiseVec, dcorrPower(3,num_noise_test_min:num_noise_test_max), '+-.', ...
-     noiseVec, micePower(3,num_noise_test_min:num_noise_test_max), 'd-.', ...
-     noiseVec, corrPower(3,num_noise_test_min:num_noise_test_max), '^-.', ...
-     noiseVec, rdcPower(3,num_noise_test_min:num_noise_test_max), 'v-.');  
+     noiseVec, ticePower(3,num_noise_test_min:num_noise_test_max), 'd-.', ...
+     noiseVec, rdcPower(3,num_noise_test_min:num_noise_test_max), 'v-.', ...
+     noiseVec, cosPower(3,num_nosie_test_min:num_noise_test_max), 's-.', ...
+     noiseVec, ccorrPower(3,num_nosie_test_min:num_noise_test_max), 'p-.');   
 axis([min(noiseVec) max(noiseVec) 0 1]);
 xlabel('Noise Level', 'FontSize', 20); ylabel('Power', 'FontSize', 20); grid on;
 h3.FontSize = 20; 
@@ -268,13 +301,20 @@ plot(tmp1,tmp2, 'k', 'LineWidth', 2);
 ax3.Box = 'on'; ax3.XTick = []; ax3.YTick = [];
 ax3.XLim = [min(tmp1) max(tmp1)];
 ax3.YLim = [min(tmp2) max(tmp2)];
+hh3(1).LineWidth = 6; 
+hh3(2).LineWidth = 2; 
+hh3(3).LineWidth = 2; 
+hh3(4).LineWidth = 2; 
+hh3(5).LineWidth = 2;
+hh3(6).LineWidth = 2;
 
 h4 = subplot(2,2,4); 
 hh4 = plot(noiseVec, rsdmPower(4,num_noise_test_min:num_noise_test_max), 'o-.', ...
      noiseVec, dcorrPower(4,num_noise_test_min:num_noise_test_max), '+-.', ...
-     noiseVec, micePower(4,num_noise_test_min:num_noise_test_max), 'd-.', ...
-     noiseVec, corrPower(4,num_noise_test_min:num_noise_test_max), '^-.', ...
-     noiseVec, rdcPower(4,num_noise_test_min:num_noise_test_max), 'v-.');  
+     noiseVec, ticePower(4,num_noise_test_min:num_noise_test_max), 'd-.', ...
+     noiseVec, rdcPower(4,num_noise_test_min:num_noise_test_max), 'v-.', ...
+     noiseVec, cosPower(4,num_nosie_test_min:num_noise_test_max), 's-.', ...
+     noiseVec, ccorrPower(4,num_nosie_test_min:num_noise_test_max), 'p-.'); 
 axis([min(noiseVec) max(noiseVec) 0 1]);
 xlabel('Noise Level', 'FontSize', 20); ylabel('Power', 'FontSize', 20); grid on;
 h4.FontSize = 20; 
@@ -286,14 +326,21 @@ plot(tmp1,tmp2, 'k', 'LineWidth', 2);
 ax4.Box = 'on'; ax4.XTick = []; ax4.YTick = [];
 ax4.XLim = [min(tmp1) max(tmp1)];
 ax4.YLim = [min(tmp2) max(tmp2)];
+hh4(1).LineWidth = 6; 
+hh4(2).LineWidth = 2; 
+hh4(3).LineWidth = 2; 
+hh4(4).LineWidth = 2; 
+hh4(5).LineWidth = 2;
+hh4(6).LineWidth = 2;
 
 figure;
 h5 = subplot(2,2,1); 
 hh5 = plot(noiseVec, rsdmPower(5,num_noise_test_min:num_noise_test_max), 'o-.', ...
      noiseVec, dcorrPower(5,num_noise_test_min:num_noise_test_max), '+-.', ...
-     noiseVec, micePower(5,num_noise_test_min:num_noise_test_max), 'd-.', ...
-     noiseVec, corrPower(5,num_noise_test_min:num_noise_test_max), '^-.', ...
-     noiseVec, rdcPower(5,num_noise_test_min:num_noise_test_max), 'v-.');  
+     noiseVec, ticePower(5,num_noise_test_min:num_noise_test_max), 'd-.', ...
+     noiseVec, rdcPower(5,num_noise_test_min:num_noise_test_max), 'v-.', ...
+     noiseVec, cosPower(5,num_nosie_test_min:num_noise_test_max), 's-.', ...
+     noiseVec, ccorrPower(5,num_nosie_test_min:num_noise_test_max), 'p-.'); 
 axis([min(noiseVec) max(noiseVec) 0 1]);
 xlabel('Noise Level'); ylabel('Power'); grid on;
 h5.FontSize = 20; 
@@ -305,13 +352,20 @@ plot(tmp1,tmp2, 'k', 'LineWidth', 2);
 ax5.Box = 'on'; ax5.XTick = []; ax5.YTick = [];
 ax5.XLim = [min(tmp1) max(tmp1)];
 ax5.YLim = [min(tmp2) max(tmp2)];
+hh5(1).LineWidth = 6; 
+hh5(2).LineWidth = 2; 
+hh5(3).LineWidth = 2; 
+hh5(4).LineWidth = 2; 
+hh5(5).LineWidth = 2;
+hh5(6).LineWidth = 2;
 
 h6 = subplot(2,2,2); 
 hh6 = plot(noiseVec, rsdmPower(6,num_noise_test_min:num_noise_test_max), 'o-.', ...
      noiseVec, dcorrPower(6,num_noise_test_min:num_noise_test_max), '+-.', ...
-     noiseVec, micePower(6,num_noise_test_min:num_noise_test_max), 'd-.', ...
-     noiseVec, corrPower(6,num_noise_test_min:num_noise_test_max), '^-.', ...
-     noiseVec, rdcPower(6,num_noise_test_min:num_noise_test_max), 'v-.'); 
+     noiseVec, ticePower(6,num_noise_test_min:num_noise_test_max), 'd-.', ...
+     noiseVec, rdcPower(6,num_noise_test_min:num_noise_test_max), 'v-.', ...
+     noiseVec, cosPower(6,num_nosie_test_min:num_noise_test_max), 's-.', ...
+     noiseVec, ccorrPower(6,num_nosie_test_min:num_noise_test_max), 'p-.'); 
 axis([min(noiseVec) max(noiseVec) 0 1]);
 xlabel('Noise Level'); ylabel('Power'); grid on;
 h6.FontSize = 20; 
@@ -323,13 +377,20 @@ plot(tmp1,tmp2, 'k', 'LineWidth', 2);
 ax6.Box = 'on'; ax6.XTick = []; ax6.YTick = [];
 ax6.XLim = [min(tmp1) max(tmp1)];
 ax6.YLim = [min(tmp2) max(tmp2)];
+hh6(1).LineWidth = 6; 
+hh6(2).LineWidth = 2; 
+hh6(3).LineWidth = 2; 
+hh6(4).LineWidth = 2; 
+hh6(5).LineWidth = 2;
+hh6(6).LineWidth = 2;
 
 h7 = subplot(2,2,3); 
 hh7 = plot(noiseVec, rsdmPower(7,num_noise_test_min:num_noise_test_max), 'o-.', ...
      noiseVec, dcorrPower(7,num_noise_test_min:num_noise_test_max), '+-.', ...
-     noiseVec, micePower(7,num_noise_test_min:num_noise_test_max), 'd-.', ...
-     noiseVec, corrPower(7,num_noise_test_min:num_noise_test_max), '^-.', ...
-     noiseVec, rdcPower(7,num_noise_test_min:num_noise_test_max), 'v-.'); 
+     noiseVec, ticePower(7,num_noise_test_min:num_noise_test_max), 'd-.', ...
+     noiseVec, rdcPower(7,num_noise_test_min:num_noise_test_max), 'v-.', ...
+     noiseVec, cosPower(7,num_nosie_test_min:num_noise_test_max), 's-.', ...
+     noiseVec, ccorrPower(7,num_nosie_test_min:num_noise_test_max), 'p-.'); 
 axis([min(noiseVec) max(noiseVec) 0 1]);
 xlabel('Noise Level'); ylabel('Power'); grid on;
 h7.FontSize = 20; 
@@ -343,17 +404,24 @@ plot(tmp1,tmp3, 'k', 'LineWidth', 2);
 ax7.Box = 'on'; ax7.XTick = []; ax7.YTick = [];
 ax7.XLim = [min(tmp1) max(tmp1)];
 ax7.YLim = [min(tmp3) max(tmp2)];
+hh7(1).LineWidth = 6; 
+hh7(2).LineWidth = 2; 
+hh7(3).LineWidth = 2; 
+hh7(4).LineWidth = 2; 
+hh7(5).LineWidth = 2;
+hh7(6).LineWidth = 2;
 
 h8 = subplot(2,2,4); 
 hh8 = plot(noiseVec, rsdmPower(8,num_noise_test_min:num_noise_test_max), 'o-.', ...
      noiseVec, dcorrPower(8,num_noise_test_min:num_noise_test_max), '+-.', ...
-     noiseVec, micePower(8,num_noise_test_min:num_noise_test_max), 'd-.', ...
-     noiseVec, corrPower(8,num_noise_test_min:num_noise_test_max), '^-.', ...
-     noiseVec, rdcPower(8,num_noise_test_min:num_noise_test_max), 'v-.');  
+     noiseVec, ticePower(8,num_noise_test_min:num_noise_test_max), 'd-.', ...
+     noiseVec, rdcPower(8,num_noise_test_min:num_noise_test_max), 'v-.', ...
+     noiseVec, cosPower(8,num_nosie_test_min:num_noise_test_max), 's-.', ...
+     noiseVec, ccorrPower(8,num_nosie_test_min:num_noise_test_max), 'p-.'); 
 axis([min(noiseVec) max(noiseVec) 0 1]);
 h8.FontSize = 20; 
-legend('RSDM', 'dcorr', 'MIC_e', 'corr', 'RDC');  % manually move this using the mouse to a
-                                                  % good location
+legend('RSDM', 'dCor', 'TIC_e', 'RDC', 'CoS', 'cCor');  % manually move this using the mouse to a
+                                                        % good location
 xlabel('Noise Level'); ylabel('Power'); grid on;
 loc_inset = [h8.Position(1)+inset_bufX h8.Position(2)+inset_bufY inset_width inset_height];
 ax8 = axes('Position',loc_inset);
@@ -362,6 +430,12 @@ tmp2 = (tmp1 > 0.5);
 plot(tmp1,tmp2, 'k', 'LineWidth', 2);
 ax8.Box = 'on'; ax8.XTick = []; ax8.YTick = [];
 ax8.XLim = [min(tmp1) max(tmp1)];
+hh8(1).LineWidth = 6; 
+hh8(2).LineWidth = 2; 
+hh8(3).LineWidth = 2; 
+hh8(4).LineWidth = 2; 
+hh8(5).LineWidth = 2;
+hh8(6).LineWidth = 2;
 
 %% Generate curves which show the effect of sample size for statistical 
 % power for the various dependency metrics
@@ -389,23 +463,29 @@ numDepTests = 8;        % the number of different dependency tests we will condu
 % for each of the nsim null datasets at a given noise level
 rsdmNull = zeros(1,nsim_null);
 dcorrNull = zeros(1,nsim_null);
-miceNull = zeros(1,nsim_null);
+ticeNull = zeros(1,nsim_null);
 corrNull = zeros(1,nsim_null);
 rdcNull  = zeros(1,nsim_null);
+cosNull = zeros(1,nsim_null);
+ccorrNull = zeros(1,nsim_null);
 
 rsdmAlt  = zeros(1,nsim_alt);
 dcorrAlt = zeros(1,nsim_alt);
-miceAlt = zeros(1,nsim_alt);
+ticeAlt = zeros(1,nsim_alt);
 corrAlt = zeros(1,nsim_alt);
 rdcAlt  = zeros(1,nsim_alt);
+cosAlt = zeros(1,nsim_alt);
+ccorrAlt = zeros(1,nsim_alt);
 
 % Arrays holding the estimated power for each of the "correlation" types, 
 % for each data type (linear, parabolic, etc...) with each noise level
 rsdmPower = zeros(numDepTests, num_noise, length(M_vec));
 dcorrPower = zeros(numDepTests, num_noise, length(M_vec));
-micePower = zeros(numDepTests, num_noise, length(M_vec));
+ticePower = zeros(numDepTests, num_noise, length(M_vec));
 corrPower = zeros(numDepTests, num_noise, length(M_vec));
 rdcPower  = zeros(numDepTests, num_noise, length(M_vec));
+cosPower  = zeros(numDepTests, num_noise, length(M_vec));
+ccorrPower  = zeros(numDepTests, num_noise, length(M_vec));
 
 % Optimal parameters for MICe
 mine_c = 15;
@@ -478,19 +558,25 @@ for m=1:length(M_vec)
                 dcorrNull(ii) = dcorr(x, y);
                 % compute MICe
                 minestats = mine(x',y',mine_alpha,mine_c,'mic_e');
-                miceNull(ii) = minestats.mic;
+                ticeNull(ii) = minestats.tic;
                 % compute correlation
                 corrNull(ii) = corr(x,y);
                 % compute RDC
                 rdcNull(ii) = rdc(x,y,rdc_k,rdc_s);
+                % compute CoS
+                cosNull(ii) = cosf(x,y);
+                % compute ccorr
+                ccorrNull(ii) = cCorr(x,y);
             end
 
             % compute the rejection cutoffs
             rsdm_cut = quantile(rsdmNull, 0.95);
             dcorr_cut = quantile(dcorrNull, 0.95);
-            mice_cut = quantile(miceNull, 0.95);
+            tice_cut = quantile(ticeNull, 0.95);
             corr_cut = quantile(corrNull, 0.95);
             rdc_cut  = quantile(rdcNull, 0.95);
+            cos_cut  = quantile(cosNull, 0.95);
+            ccorr_cut = quantile(ccorrNull, 0.95);
 
             % resimulate the data under the alternative hypothesis
             parfor ii=1:nsim_alt
@@ -529,19 +615,25 @@ for m=1:length(M_vec)
                 dcorrAlt(ii) = dcorr(x, y);
                 % compute MICe
                 minestats = mine(x',y',mine_alpha,mine_c,'mic_e');
-                miceAlt(ii) = minestats.mic;
+                ticeAlt(ii) = minestats.tic;
                 % compute corr
                 corrAlt(ii) = corr(x, y);
                 % compute RDC
                 rdcAlt(ii) = rdc(x,y,rdc_k,rdc_s);
+                % compute CoS
+                cosAlt(ii) = cosf(x,y);
+                % compute ccorr
+                ccorrAlt(ii) = cCorr(x,y);
             end
 
             % compute the power
-            rsdmPower(typ, l, m)  = sum(rsdmAlt > rsdm_cut)/nsim_alt;
+            rsdmPower(typ, l, m)   = sum(rsdmAlt > rsdm_cut)/nsim_alt;
             dcorrPower(typ, l, m)  = sum(dcorrAlt > dcorr_cut)/nsim_alt;
-            micePower(typ, l, m)   = sum(miceAlt > mice_cut)/nsim_alt;
+            ticePower(typ, l, m)   = sum(ticeAlt > tice_cut)/nsim_alt;
             corrPower(typ, l, m)   = sum(corrAlt > corr_cut)/nsim_alt;
             rdcPower(typ, l, m)    = sum(rdcAlt > rdc_cut)/nsim_alt;
+            cosPower(typ, l, m)    = sum(cosAlt > cos_cut)/nsim_alt;
+            ccorrPower(typ, l, m)  = sum(ccorrAlt > ccorr_cut)/nsim_alt;
         end
     end
     
@@ -565,19 +657,23 @@ end
 
 % process these results to search for the minimum M that gives us the
 % threshold power
-depMetrics = {'rsdm', 'dcorr', 'mice', 'corr', 'rdc'};
+depMetrics = {'rsdm', 'dcorr', 'tice', 'corr', 'rdc', 'cos', 'ccorr'};
 sampleSizeAnalysisVec = zeros(numDepTests, length(depMetrics), length(num_noise_test_min:num_noise_test_max));
 for depMetricIdx=1:length(depMetrics)
     if(strcmpi(depMetrics{depMetricIdx}, 'rsdm'))
         powerData = rsdmPower;
     elseif(strcmpi(depMetrics{depMetricIdx}, 'dcorr'))
         powerData = dcorrPower;
-    elseif(strcmpi(depMetrics{depMetricIdx}, 'mice'))
-        powerData = micePower;
+    elseif(strcmpi(depMetrics{depMetricIdx}, 'tice'))
+        powerData = ticePower;
     elseif(strcmpi(depMetrics{depMetricIdx}, 'corr'))
         powerData = corrPower;
     elseif(strcmpi(depMetrics{depMetricIdx}, 'rdc'))
         powerData = rdcPower;
+    elseif(strcmpi(depMetrics{depMetricIdx}, 'cos'))
+        powerData = cosPower;
+    elseif(strcmpi(depMetrics{depMetricIdx}, 'ccorr'))
+        powerData = ccorrPower;
     end
     
     for typ=1:numDepTests
@@ -602,9 +698,11 @@ sampleSizeAnalysisVec(sampleSizeAnalysisVec==0)=NaN;
 % define indices to get to the correct dep metric easily
 rsdmIdx = 1;
 dcorrIdx = 2;
-miceIdx = 3;
+ticeIdx = 3;
 corrIdx = 4;
 rdcIdx = 5;
+cosIdx = 6;
+ccorrIdx = 7;
 
 % inlet plot configuration
 M_inlet = 200;
@@ -616,9 +714,10 @@ figure;
 h1 = subplot(2,2,1);
 hh1 = plot(noiseVec, squeeze(sampleSizeAnalysisVec(1,rsdmIdx,num_noise_test_min:num_noise_test_max)), 'o-.', ...
      noiseVec, squeeze(sampleSizeAnalysisVec(1,dcorrIdx,num_noise_test_min:num_noise_test_max)), '+-.', ...
-     noiseVec, squeeze(sampleSizeAnalysisVec(1,miceIdx,num_noise_test_min:num_noise_test_max)), 'd-.', ...
-     noiseVec, squeeze(sampleSizeAnalysisVec(1,corrIdx,num_noise_test_min:num_noise_test_max)), '^-.', ...
-     noiseVec, squeeze(sampleSizeAnalysisVec(1,rdcIdx,num_noise_test_min:num_noise_test_max)), 'v-.'); 
+     noiseVec, squeeze(sampleSizeAnalysisVec(1,ticeIdx,num_noise_test_min:num_noise_test_max)), 'd-.', ...
+     noiseVec, squeeze(sampleSizeAnalysisVec(1,rdcIdx,num_noise_test_min:num_noise_test_max)), 'v-.', ...
+     noiseVec, squeeze(sampleSizeAnalysisVec(1,cosIdx,num_noise_test_min:num_noise_test_max)), 's-.', ...
+     noiseVec, squeeze(sampleSizeAnalysisVec(1,ccorrIdx,num_noise_test_min:num_noise_test_max)), 'p-.'); 
 % axis([min(noiseVec) max(noiseVec) 0 1]);
 xlabel('Noise Level', 'FontSize', 20); ylabel('min(Sample Size)', 'FontSize', 20); grid on;
 h1.FontSize = 20; 
@@ -630,13 +729,20 @@ plot(tmp1,tmp2, 'k', 'LineWidth', 2);
 ax1.Box = 'on'; ax1.XTick = []; ax1.YTick = [];
 ax1.XLim = [min(tmp1) max(tmp1)];
 ax1.YLim = [min(tmp2) max(tmp2)];
+hh1(1).LineWidth = 6; 
+hh1(2).LineWidth = 2; 
+hh1(3).LineWidth = 2; 
+hh1(4).LineWidth = 2; 
+hh1(5).LineWidth = 2;
+hh1(6).LineWidth = 2;
 
 h2 = subplot(2,2,2);
 hh2 = plot(noiseVec, squeeze(sampleSizeAnalysisVec(2,rsdmIdx,num_noise_test_min:num_noise_test_max)), 'o-.', ...
      noiseVec, squeeze(sampleSizeAnalysisVec(2,dcorrIdx,num_noise_test_min:num_noise_test_max)), '+-.', ...
-     noiseVec, squeeze(sampleSizeAnalysisVec(2,miceIdx,num_noise_test_min:num_noise_test_max)), 'd-.', ...
-     noiseVec, squeeze(sampleSizeAnalysisVec(2,corrIdx,num_noise_test_min:num_noise_test_max)), '^-.', ...
-     noiseVec, squeeze(sampleSizeAnalysisVec(2,rdcIdx,num_noise_test_min:num_noise_test_max)), 'v-.'); 
+     noiseVec, squeeze(sampleSizeAnalysisVec(2,ticeIdx,num_noise_test_min:num_noise_test_max)), 'd-.', ...
+     noiseVec, squeeze(sampleSizeAnalysisVec(2,rdcIdx,num_noise_test_min:num_noise_test_max)), 'v-.', ...
+     noiseVec, squeeze(sampleSizeAnalysisVec(2,cosIdx,num_noise_test_min:num_noise_test_max)), 's-.', ...
+     noiseVec, squeeze(sampleSizeAnalysisVec(2,ccorrIdx,num_noise_test_min:num_noise_test_max)), 'p-.'); 
 % axis([min(noiseVec) max(noiseVec) 0 1]);
 xlabel('Noise Level', 'FontSize', 20); ylabel('min(Sample Size)', 'FontSize', 20); grid on;
 h2.FontSize = 20; 
@@ -648,13 +754,20 @@ plot(tmp1,tmp2, 'k', 'LineWidth', 2);
 ax1.Box = 'on'; ax1.XTick = []; ax1.YTick = [];
 ax1.XLim = [min(tmp1) max(tmp1)];
 ax1.YLim = [min(tmp2) max(tmp2)];
+hh2(1).LineWidth = 6; 
+hh2(2).LineWidth = 2; 
+hh2(3).LineWidth = 2; 
+hh2(4).LineWidth = 2; 
+hh2(5).LineWidth = 2;
+hh2(6).LineWidth = 2;
 
 h3 = subplot(2,2,3);
 hh3 = plot(noiseVec, squeeze(sampleSizeAnalysisVec(3,rsdmIdx,num_noise_test_min:num_noise_test_max)), 'o-.', ...
      noiseVec, squeeze(sampleSizeAnalysisVec(3,dcorrIdx,num_noise_test_min:num_noise_test_max)), '+-.', ...
-     noiseVec, squeeze(sampleSizeAnalysisVec(3,miceIdx,num_noise_test_min:num_noise_test_max)), 'd-.', ...
-     noiseVec, squeeze(sampleSizeAnalysisVec(3,corrIdx,num_noise_test_min:num_noise_test_max)), '^-.', ...
-     noiseVec, squeeze(sampleSizeAnalysisVec(3,rdcIdx,num_noise_test_min:num_noise_test_max)), 'v-.'); 
+     noiseVec, squeeze(sampleSizeAnalysisVec(3,ticeIdx,num_noise_test_min:num_noise_test_max)), 'd-.', ...
+     noiseVec, squeeze(sampleSizeAnalysisVec(3,rdcIdx,num_noise_test_min:num_noise_test_max)), 'v-.', ...
+     noiseVec, squeeze(sampleSizeAnalysisVec(3,cosIdx,num_noise_test_min:num_noise_test_max)), 's-.', ...
+     noiseVec, squeeze(sampleSizeAnalysisVec(3,ccorrIdx,num_noise_test_min:num_noise_test_max)), 'p-.'); 
 % axis([min(noiseVec) max(noiseVec) 0 1]);
 xlabel('Noise Level', 'FontSize', 20); ylabel('min(Sample Size)', 'FontSize', 20); grid on;
 h3.FontSize = 20; 
@@ -666,13 +779,20 @@ plot(tmp1,tmp2, 'k', 'LineWidth', 2);
 ax1.Box = 'on'; ax1.XTick = []; ax1.YTick = [];
 ax1.XLim = [min(tmp1) max(tmp1)];
 ax1.YLim = [min(tmp2) max(tmp2)];
+hh3(1).LineWidth = 6; 
+hh3(2).LineWidth = 2; 
+hh3(3).LineWidth = 2; 
+hh3(4).LineWidth = 2; 
+hh3(5).LineWidth = 2;
+hh3(6).LineWidth = 2;
 
 h4 = subplot(2,2,4);
 hh4 = plot(noiseVec, squeeze(sampleSizeAnalysisVec(4,rsdmIdx,num_noise_test_min:num_noise_test_max)), 'o-.', ...
      noiseVec, squeeze(sampleSizeAnalysisVec(4,dcorrIdx,num_noise_test_min:num_noise_test_max)), '+-.', ...
-     noiseVec, squeeze(sampleSizeAnalysisVec(4,miceIdx,num_noise_test_min:num_noise_test_max)), 'd-.', ...
-     noiseVec, squeeze(sampleSizeAnalysisVec(4,corrIdx,num_noise_test_min:num_noise_test_max)), '^-.', ...
-     noiseVec, squeeze(sampleSizeAnalysisVec(4,rdcIdx,num_noise_test_min:num_noise_test_max)), 'v-.'); 
+     noiseVec, squeeze(sampleSizeAnalysisVec(4,ticeIdx,num_noise_test_min:num_noise_test_max)), 'd-.', ...
+     noiseVec, squeeze(sampleSizeAnalysisVec(4,rdcIdx,num_noise_test_min:num_noise_test_max)), 'v-.', ...
+     noiseVec, squeeze(sampleSizeAnalysisVec(4,cosIdx,num_noise_test_min:num_noise_test_max)), 's-.', ...
+     noiseVec, squeeze(sampleSizeAnalysisVec(4,ccorrIdx,num_noise_test_min:num_noise_test_max)), 'p-.'); 
 % axis([min(noiseVec) max(noiseVec) 0 1]);
 xlabel('Noise Level', 'FontSize', 20); ylabel('min(Sample Size)', 'FontSize', 20); grid on;
 h4.FontSize = 20; 
@@ -684,14 +804,21 @@ plot(tmp1,tmp2, 'k', 'LineWidth', 2);
 ax1.Box = 'on'; ax1.XTick = []; ax1.YTick = [];
 ax1.XLim = [min(tmp1) max(tmp1)];
 ax1.YLim = [min(tmp2) max(tmp2)];
+hh4(1).LineWidth = 6; 
+hh4(2).LineWidth = 2; 
+hh4(3).LineWidth = 2; 
+hh4(4).LineWidth = 2; 
+hh4(5).LineWidth = 2;
+hh4(6).LineWidth = 2;
 
 figure;
 h5 = subplot(2,2,1);
 hh5 = plot(noiseVec, squeeze(sampleSizeAnalysisVec(5,rsdmIdx,num_noise_test_min:num_noise_test_max)), 'o-.', ...
      noiseVec, squeeze(sampleSizeAnalysisVec(5,dcorrIdx,num_noise_test_min:num_noise_test_max)), '+-.', ...
-     noiseVec, squeeze(sampleSizeAnalysisVec(5,miceIdx,num_noise_test_min:num_noise_test_max)), 'd-.', ...
-     noiseVec, squeeze(sampleSizeAnalysisVec(5,corrIdx,num_noise_test_min:num_noise_test_max)), '^-.', ...
-     noiseVec, squeeze(sampleSizeAnalysisVec(5,rdcIdx,num_noise_test_min:num_noise_test_max)), 'v-.'); 
+     noiseVec, squeeze(sampleSizeAnalysisVec(5,ticeIdx,num_noise_test_min:num_noise_test_max)), 'd-.', ...
+     noiseVec, squeeze(sampleSizeAnalysisVec(5,rdcIdx,num_noise_test_min:num_noise_test_max)), 'v-.', ...
+     noiseVec, squeeze(sampleSizeAnalysisVec(5,cosIdx,num_noise_test_min:num_noise_test_max)), 's-.', ...
+     noiseVec, squeeze(sampleSizeAnalysisVec(5,ccorrIdx,num_noise_test_min:num_noise_test_max)), 'p-.'); 
 % axis([min(noiseVec) max(noiseVec) 0 1]);
 xlabel('Noise Level', 'FontSize', 20); ylabel('min(Sample Size)', 'FontSize', 20); grid on;
 h5.FontSize = 20; 
@@ -703,13 +830,20 @@ plot(tmp1,tmp2, 'k', 'LineWidth', 2);
 ax1.Box = 'on'; ax1.XTick = []; ax1.YTick = [];
 ax1.XLim = [min(tmp1) max(tmp1)];
 ax1.YLim = [min(tmp2) max(tmp2)];
+hh5(1).LineWidth = 6; 
+hh5(2).LineWidth = 2; 
+hh5(3).LineWidth = 2; 
+hh5(4).LineWidth = 2; 
+hh5(5).LineWidth = 2;
+hh5(6).LineWidth = 2;
 
 h6 = subplot(2,2,2);
 hh6 = plot(noiseVec, squeeze(sampleSizeAnalysisVec(6,rsdmIdx,num_noise_test_min:num_noise_test_max)), 'o-.', ...
      noiseVec, squeeze(sampleSizeAnalysisVec(6,dcorrIdx,num_noise_test_min:num_noise_test_max)), '+-.', ...
-     noiseVec, squeeze(sampleSizeAnalysisVec(6,miceIdx,num_noise_test_min:num_noise_test_max)), 'd-.', ...
-     noiseVec, squeeze(sampleSizeAnalysisVec(6,corrIdx,num_noise_test_min:num_noise_test_max)), '^-.', ...
-     noiseVec, squeeze(sampleSizeAnalysisVec(6,rdcIdx,num_noise_test_min:num_noise_test_max)), 'v-.'); 
+     noiseVec, squeeze(sampleSizeAnalysisVec(6,ticeIdx,num_noise_test_min:num_noise_test_max)), 'd-.', ...
+     noiseVec, squeeze(sampleSizeAnalysisVec(6,rdcIdx,num_noise_test_min:num_noise_test_max)), 'v-.', ...
+     noiseVec, squeeze(sampleSizeAnalysisVec(6,cosIdx,num_noise_test_min:num_noise_test_max)), 's-.', ...
+     noiseVec, squeeze(sampleSizeAnalysisVec(6,ccorrIdx,num_noise_test_min:num_noise_test_max)), 'p-.'); 
 % axis([min(noiseVec) max(noiseVec) 0 1]);
 xlabel('Noise Level', 'FontSize', 20); ylabel('min(Sample Size)', 'FontSize', 20); grid on;
 h6.FontSize = 20; 
@@ -721,13 +855,20 @@ plot(tmp1,tmp2, 'k', 'LineWidth', 2);
 ax1.Box = 'on'; ax1.XTick = []; ax1.YTick = [];
 ax1.XLim = [min(tmp1) max(tmp1)];
 ax1.YLim = [min(tmp2) max(tmp2)];
+hh6(1).LineWidth = 6; 
+hh6(2).LineWidth = 2; 
+hh6(3).LineWidth = 2; 
+hh6(4).LineWidth = 2; 
+hh6(5).LineWidth = 2;
+hh6(6).LineWidth = 2;
 
 h7 = subplot(2,2,3);
 hh7 = plot(noiseVec, squeeze(sampleSizeAnalysisVec(7,rsdmIdx,num_noise_test_min:num_noise_test_max)), 'o-.', ...
      noiseVec, squeeze(sampleSizeAnalysisVec(7,dcorrIdx,num_noise_test_min:num_noise_test_max)), '+-.', ...
-     noiseVec, squeeze(sampleSizeAnalysisVec(7,miceIdx,num_noise_test_min:num_noise_test_max)), 'd-.', ...
-     noiseVec, squeeze(sampleSizeAnalysisVec(7,corrIdx,num_noise_test_min:num_noise_test_max)), '^-.', ...
-     noiseVec, squeeze(sampleSizeAnalysisVec(7,rdcIdx,num_noise_test_min:num_noise_test_max)), 'v-.'); 
+     noiseVec, squeeze(sampleSizeAnalysisVec(7,ticeIdx,num_noise_test_min:num_noise_test_max)), 'd-.', ...
+     noiseVec, squeeze(sampleSizeAnalysisVec(7,rdcIdx,num_noise_test_min:num_noise_test_max)), 'v-.', ...
+     noiseVec, squeeze(sampleSizeAnalysisVec(7,cosIdx,num_noise_test_min:num_noise_test_max)), 's-.', ...
+     noiseVec, squeeze(sampleSizeAnalysisVec(7,ccorrIdx,num_noise_test_min:num_noise_test_max)), 'p-.'); 
 % axis([min(noiseVec) max(noiseVec) 0 1]);
 xlabel('Noise Level', 'FontSize', 20); ylabel('min(Sample Size)', 'FontSize', 20); grid on;
 h7.FontSize = 20; 
@@ -741,14 +882,21 @@ plot(tmp1,tmp3, 'k', 'LineWidth', 2);
 ax1.Box = 'on'; ax1.XTick = []; ax1.YTick = [];
 ax1.XLim = [min(tmp1) max(tmp1)];
 ax1.YLim = [min(tmp3) max(tmp2)];
+hh7(1).LineWidth = 6; 
+hh7(2).LineWidth = 2; 
+hh7(3).LineWidth = 2; 
+hh7(4).LineWidth = 2; 
+hh7(5).LineWidth = 2;
+hh7(6).LineWidth = 2;
 
 h8 = subplot(2,2,4);
 hh8 = plot(noiseVec, squeeze(sampleSizeAnalysisVec(8,rsdmIdx,num_noise_test_min:num_noise_test_max)), 'o-.', ...
      noiseVec, squeeze(sampleSizeAnalysisVec(8,dcorrIdx,num_noise_test_min:num_noise_test_max)), '+-.', ...
-     noiseVec, squeeze(sampleSizeAnalysisVec(8,miceIdx,num_noise_test_min:num_noise_test_max)), 'd-.', ...
-     noiseVec, squeeze(sampleSizeAnalysisVec(8,corrIdx,num_noise_test_min:num_noise_test_max)), '^-.', ...
-     noiseVec, squeeze(sampleSizeAnalysisVec(8,rdcIdx,num_noise_test_min:num_noise_test_max)), 'v-.'); 
-legend('RSDM', 'dcorr', 'MIC_e', 'corr', 'RDC');  % manually move this using the mouse to a
+     noiseVec, squeeze(sampleSizeAnalysisVec(8,ticeIdx,num_noise_test_min:num_noise_test_max)), 'd-.', ...
+     noiseVec, squeeze(sampleSizeAnalysisVec(8,rdcIdx,num_noise_test_min:num_noise_test_max)), 'v-.', ...
+     noiseVec, squeeze(sampleSizeAnalysisVec(8,cosIdx,num_noise_test_min:num_noise_test_max)), 's-.', ...
+     noiseVec, squeeze(sampleSizeAnalysisVec(8,ccorrIdx,num_noise_test_min:num_noise_test_max)), 'p-.'); 
+legend('RSDM', 'dCor', 'TIC_e', 'RDC', 'CoS', 'cCor');  % manually move this using the mouse to a
                                                   % good location
 % axis([min(noiseVec) max(noiseVec) 0 1]);
 xlabel('Noise Level', 'FontSize', 20); ylabel('min(Sample Size)', 'FontSize', 20); grid on;
@@ -762,6 +910,12 @@ ax1.Box = 'on'; ax1.XTick = []; ax1.YTick = [];
 ax1.XLim = [min(tmp1) max(tmp1)];
 % ax1.YLim = [min(tmp2) max(tmp2)]; % why is this erroring?
 ax1.YLim = [0 1];
+hh8(1).LineWidth = 6; 
+hh8(2).LineWidth = 2; 
+hh8(3).LineWidth = 2; 
+hh8(4).LineWidth = 2; 
+hh8(5).LineWidth = 2;
+hh8(6).LineWidth = 2;
 
 %% Characterize null distribution (X indep Y) experimentally for \hat{RSDM}
 clear;
@@ -944,3 +1098,168 @@ h4 = subplot(2,2,4); plot(M_vec, sigmaVec, 'LineWidth', 5);
 grid on; xlabel('M', 'FontSize', fontSize); 
 ylabel('\lambda', 'FontSize', fontSize);
 h4.FontSize = fontSize;
+
+%% Generate curves which show the effect of sample size for statistical for only CoS and cCorr
+% TODO: merge these results back in w/ the other power vs sample-size
+% calculations ...
+
+clear;
+clc;
+
+% WARNING: ENSURE THAT minepy/matlab/ is in the matlab path for MIC to
+% work!
+
+rng(1234);
+dbstop if error;
+
+nsim_null = 500;   % The number of null datasets we use to estimate our rejection reject regions for an alternative with level 0.05
+nsim_alt  = 500;   % Number of alternative datasets we use to estimate our power
+
+num_noise = 30;                    % The number of different noise levels used
+noise = 3;                         % A constant to determine the amount of noise
+
+M_vec = 25:25:1500;      % number of samples
+numDepTests = 8;        % the number of different dependency tests we will conduct
+                        % TODO: add copula dependencies as well
+
+% Vectors holding the null "correlations" (for pearson, dcor and mic respectively) 
+% for each of the nsim null datasets at a given noise level
+cosNull = zeros(1,nsim_null);
+ccorrNull = zeros(1,nsim_null);
+
+cosAlt = zeros(1,nsim_alt);
+ccorrAlt = zeros(1,nsim_alt);
+
+% Arrays holding the estimated power for each of the "correlation" types, 
+% for each data type (linear, parabolic, etc...) with each noise level
+cosPower  = zeros(numDepTests, num_noise, length(M_vec));
+ccorrPower  = zeros(numDepTests, num_noise, length(M_vec));
+
+
+% We loop through the noise level and functional form; 
+% each time we estimate a null distribution based on the marginals of the data, 
+% and then use that null distribution to estimate power
+
+% We use a uniformly distributed x, because in the original paper the 
+% authors used the same
+
+% Simon & Tibshirani use xMin=0, xMax=1 for performing their analysis ...
+xMin = 0;
+xMax = 1;
+
+dispstat('','init'); % One time only initialization
+dispstat(sprintf('Begining the simulation...\n'),'keepthis','timestamp');
+num_noise_test_min = 1;
+num_noise_test_max = 30;
+for m=1:length(M_vec)
+    M = M_vec(m);
+    for l=num_noise_test_min:num_noise_test_max
+        for typ=1:numDepTests
+            dispstat(sprintf('M=%d Noise=%d Dependency=%d',M, l, typ),'keepthis', 'timestamp');
+            % simulate data under the null w/ correct marginals
+            parfor ii=1:nsim_null
+                x = rand(M,1)*(xMax-xMin)+xMin;
+                switch(typ)
+                    case 1
+                        % linear
+                        y = x + noise*(l/num_noise)*randn(M,1); 
+                    case 2
+                        % parabolic
+                        y = 4*(x-.5).^2 + noise*(l/num_noise)*randn(M,1);
+                    case 3
+                        % cubic
+                        y = 128*(x-1/3).^3-48*(x-1/3).^3-12*(x-1/3)+10* noise*(l/num_noise)*randn(M,1);
+                    case 4
+                        % low-freq sin
+                        y = sin(4*pi*x) + 2*noise*(l/num_noise)*randn(M,1);
+                    case 5
+                        % high-freq sin
+                        y = sin(16*pi*x) + noise*(l/num_noise)*randn(M,1);
+                    case 6
+                        % fourth root
+                        y = x.^(1/4) + noise*(l/num_noise)*randn(M,1);
+                    case 7
+                        % circle
+                        y=(2*binornd(1,0.5,M,1)-1) .* (sqrt(1 - (2*x - 1).^2)) + noise/4*l/num_noise*randn(M,1);
+                    case 8
+                        % step function
+                        y = (x > 0.5) + noise*5*l/num_noise*randn(M,1);
+                    otherwise
+                        error('unknown dep type!');
+                end
+                % resimulate x so we have null scenario
+                x = rand(M,1)*(xMax-xMin)+xMin;
+
+                % calculate the metrics
+                % compute CoS
+                cosNull(ii) = cosf(x,y);
+                % compute ccorr
+                ccorrNull(ii) = cCorr(x,y);
+            end
+
+            % compute the rejection cutoffs
+            cos_cut  = quantile(cosNull, 0.95);
+            ccorr_cut = quantile(ccorrNull, 0.95);
+
+            % resimulate the data under the alternative hypothesis
+            parfor ii=1:nsim_alt
+                x = rand(M,1)*(xMax-xMin)+xMin;
+                switch(typ)
+                    case 1
+                        % linear
+                        y = x + noise*(l/num_noise)*randn(M,1); 
+                    case 2
+                        % parabolic
+                        y = 4*(x-.5).^2 + noise*(l/num_noise)*randn(M,1);
+                    case 3
+                        % cubic
+                        y = 128*(x-1/3).^3-48*(x-1/3).^3-12*(x-1/3) + 10*noise*(l/num_noise)*randn(M,1);
+                    case 4
+                        % low-freq sin
+                        y = sin(4*pi*x) + 2*noise*(l/num_noise)*randn(M,1);
+                    case 5
+                        % high-freq sin
+                        y = sin(16*pi*x) + noise*(l/num_noise)*randn(M,1);
+                    case 6
+                        % fourth root
+                        y = x.^(1/4) + noise*(l/num_noise)*randn(M,1);
+                    case 7
+                        % circle
+                        y=(2*binornd(1,0.5,M,1)-1) .* (sqrt(1 - (2*x - 1).^2)) + noise/4*l/num_noise*randn(M,1);
+                    case 8
+                        % step function
+                        y = (x > 0.5) + noise*5*l/num_noise*randn(M,1);
+                    otherwise
+                        error('unknown dep type!');
+                end
+
+                % calculate the metrics
+                % compute CoS
+                cosAlt(ii) = cosf(x,y);
+                % compute ccorr
+                ccorrAlt(ii) = cCorr(x,y);
+            end
+
+            % compute the power
+            cosPower(typ, l, m)    = sum(cosAlt > cos_cut)/nsim_alt;
+            ccorrPower(typ, l, m)  = sum(ccorrAlt > ccorr_cut)/nsim_alt;
+        end
+    end
+    
+    % save intermediate results just in case things crash :(
+    if(ispc)
+        save('C:\\Users\\Kiran\\ownCloud\\PhD\\sim_results\\independence\\rsdmPower_CoS_cCorr.mat');
+    elseif(ismac)
+        save('/Users/Kiran/ownCloud/PhD/sim_results/independence/rsdmPower_CoS_cCorr.mat');
+    else
+        save('/home/kiran/ownCloud/PhD/sim_results/independence/rsdmPower_CoS_cCorr.mat');
+    end
+end
+% save the data
+if(ispc)
+    save('C:\\Users\\Kiran\\ownCloud\\PhD\\sim_results\\independence\\rsdmPower_CoS_cCorr.mat');
+elseif(ismac)
+    save('/Users/Kiran/ownCloud/PhD/sim_results/independence/rsdmPower_CoS_cCorr.mat');
+else
+    save('/home/kiran/ownCloud/PhD/sim_results/independence/rsdmPower_CoS_cCorr.mat');
+end
