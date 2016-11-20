@@ -1122,19 +1122,25 @@ M_vec = 25:25:750;      % number of samples
 numDepTests = 8;        % the number of different dependency tests we will conduct
                         % TODO: add copula dependencies as well
 
+% Optimal parameters for MICe
+mine_c = 15;
+mine_alpha = 0.6;
+                        
 % Vectors holding the null "correlations" (for pearson, dcor and mic respectively) 
 % for each of the nsim null datasets at a given noise level
 cosNull = zeros(1,nsim_null);
 ccorrNull = zeros(1,nsim_null);
+ticeNull = zeros(1,nsim_null);
 
 cosAlt = zeros(1,nsim_alt);
 ccorrAlt = zeros(1,nsim_alt);
+ticeAlt = zeros(1,nsim_alt);
 
 % Arrays holding the estimated power for each of the "correlation" types, 
 % for each data type (linear, parabolic, etc...) with each noise level
 cosPower  = zeros(numDepTests, num_noise, length(M_vec));
 ccorrPower  = zeros(numDepTests, num_noise, length(M_vec));
-
+ticePower = zeros(numDepTests, num_noise, length(M_vec));
 
 % We loop through the noise level and functional form; 
 % each time we estimate a null distribution based on the marginals of the data, 
@@ -1191,6 +1197,9 @@ for m=1:length(M_vec)
                 x = rand(M,1)*(xMax-xMin)+xMin;
 
                 % calculate the metrics
+                % compute TICe
+                minestats = mine(x',y',mine_alpha,mine_c,'mic_e');
+                ticeNull(ii) = minestats.tic;
                 % compute CoS
                 cosNull(ii) = cosf(x,y);
                 % compute ccorr
@@ -1200,6 +1209,7 @@ for m=1:length(M_vec)
             % compute the rejection cutoffs
             cos_cut  = quantile(cosNull, 0.95);
             ccorr_cut = quantile(ccorrNull, 0.95);
+            tice_cut = quantile(ticeNull, 0.95);
 
             % resimulate the data under the alternative hypothesis
             parfor ii=1:nsim_alt
@@ -1234,6 +1244,9 @@ for m=1:length(M_vec)
                 end
 
                 % calculate the metrics
+                % compute TICe
+                minestats = mine(x',y',mine_alpha,mine_c,'mic_e');
+                ticeAlt(ii) = minestats.tic;
                 % compute CoS
                 cosAlt(ii) = cosf(x,y);
                 % compute ccorr
@@ -1243,23 +1256,24 @@ for m=1:length(M_vec)
             % compute the power
             cosPower(typ, l, m)    = sum(cosAlt > cos_cut)/nsim_alt;
             ccorrPower(typ, l, m)  = sum(ccorrAlt > ccorr_cut)/nsim_alt;
+            ticePower(typ, l, m)   = sum(ticeAlt > tice_cut)/nsim_alt;
         end
     end
     
     % save intermediate results just in case things crash :(
     if(ispc)
-        save('C:\\Users\\Kiran\\ownCloud\\PhD\\sim_results\\independence\\rsdmPower_CoS_cCorr.mat');
+        save('C:\\Users\\Kiran\\ownCloud\\PhD\\sim_results\\independence\\rsdmPower_CoS_cCorr_ticE.mat');
     elseif(ismac)
-        save('/Users/Kiran/ownCloud/PhD/sim_results/independence/rsdmPower_CoS_cCorr.mat');
+        save('/Users/Kiran/ownCloud/PhD/sim_results/independence/rsdmPower_CoS_cCorr_ticE.mat');
     else
-        save('/home/kiran/ownCloud/PhD/sim_results/independence/rsdmPower_CoS_cCorr.mat');
+        save('/home/kiran/ownCloud/PhD/sim_results/independence/rsdmPower_CoS_cCorr_ticE.mat');
     end
 end
 % save the data
 if(ispc)
-    save('C:\\Users\\Kiran\\ownCloud\\PhD\\sim_results\\independence\\rsdmPower_CoS_cCorr.mat');
+    save('C:\\Users\\Kiran\\ownCloud\\PhD\\sim_results\\independence\\rsdmPower_CoS_cCorr_ticE.mat');
 elseif(ismac)
-    save('/Users/Kiran/ownCloud/PhD/sim_results/independence/rsdmPower_CoS_cCorr.mat');
+    save('/Users/Kiran/ownCloud/PhD/sim_results/independence/rsdmPower_CoS_cCorr_ticE.mat');
 else
-    save('/home/kiran/ownCloud/PhD/sim_results/independence/rsdmPower_CoS_cCorr.mat');
+    save('/home/kiran/ownCloud/PhD/sim_results/independence/rsdmPower_CoS_cCorr_ticE.mat');
 end
