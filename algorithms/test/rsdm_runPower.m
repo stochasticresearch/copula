@@ -1118,7 +1118,7 @@ nsim_alt  = 500;   % Number of alternative datasets we use to estimate our power
 num_noise = 30;                    % The number of different noise levels used
 noise = 3;                         % A constant to determine the amount of noise
 
-M_vec = 25:25:750;      % number of samples
+M_vec = 25:25:1500;      % number of samples
 numDepTests = 8;        % the number of different dependency tests we will conduct
                         % TODO: add copula dependencies as well
 
@@ -1157,7 +1157,8 @@ dispstat('','init'); % One time only initialization
 dispstat(sprintf('Begining the simulation...\n'),'keepthis','timestamp');
 num_noise_test_min = 1;
 num_noise_test_max = 30;
-for m=1:length(M_vec)
+% for m=1:length(M_vec)
+for m=1:30
     M = M_vec(m);
     for l=num_noise_test_min:num_noise_test_max
         for typ=1:numDepTests
