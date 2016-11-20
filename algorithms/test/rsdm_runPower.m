@@ -1263,18 +1263,18 @@ for m=1:30
     
     % save intermediate results just in case things crash :(
     if(ispc)
-        save('C:\\Users\\Kiran\\ownCloud\\PhD\\sim_results\\independence\\rsdmPower_CoS_cCorr_ticE.mat');
+        save('C:\\Users\\Kiran\\ownCloud\\PhD\\sim_results\\independence\\rsdmPower_CoS_cCorr_ticE_M_25_750.mat');
     elseif(ismac)
-        save('/Users/Kiran/ownCloud/PhD/sim_results/independence/rsdmPower_CoS_cCorr_ticE.mat');
+        save('/Users/Kiran/ownCloud/PhD/sim_results/independence/rsdmPower_CoS_cCorr_ticE_M_25_750.mat');
     else
-        save('/home/kiran/ownCloud/PhD/sim_results/independence/rsdmPower_CoS_cCorr_ticE.mat');
+        save('/home/kiran/ownCloud/PhD/sim_results/independence/rsdmPower_CoS_cCorr_ticE_M_25_750.mat');
     end
 end
 % save the data
 if(ispc)
-    save('C:\\Users\\Kiran\\ownCloud\\PhD\\sim_results\\independence\\rsdmPower_CoS_cCorr_ticE.mat');
+    save('C:\\Users\\Kiran\\ownCloud\\PhD\\sim_results\\independence\\rsdmPower_CoS_cCorr_ticE_M_25_750.mat');
 elseif(ismac)
-    save('/Users/Kiran/ownCloud/PhD/sim_results/independence/rsdmPower_CoS_cCorr_ticE.mat');
+    save('/Users/Kiran/ownCloud/PhD/sim_results/independence/rsdmPower_CoS_cCorr_ticE_M_25_750.mat');
 else
-    save('/home/kiran/ownCloud/PhD/sim_results/independence/rsdmPower_CoS_cCorr_ticE.mat');
+    save('/home/kiran/ownCloud/PhD/sim_results/independence/rsdmPower_CoS_cCorr_ticE_M_25_750.mat');
 end
