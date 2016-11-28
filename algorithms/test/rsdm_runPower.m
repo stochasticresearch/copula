@@ -214,11 +214,11 @@ end
 
 % save the data
 if(ispc)
-    save(sprintf('C:\\Users\\Kiran\\ownCloud\\PhD\\sim_results\\independence\\rsdmPower_M_%d.mat', M));
+    save(sprintf('C:\\Users\\Kiran\\ownCloud\\PhD\\sim_results\\independence\\power_M_%d.mat', M));
 elseif(ismac)
-    save(sprintf('/Users/Kiran/ownCloud/PhD/sim_results/independence/rsdmPower_M_%d.mat', M));
+    save(sprintf('/Users/Kiran/ownCloud/PhD/sim_results/independence/power_M_%d.mat', M));
 else
-    save(sprintf('/home/kiran/ownCloud/PhD/sim_results/independence/rsdmPower_M_%d.mat', M));
+    save(sprintf('/home/kiran/ownCloud/PhD/sim_results/independence/power_M_%d.mat', M));
 end
 
 % inlet plot configuration
@@ -639,25 +639,25 @@ for m=1:length(M_vec)
     
     % save intermediate results just in case things crash :(
     if(ispc)
-        save('C:\\Users\\Kiran\\ownCloud\\PhD\\sim_results\\independence\\rsdmPower.mat');
+        save('C:\\Users\\Kiran\\ownCloud\\PhD\\sim_results\\independence\\power_all.mat');
     elseif(ismac)
-        save('/Users/Kiran/ownCloud/PhD/sim_results/independence/rsdmPower.mat');
+        save('/Users/Kiran/ownCloud/PhD/sim_results/independence/power_all.mat');
     else
-        save('/home/kiran/ownCloud/PhD/sim_results/independence/rsdmPower.mat');
+        save('/home/kiran/ownCloud/PhD/sim_results/independence/power_all.mat');
     end
 end
 % save the data
 if(ispc)
-    save('C:\\Users\\Kiran\\ownCloud\\PhD\\sim_results\\independence\\rsdmPower.mat');
+    save('C:\\Users\\Kiran\\ownCloud\\PhD\\sim_results\\independence\\power_all.mat');
 elseif(ismac)
-    save('/Users/Kiran/ownCloud/PhD/sim_results/independence/rsdmPower.mat');
+    save('/Users/Kiran/ownCloud/PhD/sim_results/independence/power_all.mat');
 else
-    save('/home/kiran/ownCloud/PhD/sim_results/independence/rsdmPower.mat');
+    save('/home/kiran/ownCloud/PhD/sim_results/independence/power_all.mat');
 end
 
 % process these results to search for the minimum M that gives us the
 % threshold power
-depMetrics = {'rsdm', 'dcorr', 'tice', 'corr', 'rdc'};%, 'cos', 'ccorr'};
+depMetrics = {'rsdm', 'dcorr', 'tice', 'corr', 'rdc', 'cos', 'ccorr'};
 sampleSizeAnalysisVec = zeros(numDepTests, length(depMetrics), length(num_noise_test_min:num_noise_test_max));
 for depMetricIdx=1:length(depMetrics)
     if(strcmpi(depMetrics{depMetricIdx}, 'rsdm'))
@@ -667,8 +667,7 @@ for depMetricIdx=1:length(depMetrics)
         powerData = dcorrPower;
         dcorrIdx = 2;
     elseif(strcmpi(depMetrics{depMetricIdx}, 'tice'))
-        %powerData = ticePower;
-        powerData = micePower;
+        powerData = ticePower;
         ticeIdx = 3;
     elseif(strcmpi(depMetrics{depMetricIdx}, 'corr'))
         powerData = corrPower;
@@ -714,9 +713,9 @@ h1 = subplot(2,2,1);
 hh1 = plot(noiseVec, squeeze(sampleSizeAnalysisVec(1,rsdmIdx,num_noise_test_min:num_noise_test_max)), 'o-.', ...
      noiseVec, squeeze(sampleSizeAnalysisVec(1,dcorrIdx,num_noise_test_min:num_noise_test_max)), '+-.', ...
      noiseVec, squeeze(sampleSizeAnalysisVec(1,ticeIdx,num_noise_test_min:num_noise_test_max)), 'd-.', ...
-     noiseVec, squeeze(sampleSizeAnalysisVec(1,rdcIdx,num_noise_test_min:num_noise_test_max)), 'v-.');%, ...
-     %noiseVec, squeeze(sampleSizeAnalysisVec(1,cosIdx,num_noise_test_min:num_noise_test_max)), 's-.', ...
-     %noiseVec, squeeze(sampleSizeAnalysisVec(1,ccorrIdx,num_noise_test_min:num_noise_test_max)), 'p-.'); 
+     noiseVec, squeeze(sampleSizeAnalysisVec(1,rdcIdx,num_noise_test_min:num_noise_test_max)), 'v-.', ...
+     noiseVec, squeeze(sampleSizeAnalysisVec(1,cosIdx,num_noise_test_min:num_noise_test_max)), 's-.', ...
+     noiseVec, squeeze(sampleSizeAnalysisVec(1,ccorrIdx,num_noise_test_min:num_noise_test_max)), 'p-.'); 
 % axis([min(noiseVec) max(noiseVec) 0 1]);
 xlabel('Noise Level', 'FontSize', 20); ylabel('$$M_{min}$$', 'FontSize', 20, 'Interpreter', 'Latex'); grid on;
 h1.FontSize = 20; 
@@ -732,16 +731,16 @@ hh1(1).LineWidth = 5;
 hh1(2).LineWidth = 1.5; 
 hh1(3).LineWidth = 1.5; 
 hh1(4).LineWidth = 1.5; 
-% hh1(5).LineWidth = 1.5;
-% hh1(6).LineWidth = 1.5;
+hh1(5).LineWidth = 1.5;
+hh1(6).LineWidth = 1.5;
 
 h2 = subplot(2,2,2);
 hh2 = plot(noiseVec, squeeze(sampleSizeAnalysisVec(2,rsdmIdx,num_noise_test_min:num_noise_test_max)), 'o-.', ...
      noiseVec, squeeze(sampleSizeAnalysisVec(2,dcorrIdx,num_noise_test_min:num_noise_test_max)), '+-.', ...
      noiseVec, squeeze(sampleSizeAnalysisVec(2,ticeIdx,num_noise_test_min:num_noise_test_max)), 'd-.', ...
-     noiseVec, squeeze(sampleSizeAnalysisVec(2,rdcIdx,num_noise_test_min:num_noise_test_max)), 'v-.');%, ...
-     %noiseVec, squeeze(sampleSizeAnalysisVec(2,cosIdx,num_noise_test_min:num_noise_test_max)), 's-.', ...
-     %noiseVec, squeeze(sampleSizeAnalysisVec(2,ccorrIdx,num_noise_test_min:num_noise_test_max)), 'p-.'); 
+     noiseVec, squeeze(sampleSizeAnalysisVec(2,rdcIdx,num_noise_test_min:num_noise_test_max)), 'v-.', ...
+     noiseVec, squeeze(sampleSizeAnalysisVec(2,cosIdx,num_noise_test_min:num_noise_test_max)), 's-.', ...
+     noiseVec, squeeze(sampleSizeAnalysisVec(2,ccorrIdx,num_noise_test_min:num_noise_test_max)), 'p-.'); 
 % axis([min(noiseVec) max(noiseVec) 0 1]);
 xlabel('Noise Level', 'FontSize', 20); ylabel('$$M_{min}$$', 'FontSize', 20, 'Interpreter', 'Latex'); grid on;
 h2.FontSize = 20; 
@@ -757,16 +756,16 @@ hh2(1).LineWidth = 5;
 hh2(2).LineWidth = 1.5; 
 hh2(3).LineWidth = 1.5; 
 hh2(4).LineWidth = 1.5; 
-% hh2(5).LineWidth = 1.5;
-% hh2(6).LineWidth = 1.5;
+hh2(5).LineWidth = 1.5;
+hh2(6).LineWidth = 1.5;
 
 h3 = subplot(2,2,3);
 hh3 = plot(noiseVec, squeeze(sampleSizeAnalysisVec(3,rsdmIdx,num_noise_test_min:num_noise_test_max)), 'o-.', ...
      noiseVec, squeeze(sampleSizeAnalysisVec(3,dcorrIdx,num_noise_test_min:num_noise_test_max)), '+-.', ...
      noiseVec, squeeze(sampleSizeAnalysisVec(3,ticeIdx,num_noise_test_min:num_noise_test_max)), 'd-.', ...
-     noiseVec, squeeze(sampleSizeAnalysisVec(3,rdcIdx,num_noise_test_min:num_noise_test_max)), 'v-.');%, ...
-     %noiseVec, squeeze(sampleSizeAnalysisVec(3,cosIdx,num_noise_test_min:num_noise_test_max)), 's-.', ...
-     %noiseVec, squeeze(sampleSizeAnalysisVec(3,ccorrIdx,num_noise_test_min:num_noise_test_max)), 'p-.'); 
+     noiseVec, squeeze(sampleSizeAnalysisVec(3,rdcIdx,num_noise_test_min:num_noise_test_max)), 'v-.', ...
+     noiseVec, squeeze(sampleSizeAnalysisVec(3,cosIdx,num_noise_test_min:num_noise_test_max)), 's-.', ...
+     noiseVec, squeeze(sampleSizeAnalysisVec(3,ccorrIdx,num_noise_test_min:num_noise_test_max)), 'p-.'); 
 % axis([min(noiseVec) max(noiseVec) 0 1]);
 xlabel('Noise Level', 'FontSize', 20); ylabel('$$M_{min}$$', 'FontSize', 20, 'Interpreter', 'Latex'); grid on;
 h3.FontSize = 20; 
@@ -782,16 +781,16 @@ hh3(1).LineWidth = 5;
 hh3(2).LineWidth = 1.5; 
 hh3(3).LineWidth = 1.5; 
 hh3(4).LineWidth = 1.5; 
-% hh3(5).LineWidth = 1.5;
-% hh3(6).LineWidth = 1.5;
+hh3(5).LineWidth = 1.5;
+hh3(6).LineWidth = 1.5;
 
 h4 = subplot(2,2,4);
 hh4 = plot(noiseVec, squeeze(sampleSizeAnalysisVec(4,rsdmIdx,num_noise_test_min:num_noise_test_max)), 'o-.', ...
      noiseVec, squeeze(sampleSizeAnalysisVec(4,dcorrIdx,num_noise_test_min:num_noise_test_max)), '+-.', ...
      noiseVec, squeeze(sampleSizeAnalysisVec(4,ticeIdx,num_noise_test_min:num_noise_test_max)), 'd-.', ...
-     noiseVec, squeeze(sampleSizeAnalysisVec(4,rdcIdx,num_noise_test_min:num_noise_test_max)), 'v-.');%, ...
-     %noiseVec, squeeze(sampleSizeAnalysisVec(4,cosIdx,num_noise_test_min:num_noise_test_max)), 's-.', ...
-     %noiseVec, squeeze(sampleSizeAnalysisVec(4,ccorrIdx,num_noise_test_min:num_noise_test_max)), 'p-.'); 
+     noiseVec, squeeze(sampleSizeAnalysisVec(4,rdcIdx,num_noise_test_min:num_noise_test_max)), 'v-.', ...
+     noiseVec, squeeze(sampleSizeAnalysisVec(4,cosIdx,num_noise_test_min:num_noise_test_max)), 's-.', ...
+     noiseVec, squeeze(sampleSizeAnalysisVec(4,ccorrIdx,num_noise_test_min:num_noise_test_max)), 'p-.'); 
 % axis([min(noiseVec) max(noiseVec) 0 1]);
 xlabel('Noise Level', 'FontSize', 20); ylabel('$$M_{min}$$', 'FontSize', 20, 'Interpreter', 'Latex'); grid on;
 h4.FontSize = 20; 
@@ -807,17 +806,17 @@ hh4(1).LineWidth = 5;
 hh4(2).LineWidth = 1.5; 
 hh4(3).LineWidth = 1.5; 
 hh4(4).LineWidth = 1.5; 
-% hh4(5).LineWidth = 1.5;
-% hh4(6).LineWidth = 1.5;
+hh4(5).LineWidth = 1.5;
+hh4(6).LineWidth = 1.5;
 
 figure;
 h5 = subplot(2,2,1);
 hh5 = plot(noiseVec, squeeze(sampleSizeAnalysisVec(5,rsdmIdx,num_noise_test_min:num_noise_test_max)), 'o-.', ...
      noiseVec, squeeze(sampleSizeAnalysisVec(5,dcorrIdx,num_noise_test_min:num_noise_test_max)), '+-.', ...
      noiseVec, squeeze(sampleSizeAnalysisVec(5,ticeIdx,num_noise_test_min:num_noise_test_max)), 'd-.', ...
-     noiseVec, squeeze(sampleSizeAnalysisVec(5,rdcIdx,num_noise_test_min:num_noise_test_max)), 'v-.');%, ...
-     %noiseVec, squeeze(sampleSizeAnalysisVec(5,cosIdx,num_noise_test_min:num_noise_test_max)), 's-.', ...
-     %noiseVec, squeeze(sampleSizeAnalysisVec(5,ccorrIdx,num_noise_test_min:num_noise_test_max)), 'p-.'); 
+     noiseVec, squeeze(sampleSizeAnalysisVec(5,rdcIdx,num_noise_test_min:num_noise_test_max)), 'v-.', ...
+     noiseVec, squeeze(sampleSizeAnalysisVec(5,cosIdx,num_noise_test_min:num_noise_test_max)), 's-.', ...
+     noiseVec, squeeze(sampleSizeAnalysisVec(5,ccorrIdx,num_noise_test_min:num_noise_test_max)), 'p-.'); 
 % axis([min(noiseVec) max(noiseVec) 0 1]);
 xlabel('Noise Level', 'FontSize', 20); ylabel('$$M_{min}$$', 'FontSize', 20, 'Interpreter', 'Latex'); grid on;
 h5.FontSize = 20; 
@@ -833,16 +832,16 @@ hh5(1).LineWidth = 5;
 hh5(2).LineWidth = 1.5; 
 hh5(3).LineWidth = 1.5; 
 hh5(4).LineWidth = 1.5; 
-% hh5(5).LineWidth = 1.5;
-% hh5(6).LineWidth = 1.5;
+hh5(5).LineWidth = 1.5;
+hh5(6).LineWidth = 1.5;
 
 h6 = subplot(2,2,2);
 hh6 = plot(noiseVec, squeeze(sampleSizeAnalysisVec(6,rsdmIdx,num_noise_test_min:num_noise_test_max)), 'o-.', ...
      noiseVec, squeeze(sampleSizeAnalysisVec(6,dcorrIdx,num_noise_test_min:num_noise_test_max)), '+-.', ...
      noiseVec, squeeze(sampleSizeAnalysisVec(6,ticeIdx,num_noise_test_min:num_noise_test_max)), 'd-.', ...
-     noiseVec, squeeze(sampleSizeAnalysisVec(6,rdcIdx,num_noise_test_min:num_noise_test_max)), 'v-.');%, ...
-     %noiseVec, squeeze(sampleSizeAnalysisVec(6,cosIdx,num_noise_test_min:num_noise_test_max)), 's-.', ...
-     %noiseVec, squeeze(sampleSizeAnalysisVec(6,ccorrIdx,num_noise_test_min:num_noise_test_max)), 'p-.'); 
+     noiseVec, squeeze(sampleSizeAnalysisVec(6,rdcIdx,num_noise_test_min:num_noise_test_max)), 'v-.', ...
+     noiseVec, squeeze(sampleSizeAnalysisVec(6,cosIdx,num_noise_test_min:num_noise_test_max)), 's-.', ...
+     noiseVec, squeeze(sampleSizeAnalysisVec(6,ccorrIdx,num_noise_test_min:num_noise_test_max)), 'p-.'); 
 % axis([min(noiseVec) max(noiseVec) 0 1]);
 xlabel('Noise Level', 'FontSize', 20); ylabel('$$M_{min}$$', 'FontSize', 20, 'Interpreter', 'Latex'); grid on;
 h6.FontSize = 20; 
@@ -858,16 +857,16 @@ hh6(1).LineWidth = 5;
 hh6(2).LineWidth = 1.5; 
 hh6(3).LineWidth = 1.5; 
 hh6(4).LineWidth = 1.5; 
-% hh6(5).LineWidth = 1.5;
-% hh6(6).LineWidth = 1.5;
+hh6(5).LineWidth = 1.5;
+hh6(6).LineWidth = 1.5;
 
 h7 = subplot(2,2,3);
 hh7 = plot(noiseVec, squeeze(sampleSizeAnalysisVec(7,rsdmIdx,num_noise_test_min:num_noise_test_max)), 'o-.', ...
      noiseVec, squeeze(sampleSizeAnalysisVec(7,dcorrIdx,num_noise_test_min:num_noise_test_max)), '+-.', ...
      noiseVec, squeeze(sampleSizeAnalysisVec(7,ticeIdx,num_noise_test_min:num_noise_test_max)), 'd-.', ...
-     noiseVec, squeeze(sampleSizeAnalysisVec(7,rdcIdx,num_noise_test_min:num_noise_test_max)), 'v-.');%, ...
-     %noiseVec, squeeze(sampleSizeAnalysisVec(7,cosIdx,num_noise_test_min:num_noise_test_max)), 's-.', ...
-     %noiseVec, squeeze(sampleSizeAnalysisVec(7,ccorrIdx,num_noise_test_min:num_noise_test_max)), 'p-.'); 
+     noiseVec, squeeze(sampleSizeAnalysisVec(7,rdcIdx,num_noise_test_min:num_noise_test_max)), 'v-.', ...
+     noiseVec, squeeze(sampleSizeAnalysisVec(7,cosIdx,num_noise_test_min:num_noise_test_max)), 's-.', ...
+     noiseVec, squeeze(sampleSizeAnalysisVec(7,ccorrIdx,num_noise_test_min:num_noise_test_max)), 'p-.'); 
 % axis([min(noiseVec) max(noiseVec) 0 1]);
 xlabel('Noise Level', 'FontSize', 20); ylabel('$$M_{min}$$', 'FontSize', 20, 'Interpreter', 'Latex'); grid on;
 h7.FontSize = 20; 
@@ -885,17 +884,17 @@ hh7(1).LineWidth = 5;
 hh7(2).LineWidth = 1.5; 
 hh7(3).LineWidth = 1.5; 
 hh7(4).LineWidth = 1.5; 
-% hh7(5).LineWidth = 1.5;
-% hh7(6).LineWidth = 1.5;
+hh7(5).LineWidth = 1.5;
+hh7(6).LineWidth = 1.5;
 
 h8 = subplot(2,2,4);
 hh8 = plot(noiseVec, squeeze(sampleSizeAnalysisVec(8,rsdmIdx,num_noise_test_min:num_noise_test_max)), 'o-.', ...
      noiseVec, squeeze(sampleSizeAnalysisVec(8,dcorrIdx,num_noise_test_min:num_noise_test_max)), '+-.', ...
      noiseVec, squeeze(sampleSizeAnalysisVec(8,ticeIdx,num_noise_test_min:num_noise_test_max)), 'd-.', ...
-     noiseVec, squeeze(sampleSizeAnalysisVec(8,rdcIdx,num_noise_test_min:num_noise_test_max)), 'v-.');%, ...
-     %noiseVec, squeeze(sampleSizeAnalysisVec(8,cosIdx,num_noise_test_min:num_noise_test_max)), 's-.', ...
-     %noiseVec, squeeze(sampleSizeAnalysisVec(8,ccorrIdx,num_noise_test_min:num_noise_test_max)), 'p-.'); 
-legend('RSDM', 'dCor', 'TIC_e', 'RDC');%, 'CoS', 'cCor');  % manually move this using the mouse to a
+     noiseVec, squeeze(sampleSizeAnalysisVec(8,rdcIdx,num_noise_test_min:num_noise_test_max)), 'v-.', ...
+     noiseVec, squeeze(sampleSizeAnalysisVec(8,cosIdx,num_noise_test_min:num_noise_test_max)), 's-.', ...
+     noiseVec, squeeze(sampleSizeAnalysisVec(8,ccorrIdx,num_noise_test_min:num_noise_test_max)), 'p-.'); 
+legend('RSDM', 'dCor', 'TIC_e', 'RDC', 'CoS', 'cCor');  % manually move this using the mouse to a
                                                   % good location
 % axis([min(noiseVec) max(noiseVec) 0 1]);
 xlabel('Noise Level', 'FontSize', 20); ylabel('$$M_{min}$$', 'FontSize', 20, 'Interpreter', 'Latex'); grid on;
@@ -913,8 +912,8 @@ hh8(1).LineWidth = 5;
 hh8(2).LineWidth = 1.5; 
 hh8(3).LineWidth = 1.5; 
 hh8(4).LineWidth = 1.5; 
-% hh8(5).LineWidth = 1.5;
-% hh8(6).LineWidth = 1.5;
+hh8(5).LineWidth = 1.5;
+hh8(6).LineWidth = 1.5;
 
 %% Characterize null distribution (X indep Y) experimentally for \hat{RSDM}
 clear;

@@ -1,5 +1,51 @@
-% RSDM Power Merge Script
+%% Merge the CoS/cCorr/TICe data
+clear;
+clc;
+dbstop if error;
 
+loRangeFilename = 'rsdmPower_CoS_cCorr_ticE_M_25_825.mat';
+hiRangeFilename = 'rsdmPower_CoS_cCorr_ticE_M_850_1500.mat';
+outputFilename  = 'rsdmPower_CoS_cCorr_ticE_M_25_1500.mat';
+
+if(ispc)
+    folder = 'C:\\Users\\Kiran\\ownCloud\\PhD\sim_results\\independence';
+elseif(ismac)
+    folder = '/Users/Kiran/ownCloud/PhD/sim_results/independence';
+else % assume unix
+    folder = '/home/kiran/ownCloud/PhD/sim_results/independence';
+end
+
+f1 = fullfile(folder, loRangeFilename);
+f2 = fullfile(folder, hiRangeFilename);
+
+load(f2);
+ccorrPower_toMerge = ccorrPower;
+cosPower_toMerge = cosPower;
+ticePower_toMerge = ticePower;
+load(f1);
+mergeStartIdx = length(25:25:825);
+numToMerge = length(850:25:1500);
+
+% merge the powers
+for typ=1:numDepTests
+    for l=num_noise_test_min:num_noise_test_max
+        for mm=1:numToMerge
+            % for the submerge
+            ccorrPower(typ,l,mm+mergeStartIdx) = ccorrPower_toMerge(typ,l,mm+mergeStartIdx);
+            cosPower(typ,l,mm+mergeStartIdx) = cosPower_toMerge(typ,l,mm+mergeStartIdx);
+            ticePower(typ,l,mm+mergeStartIdx) = ticePower_toMerge(typ,l,mm+mergeStartIdx);
+        end
+    end
+end
+
+% save as rsdmPower.mat
+finalOutputFile = fullfile(folder, outputFilename);
+clearvars loRangeFilename hiRangeFilename outputFilename
+clearvars folder loFilename hiFilename
+clearvars ccorrPower_toMerge cosPower_toMerge ticePower_toMerge
+clearvars mergeStartIdx numToMerge 
+save(finalOutputFile);
+%% RSDM Power Merge Script
 clear;
 clc;
 dbstop if error;
@@ -19,16 +65,16 @@ else % assume unix
     folder = '/home/kiran/ownCloud/PhD/sim_results/independence';
 end
 
-loFilename = fullfile(folder, loRangeFilename);
-hiFilename = fullfile(folder, hiRangeFilename);
+f1 = fullfile(folder, loRangeFilename);
+f2 = fullfile(folder, hiRangeFilename);
 
-load(hiFilename);
+load(f2);
 corrPower_toMerge = corrPower;
 dcorrPower_toMerge = dcorrPower;
 micePower_toMerge = micePower;
 rdcPower_toMerge = rdcPower;
 rsdmPower_toMerge = rsdmPower;
-load(loFilename);
+load(f1);
 % mergeStartIdx = length(25:25:400);
 % numToMerge = length(425:25:750);
 % M_vec = 25:25:750;
@@ -60,4 +106,34 @@ clearvars loRangeFilename hiRangeFilename outputFilename
 clearvars folder loFilename hiFilename
 clearvars corrPower_toMerge dcorrPower_toMerge micePower_toMerge rdcPower_toMerge rsdmPower_toMerge
 clearvars mergeStartIdx numToMerge 
+save(finalOutputFile);
+
+%% Merge the powers of rsdm/dCorr/MICe/rdc/corr with CoS/cCorr/TICe
+
+clear;
+clc;
+dbstop if error;
+
+f1name = 'power_rsdm_dCorr_rdc_corr_mice.mat';
+f2name = 'power_CoS_cCorr_ticE.mat';
+outputFilename = 'power_all.mat';
+
+if(ispc)
+    folder = 'C:\\Users\\Kiran\\ownCloud\\PhD\sim_results\\independence';
+elseif(ismac)
+    folder = '/Users/Kiran/ownCloud/PhD/sim_results/independence';
+else % assume unix
+    folder = '/home/kiran/ownCloud/PhD/sim_results/independence';
+end
+
+f1 = fullfile(folder, f1name);
+f2 = fullfile(folder, f2name);
+
+load(f2);
+load(f1);
+
+% save as rsdmPower.mat
+finalOutputFile = fullfile(folder, outputFilename);
+clearvars f1name f2name outputFilename
+clearvars folder f1 f2
 save(finalOutputFile);
