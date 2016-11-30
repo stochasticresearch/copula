@@ -34,6 +34,7 @@ classdef ktauhat_s < handle
         u;
         v;
         CLOSE_TO_ZERO_THRESH;
+        ONE_OVER_CLOSE_TO_ZERO_THRESH;
     end
     
     properties(SetAccess = private)
@@ -47,7 +48,9 @@ classdef ktauhat_s < handle
         uOvlpMap;
         vOvlpMap;
         mm;
+        mmGroups;
         mm_choose_2;
+        closeToZeroThresh;
         
         % for rewind capability
         % TODO: is there a better (more efficient & cleaner way) to do
@@ -62,7 +65,9 @@ classdef ktauhat_s < handle
         uOvlpMap_prev;
         vOvlpMap_prev;
         mm_prev;
+        mmGroups_prev;
         mm_choose_2_prev;
+        closeToZeroThresh_prev;
     end
     
     methods(Access = private)
@@ -109,16 +114,27 @@ classdef ktauhat_s < handle
             % achieve real speed-up w/ RSDM-S rather than RSDM.  We might
             % need to do something clever where we convert the inputs to
             % ranks, and then index into a vector rather than a map
-            % container to obtain speed-ups necessary
+            % container to obtain necessary speed-ups.  The below block of
+            % code is the code that needs to be optimized!
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             obj.uMap(uCurrSamp) = obj.uMap(uCurrSamp) + 1;
             obj.uu = obj.uu + obj.uMap(uCurrSamp) - 1;
             obj.vMap(vCurrSamp) = obj.vMap(vCurrSamp) + 1;
             obj.vv = obj.vv + obj.vMap(vCurrSamp) - 1;
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
             % attempt to automatically determine if we have hybrid-data or
             % all discrete/continuous
-            uuCloseToZero = obj.closeToZero(obj.uu);
-            vvCloseToZero = obj.closeToZero(obj.vv);
+            % the below block of code is a recursive replacement of the
+            % "closeToZero" function in ktauhat
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            if(~mod(obj.mm, obj.ONE_OVER_CLOSE_TO_ZERO_THRESH))
+                obj.mmGroups = obj.mmGroups + 1;
+                obj.closeToZeroThresh = obj.closeToZeroThresh + obj.mmGroups - 1;
+            end
+            uuCloseToZero = obj.uu <= obj.closeToZeroThresh;
+            vvCloseToZero = obj.vv <= obj.closeToZeroThresh;
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             
             % hybrid scenario
             if( (uuCloseToZero && obj.vv>0) || (obj.uu>0 && vvCloseToZero) )
@@ -155,23 +171,6 @@ classdef ktauhat_s < handle
             end
         end
         
-        
-        function [out] = closeToZero(obj, in)
-            out = 1;
-            mmFloor = floor(obj.mm*obj.CLOSE_TO_ZERO_THRESH);
-            
-            if(mmFloor>=2)
-                % TODO: remove this nchoosek call for high performance!!
-                cmpVal = nchoosek(mmFloor,2);
-            else
-                cmpVal = 0;
-            end
-
-            if(in>cmpVal)
-                out = 0;
-            end
-        end
-        
         function [cf] = correctionFactor(obj,continuousRvIndicator)
             if(continuousRvIndicator==0)
                 valVec = cell2mat(obj.uOvlpMap.values());
@@ -195,6 +194,7 @@ classdef ktauhat_s < handle
             % set immutable properties
             obj.M = length(x);
             obj.CLOSE_TO_ZERO_THRESH = 0.02;      % if we are > 2% of length in terms of combinations;
+            obj.ONE_OVER_CLOSE_TO_ZERO_THRESH = 1/obj.CLOSE_TO_ZERO_THRESH;
             [obj.u,I] = sort(x);
             obj.v = y(I);
             
@@ -218,6 +218,8 @@ classdef ktauhat_s < handle
             obj.vOvlpMap_prev = obj.vOvlpMap;
             obj.mm_prev = obj.mm;
             obj.mm_choose_2_prev = obj.mm_choose_2;
+            obj.closeToZeroThresh_prev = obj.closeToZeroThresh;
+            obj.mmGroups_prev = obj.mmGroups;
             
             for ii=1:numPts-1
                 if(obj.iiEnd<obj.M)
@@ -244,6 +246,8 @@ classdef ktauhat_s < handle
             obj.vOvlpMap = obj.vOvlpMap_prev;
             obj.mm = obj.mm_prev;
             obj.mm_choose_2 = obj.mm_choose_2_prev;
+            obj.closeToZeroThresh = obj.closeToZeroThresh_prev;
+            obj.mmGroups = obj.mmGroups_prev;
         end
         
         function [] = clearState(obj)
@@ -256,7 +260,9 @@ classdef ktauhat_s < handle
             obj.vv = 0;
             obj.K = 0;
             obj.mm = 1;
+            obj.mmGroups = 0;
             obj.mm_choose_2 = 0;
+            obj.closeToZeroThresh = 0;
             
             % reinitialize the maps 
             % WARNING!: overwriting objects here ... is this bad coding practice?
@@ -282,7 +288,9 @@ classdef ktauhat_s < handle
             obj.uu = 0;
             obj.vv = 0;
             obj.mm = 1;     % we start w/ 1 sample, and consume the next, etc...
+            obj.mmGroups = 0;
             obj.mm_choose_2 = 0;
+            obj.closeToZeroThresh = 0;
             
             % initialize the maps
             obj.uMap = containers.Map(obj.u, zeros(1,length(obj.u)));
