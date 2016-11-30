@@ -130,23 +130,12 @@ if( (closeToZero(u, len) && v>0) || (u>0 && closeToZero(v, len)) )
         otherwise
             error('Unknown Correction Factor Option!');
     end
-%     correctionFactor
     t = max(u,v)-correctionFactor;
     tau = K/( sqrt(nchoosek(len,2)-t)*sqrt(nchoosek(len,2)-t) );
-    
-%     fprintf('<<< cf=%0.02f, tt=%0.02f\n', correctionFactor, t);
-    
-%     fprintf('K=%0.02f max(u,v)=%0.02f [%0.02f %0.02f %0.02f], correctionFactor=%0.02f nchoosek(M,2)=%d C-t=%d\n', ...
-%         K, max(u,v), numOverlapPtsVec(1), numOverlapPtsVec(2), numOverlapPtsVec(3), ...
-%         correctionFactor, nchoosek(len,2), nchoosek(len,2)-t);
+%     fprintf('<<< cf=%0.02f, tt=%0.02f\n', correctionFactor, t);    
 else
     % case of either all continuous or all discrete data
-%     fprintf('len=%d\n', len);
-%     fprintf('<<< den=%0.02f\n', ( sqrt(nchoosek(len,2)-u)*sqrt(nchoosek(len,2)-v) ) );
     tau = K/( sqrt(nchoosek(len,2)-u)*sqrt(nchoosek(len,2)-v) );
-    
-%     fprintf('K=%0.02f u=%0.02f v=%0.02f nchoosek(M,2)=%d C-u=%d C-v=%d\n', ...
-%         K, u, v, nchoosek(len,2), nchoosek(len,2)-u, nchoosek(len,2)-v);
 end
 
 % fprintf('<<< K=%d uu=%d vv=%d u(closeToZero)=%d v(closeToZero)=%d\n', ...

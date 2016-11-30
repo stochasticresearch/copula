@@ -39,8 +39,8 @@ M = 500; numDiscreteIntervals = 4;
 rng(1234);
 
 testContinuous = 1;
-testHybrid1 = 1;
-testHybrid2 = 1;
+testHybrid1 = 0;
+testHybrid2 = 0;
 testDiscrete = 1;
 
 tol = 0.02;
@@ -108,7 +108,7 @@ for testNum=1:numTests
         
         if(testContinuous)
             tau1_c = ktauhat(x_continuous_subset, y_continuous_subset);
-            tau2_c = kso_continuous.consume();
+            tau2_c = kso_continuous.consume(2);
             
             if(abs(tau1_c-tau2_c)>tol)
                 warning('Continuous Error: ii=%d', ii);
@@ -118,7 +118,7 @@ for testNum=1:numTests
         
         if(testHybrid1)
             tau1_h1 = ktauhat(x_discrete_subset, y_hybrid1_subset);
-            tau2_h1 = kso_hybrid1.consume();
+            tau2_h1 = kso_hybrid1.consume(2);
             if(abs(tau1_h1-tau2_h1)>tol)
                 warning('Hybrid-1 Error: ii=%d', ii);
                 warning('\t tau1=%0.04f tau2=%0.04f\n', tau1_h1, tau2_h1);
@@ -127,7 +127,7 @@ for testNum=1:numTests
         
         if(testHybrid2)
             tau1_h2 = ktauhat(x_continuous_subset, y_hybrid2_subset);
-            tau2_h2 = kso_hybrid2.consume();
+            tau2_h2 = kso_hybrid2.consume(2);
             if(abs(tau1_h2-tau2_h2)>tol)
                 warning('Hybrid-2 Error: ii=%d', ii);
                 warning('\t tau1=%0.04f tau2=%0.04f\n', tau1_h2, tau2_h2);
@@ -136,7 +136,7 @@ for testNum=1:numTests
         
         if(testDiscrete)      % circular isn't correct for discrete
             tau1_d = ktauhat(x_discrete_subset, y_discrete_subset);
-            tau2_d = kso_discrete.consume();
+            tau2_d = kso_discrete.consume(2);
             if(abs(tau1_d-tau2_d)>tol)
                 warning('Discrete Error: ii=%d', ii);
                 warning('\t tau1=%0.04f tau2=%0.04f\n', tau1_d, tau2_d);
@@ -145,4 +145,51 @@ for testNum=1:numTests
         
     end
 %     fprintf('*******************************\n');
+end
+
+%% test ktauhat_s restart mode
+clear;
+clc;
+dbstop if error;
+
+M = 500;
+rng(1234);
+
+x = rand(M,1);
+x = sort(x);
+y = (x-0.5).^2;
+
+tol = 1e-3;
+
+kso = ktauhat_s(x, y);
+iiBegin = 1;
+iiEnd = M/5;
+for ii=iiBegin+1:iiEnd
+    x_continuous_subset = x(iiBegin:ii);
+    y_continuous_subset = y(iiBegin:ii);
+    
+    tau1_c = ktauhat(x_continuous_subset, y_continuous_subset);
+    tau2_c = kso.consume(1);
+
+    if(abs(tau1_c-tau2_c)>tol)
+        warning('Continuous Error: ii=%d', ii);
+        warning('\t tau1=%0.04f tau2=%0.04f\n', tau1_c, tau2_c);
+    end
+end
+
+% perform a reset state
+kso.clearState();
+iiBegin = iiEnd+1;
+iiEnd = M;
+for ii=iiBegin+1:iiEnd
+    x_continuous_subset = x(iiBegin:ii);
+    y_continuous_subset = y(iiBegin:ii);
+    
+    tau1_c = ktauhat(x_continuous_subset, y_continuous_subset);
+    tau2_c = kso.consume(1);
+
+    if(abs(tau1_c-tau2_c)>tol)
+        warning('Continuous Error: ii=%d', ii);
+        warning('\t tau1=%0.04f tau2=%0.04f\n', tau1_c, tau2_c);
+    end
 end

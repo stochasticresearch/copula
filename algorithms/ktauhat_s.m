@@ -39,59 +39,37 @@ classdef ktauhat_s < handle
     properties(SetAccess = private)
         iiBegin;
         iiEnd;
-        uK;
-        vK;
+        K;
         uu;
         vv;
-        
         uMap;
         vMap;
         uOvlpMap;
         vOvlpMap;
+        mm;
+        mm_choose_2;
+        
+        % for rewind capability
+        % TODO: is there a better (more efficient & cleaner way) to do
+        %       rewind?
+        iiBegin_prev;
+        iiEnd_prev;
+        K_prev;
+        uu_prev;
+        vv_prev;
+        uMap_prev;
+        vMap_prev;
+        uOvlpMap_prev;
+        vOvlpMap_prev;
+        mm_prev;
+        mm_choose_2_prev;
     end
     
-    methods
-        function obj = ktauhat_s(x, y)
-            % set immutable properties
-            obj.M = length(x);
-            obj.CLOSE_TO_ZERO_THRESH = 0.02;      % if we are > 2% of length in terms of combinations;
-            [obj.u,I] = sort(x);
-            obj.v = y(I);
-            
-            % to properly process hybrid and discrete data, we need to sort
-            % each "block" of v ... i.e., all the y's with the same u
-            obj.v = sortSubblocks(obj.u, obj.v);
-            
-            % initialize remaining properties
-            obj.iiBegin = 1;
-            obj.iiEnd = 1;
-            obj.uK = 0;
-            obj.uu = 0;
-            obj.vv = 0;
-            
-            % add the first sample to the maps
-            obj.uMap = containers.Map('KeyType', 'double', 'ValueType', 'double');
-            obj.vMap = containers.Map('KeyType', 'double', 'ValueType', 'double');
-            obj.uOvlpMap = containers.Map('KeyType', 'double', 'ValueType', 'uint64');
-            obj.vOvlpMap = containers.Map('KeyType', 'double', 'ValueType', 'uint64');
-            obj.uMap(obj.u(1)) = 1;
-            obj.vMap(obj.v(1)) = 1;
-
-        end
-        
-        % TODO: better overloading
-        function [metric] = consumeN(obj, numPts)
-            for ii=1:numPts
-                metric = obj.consume();
-            end
-        end
-        
-        function [metric] = consumeAll(obj)
-            metric = obj.consume(obj.M);
-        end
-        
-        function [metric] = consume(obj)
+    methods(Access = private)
+        function [metric] = consume__(obj)
             obj.iiEnd = obj.iiEnd + 1;
+            obj.mm = obj.mm + 1;
+            obj.mm_choose_2 = obj.mm_choose_2 + obj.mm - 1;
 
             uTmp = obj.u(obj.iiBegin:obj.iiEnd);
             vTmp = obj.v(obj.iiBegin:obj.iiEnd);
@@ -109,7 +87,7 @@ classdef ktauhat_s < handle
             if(uPosTmp<uNegTmp)
                 uAddVal = -1*uAddVal;
             end
-            obj.uK = obj.uK+uAddVal;
+            obj.K = obj.K+uAddVal;
             
             % count overlaps -- for now, we do this in separate if/else
             % statements to make the code clear, but in C++ this can be
@@ -127,34 +105,21 @@ classdef ktauhat_s < handle
                 obj.vOvlpMap(vCurrSamp) = obj.vOvlpMap(vCurrSamp) + 1;
             end
 
-            if(~isKey(obj.uMap, uCurrSamp))
-                obj.uMap(uCurrSamp) = 1;
-            else
-                obj.uMap(uCurrSamp) = obj.uMap(uCurrSamp) + 1;
-                if((obj.uMap(uCurrSamp)-1)<2)
-                    subVal = 0;
-                else
-                    subVal = nchoosek(obj.uMap(uCurrSamp)-1,2);
-                end
-                obj.uu = obj.uu - subVal + nchoosek(obj.uMap(uCurrSamp),2);
-            end
-            if(~isKey(obj.vMap, vCurrSamp))
-                obj.vMap(vCurrSamp) = 1;
-            else
-                obj.vMap(vCurrSamp) = obj.vMap(vCurrSamp) + 1;
-                if((obj.vMap(vCurrSamp)-1)<2)
-                    subVal = 0;
-                else
-                    subVal = nchoosek(obj.vMap(vCurrSamp)-1,2);
-                end
-                obj.vv = obj.vv - subVal + nchoosek(obj.vMap(vCurrSamp),2);
-            end
+            % TODO: C++ implementation of this must be faster in order to
+            % achieve real speed-up w/ RSDM-S rather than RSDM.  We might
+            % need to do something clever where we convert the inputs to
+            % ranks, and then index into a vector rather than a map
+            % container to obtain speed-ups necessary
+            obj.uMap(uCurrSamp) = obj.uMap(uCurrSamp) + 1;
+            obj.uu = obj.uu + obj.uMap(uCurrSamp) - 1;
+            obj.vMap(vCurrSamp) = obj.vMap(vCurrSamp) + 1;
+            obj.vv = obj.vv + obj.vMap(vCurrSamp) - 1;
 
             % attempt to automatically determine if we have hybrid-data or
             % all discrete/continuous
             uuCloseToZero = obj.closeToZero(obj.uu);
             vvCloseToZero = obj.closeToZero(obj.vv);
-
+            
             % hybrid scenario
             if( (uuCloseToZero && obj.vv>0) || (obj.uu>0 && vvCloseToZero) )
                 hybridFlag = 1;
@@ -173,50 +138,30 @@ classdef ktauhat_s < handle
                 hybridFlag = 0;
             end
             
-            mm = obj.iiEnd-obj.iiBegin+1;
             if(hybridFlag)
-                den = sqrt(nchoosek(mm,2)-tt)*sqrt(nchoosek(mm,2)-tt);
+                den = sqrt(obj.mm_choose_2-tt)*sqrt(obj.mm_choose_2-tt);
             else
                 % all continuous/discrete case
                 % we assume u is independent var, v is the dependent var
-                den = sqrt(nchoosek(mm,2)-obj.uu)*sqrt(nchoosek(mm,2)-obj.vv);
+                den = sqrt(obj.mm_choose_2-obj.uu)*sqrt(obj.mm_choose_2-obj.vv);
             end
-%             fprintf('>>> vPosTmp=%d vNegTmp=%d uAddVal=%d\n', ...
-%                 vPosTmp, vNegTmp, uAddVal);
-%             fprintf('>>> uK=%d uu=%d vv=%d u(closeToZero)=%d v(closeToZero)=%d\n', ...
-%                 obj.uK, obj.uu, obj.vv, uuCloseToZero, vvCloseToZero);
+%             fprintf('>>> K=%d uu=%d vv=%d u(closeToZero)=%d v(closeToZero)=%d\n', ...
+%                 obj.K, obj.uu, obj.vv, uuCloseToZero, vvCloseToZero);
 
-            if(obj.uK==0 || den==0)
+            if(obj.K==0 || den==0)
                 metric = 0;
             else
-                metric = obj.uK/den;
+                metric = obj.K/den;
             end
-            
         end
         
-        function [] = clearState(obj)
-            obj.iiBegin = obj.iiEnd;
-            obj.uu = 0;
-            obj.vv = 0;
-            obj.uK = 0;
-            
-            % empty the maps & add the first element into it
-            remove(obj.uMap, obj.uMap.keys());
-            remove(obj.vMap, obj.vMap.keys());
-            remove(obj.uOvlpMap, obj.uOvlpMap.keys());
-            remove(obj.vOvlpMap, obj.vOvlpMap.keys());
-            
-            % initialize the uMap and vMap
-            obj.uMap(obj.iiBegin) = 1;
-            obj.vMap(obj.iiBegin) = 1;
-        end
         
         function [out] = closeToZero(obj, in)
             out = 1;
-            mm = obj.iiEnd-obj.iiBegin + 1;
-            mmFloor = floor(mm*obj.CLOSE_TO_ZERO_THRESH);
+            mmFloor = floor(obj.mm*obj.CLOSE_TO_ZERO_THRESH);
             
             if(mmFloor>=2)
+                % TODO: remove this nchoosek call for high performance!!
                 cmpVal = nchoosek(mmFloor,2);
             else
                 cmpVal = 0;
@@ -243,5 +188,112 @@ classdef ktauhat_s < handle
                 cf = nchoosek(meanVal,2)*lenMap;
             end
         end
+    end
+    
+    methods
+        function obj = ktauhat_s(x, y)
+            % set immutable properties
+            obj.M = length(x);
+            obj.CLOSE_TO_ZERO_THRESH = 0.02;      % if we are > 2% of length in terms of combinations;
+            [obj.u,I] = sort(x);
+            obj.v = y(I);
+            
+            % to properly process hybrid and discrete data, we need to sort
+            % each "block" of v ... i.e., all the y's with the same u
+            obj.v = sortSubblocks(obj.u, obj.v);
+            
+            % initialize all the required variables for processing
+            obj.resetState();
+        end
+        
+        function [metric] = consume(obj, numPts)
+            obj.iiBegin_prev = obj.iiBegin;
+            obj.iiEnd_prev = obj.iiEnd;
+            obj.K_prev = obj.K;
+            obj.uu_prev = obj.uu;
+            obj.vv_prev = obj.vv;
+            obj.uMap_prev = obj.uMap;
+            obj.vMap_prev = obj.vMap;
+            obj.uOvlpMap_prev = obj.uOvlpMap;
+            obj.vOvlpMap_prev = obj.vOvlpMap;
+            obj.mm_prev = obj.mm;
+            obj.mm_choose_2_prev = obj.mm_choose_2;
+            
+            for ii=1:numPts-1
+                if(obj.iiEnd<obj.M)
+                    metric = obj.consume__();
+                else
+                    break;
+                end
+            end
+        end
+        
+        function [metric] = consumeAll(obj)
+            metric = obj.consume(obj.M);
+        end
+        
+        function [] = rewind(obj)
+            obj.iiBegin = obj.iiBegin_prev;
+            obj.iiEnd = obj.iiEnd_prev;
+            obj.K = obj.K_prev;
+            obj.uu = obj.uu_prev;
+            obj.vv = obj.vv_prev;
+            obj.uMap = obj.uMap_prev;
+            obj.vMap = obj.vMap_prev;
+            obj.uOvlpMap = obj.uOvlpMap_prev;
+            obj.vOvlpMap = obj.vOvlpMap_prev;
+            obj.mm = obj.mm_prev;
+            obj.mm_choose_2 = obj.mm_choose_2_prev;
+        end
+        
+        function [] = clearState(obj)
+            % called when we want to start a new rectangle
+            
+            % reset all private properties defined above
+            obj.iiBegin = obj.iiEnd + 1;
+            obj.iiEnd = obj.iiBegin;
+            obj.uu = 0;
+            obj.vv = 0;
+            obj.K = 0;
+            obj.mm = 1;
+            obj.mm_choose_2 = 0;
+            
+            % reinitialize the maps 
+            % WARNING!: overwriting objects here ... is this bad coding practice?
+            obj.uMap = containers.Map(obj.u, zeros(1,length(obj.u)));
+            obj.vMap = containers.Map(obj.v, zeros(1,length(obj.v)));
+            
+            remove(obj.uOvlpMap, obj.uOvlpMap.keys());
+            remove(obj.vOvlpMap, obj.vOvlpMap.keys());
+            
+            % initialize the uMap and vMap by add the first element into it
+            obj.uMap(obj.u(obj.iiBegin)) = 1;
+            obj.vMap(obj.v(obj.iiBegin)) = 1;
+        end
+        
+        function [] = resetState(obj)
+            % called when we want to "reset".  We do this when we
+            % re-process the data at a different scan rate
+            
+            % initialize remaining properties
+            obj.iiBegin = 1;
+            obj.iiEnd = 1;
+            obj.K = 0;
+            obj.uu = 0;
+            obj.vv = 0;
+            obj.mm = 1;     % we start w/ 1 sample, and consume the next, etc...
+            obj.mm_choose_2 = 0;
+            
+            % initialize the maps
+            obj.uMap = containers.Map(obj.u, zeros(1,length(obj.u)));
+            obj.vMap = containers.Map(obj.v, zeros(1,length(obj.v)));
+            obj.uOvlpMap = containers.Map('KeyType', 'double', 'ValueType', 'uint64');
+            obj.vOvlpMap = containers.Map('KeyType', 'double', 'ValueType', 'uint64');
+            
+            % add the first sample to the maps
+            obj.uMap(obj.u(obj.iiBegin)) = 1;
+            obj.vMap(obj.v(obj.iiBegin)) = 1;
+        end
+        
     end
 end
