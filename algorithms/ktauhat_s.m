@@ -81,10 +81,8 @@ classdef ktauhat_s < handle
             uCurrSamp = obj.u(obj.iiEnd); uPrevSamp = obj.u(obj.iiEnd-1);
             vCurrSamp = obj.v(obj.iiEnd); vPrevSamp = obj.v(obj.iiEnd-1);
 
-            uDiff = uTmp(end)-uTmp(end-1:-1:1);
-            vDiff = vTmp(end)-vTmp(end-1:-1:1);
-            uLastSampDiff = uCurrSamp-uPrevSamp;
-            vLastSampDiff = vCurrSamp-vPrevSamp;
+            uDiff = uCurrSamp-uTmp(end-1:-1:1);
+            vDiff = vCurrSamp-vTmp(end-1:-1:1);
             uPosTmp = sum(uDiff>0 & vDiff~=0); vPosTmp = sum(vDiff>0 & uDiff~=0);
             uNegTmp = sum(uDiff<0 & vDiff~=0); vNegTmp = sum(vDiff<0 & uDiff~=0);
             
@@ -94,34 +92,22 @@ classdef ktauhat_s < handle
             end
             obj.K = obj.K+uAddVal;
             
+            uLastSampDiff = uCurrSamp-uPrevSamp;
+            vLastSampDiff = vCurrSamp-vPrevSamp;
             % count overlaps -- for now, we do this in separate if/else
             % statements to make the code clear, but in C++ this can be
             % optimized
             if(uLastSampDiff==0 && vLastSampDiff~=0)
-                if(~isKey(obj.uOvlpMap,uCurrSamp) && ~isKey(obj.uOvlpMap, uPrevSamp))
-                    obj.uOvlpMap(uCurrSamp) = 0;
-                end
                 obj.uOvlpMap(uCurrSamp) = obj.uOvlpMap(uCurrSamp) + 1;
             end
             if(vLastSampDiff==0 && uLastSampDiff~=0)
-                if(~isKey(obj.vOvlpMap,vCurrSamp) && ~isKey(obj.vOvlpMap, vPrevSamp))
-                    obj.vOvlpMap(vCurrSamp) = 0;
-                end
                 obj.vOvlpMap(vCurrSamp) = obj.vOvlpMap(vCurrSamp) + 1;
             end
 
-            % TODO: C++ implementation of this must be faster in order to
-            % achieve real speed-up w/ RSDM-S rather than RSDM.  We might
-            % need to do something clever where we convert the inputs to
-            % ranks, and then index into a vector rather than a map
-            % container to obtain necessary speed-ups.  The below block of
-            % code is the code that needs to be optimized!
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             obj.uMap(uCurrSamp) = obj.uMap(uCurrSamp) + 1;
             obj.uu = obj.uu + obj.uMap(uCurrSamp) - 1;
             obj.vMap(vCurrSamp) = obj.vMap(vCurrSamp) + 1;
             obj.vv = obj.vv + obj.vMap(vCurrSamp) - 1;
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
             % attempt to automatically determine if we have hybrid-data or
             % all discrete/continuous
@@ -173,9 +159,9 @@ classdef ktauhat_s < handle
         
         function [cf] = correctionFactor(obj,continuousRvIndicator)
             if(continuousRvIndicator==0)
-                valVec = cell2mat(obj.uOvlpMap.values());
+                valVec = obj.uOvlpMap;
             else
-                valVec = cell2mat(obj.vOvlpMap.values());
+                valVec = obj.vOvlpMap;
             end
 %             continuousRvIndicator
 %             valVec
@@ -195,8 +181,12 @@ classdef ktauhat_s < handle
             obj.M = length(x);
             obj.CLOSE_TO_ZERO_THRESH = 0.02;      % if we are > 2% of length in terms of combinations;
             obj.ONE_OVER_CLOSE_TO_ZERO_THRESH = 1/obj.CLOSE_TO_ZERO_THRESH;
-            [obj.u,I] = sort(x);
-            obj.v = y(I);
+            
+            % convert data to an integer based representation
+            u = sort(x); [~,uu] = ismember(x,u);
+            v = sort(y); [~,vv] = ismember(y,v);
+            [obj.u,I] = sort(uu);
+            obj.v = vv(I);
             
             % to properly process hybrid and discrete data, we need to sort
             % each "block" of v ... i.e., all the y's with the same u
@@ -265,12 +255,10 @@ classdef ktauhat_s < handle
             obj.closeToZeroThresh = 0;
             
             % reinitialize the maps 
-            % WARNING!: overwriting objects here ... is this bad coding practice?
-            obj.uMap = containers.Map(obj.u, zeros(1,length(obj.u)));
-            obj.vMap = containers.Map(obj.v, zeros(1,length(obj.v)));
-            
-            remove(obj.uOvlpMap, obj.uOvlpMap.keys());
-            remove(obj.vOvlpMap, obj.vOvlpMap.keys());
+            obj.uMap = zeros(1,length(obj.u));
+            obj.vMap = zeros(1,length(obj.v));
+            obj.uOvlpMap = zeros(1,length(obj.u));
+            obj.vOvlpMap = zeros(1,length(obj.v));
             
             % initialize the uMap and vMap by add the first element into it
             obj.uMap(obj.u(obj.iiBegin)) = 1;
@@ -293,10 +281,12 @@ classdef ktauhat_s < handle
             obj.closeToZeroThresh = 0;
             
             % initialize the maps
-            obj.uMap = containers.Map(obj.u, zeros(1,length(obj.u)));
-            obj.vMap = containers.Map(obj.v, zeros(1,length(obj.v)));
-            obj.uOvlpMap = containers.Map('KeyType', 'double', 'ValueType', 'uint64');
-            obj.vOvlpMap = containers.Map('KeyType', 'double', 'ValueType', 'uint64');
+            % we now just use arrays b/c we converted the data to be
+            % integer representation only
+            obj.uMap = zeros(1,length(obj.u));
+            obj.vMap = zeros(1,length(obj.v));
+            obj.uOvlpMap = zeros(1,length(obj.u));
+            obj.vOvlpMap = zeros(1,length(obj.v));
             
             % add the first sample to the maps
             obj.uMap(obj.u(obj.iiBegin)) = 1;
