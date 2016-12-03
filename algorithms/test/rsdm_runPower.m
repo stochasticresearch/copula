@@ -929,38 +929,93 @@ yMin = 0; yMax = 1;
 
 FIT_PLOTS = 0;
 
-rsdmNullDistributionResults = zeros(nsim, length(M_vec));
+rsdmNullDistributionResultsContinuous = zeros(nsim, length(M_vec));
+rsdmNullDistributionResultsDiscrete = zeros(nsim, length(M_vec));
+rsdmNullDistributionResultsHybrid1 = zeros(nsim, length(M_vec));
+rsdmNullDistributionResultsHybrid2 = zeros(nsim, length(M_vec));
+
+numDiscreteIntervals = 4;
 
 for ii=1:nsim
     parfor jj=1:length(M_vec)
         M = M_vec(jj);
-        % create independent x & y
+        
+        % continuous create independent x & y
         x = rand(M,1)*(xMax-xMin)+xMin;
         y = rand(M,1)*(yMax-yMin)+yMin;
+        
+        % discrete independent x & y
+        x_discrete = discretizeRv(x,numDiscreteIntervals)';
+        y_discrete = discretizeRv(y,numDiscreteIntervals)';
     
         % compute RSDM
-        rsdmNullDistributionResults(ii,jj) = rsdm(x, y);
+        rsdmNullDistributionResultsContinuous(ii,jj) = rsdm(x, y);
+        rsdmNullDistributionResultsHybrid1(ii,jj) = rsdm(x_discrete,y);
+        rsdmNullDistributionResultsHybrid2(ii,jj) = rsdm(x,y_discrete);
+        rsdmNullDistributionResultsDiscrete(ii,jj) = rsdm(x_discrete,y_discrete);
     end
 end
 
 % plot distribution of RSDM under the null distribution 
 legendCell = cell(1,length(M_vec));
+subplot(2,2,1);
 for ii=1:length(M_vec)
-    [f,xi] = ksdensity(rsdmNullDistributionResults(:,ii));
+    [f,xi] = ksdensity(rsdmNullDistributionResultsContinuous(:,ii));
     plot(xi,f); hold on;
     legendCell{ii} = sprintf('M=%d',M_vec(ii));
 end
 grid on;
 legend(legendCell);
-title('Distribution of RSDM_{approx}');
+title('Distribution of RSDM_{approx}, X-C,Y-C');
 
-D_cell = cell(1,length(M_vec)); 
-PD_cell = cell(1,length(M_vec));
+subplot(2,2,2);
+for ii=1:length(M_vec)
+    [f,xi] = ksdensity(rsdmNullDistributionResultsHybrid1(:,ii));
+    plot(xi,f); hold on;
+    legendCell{ii} = sprintf('M=%d',M_vec(ii));
+end
+grid on;
+legend(legendCell);
+title('Distribution of RSDM_{approx}, X-D,Y-C');
+
+subplot(2,2,3);
+for ii=1:length(M_vec)
+    [f,xi] = ksdensity(rsdmNullDistributionResultsHybrid2(:,ii));
+    plot(xi,f); hold on;
+    legendCell{ii} = sprintf('M=%d',M_vec(ii));
+end
+grid on;
+legend(legendCell);
+title('Distribution of RSDM_{approx}, X-C,Y-D');
+
+subplot(2,2,4);
+for ii=1:length(M_vec)
+    [f,xi] = ksdensity(rsdmNullDistributionResultsDiscrete(:,ii));
+    plot(xi,f); hold on;
+    legendCell{ii} = sprintf('M=%d',M_vec(ii));
+end
+grid on;
+legend(legendCell);
+title('Distribution of RSDM_{approx}, X-D,Y-D');
+
+D_continuous_cell = cell(1,length(M_vec));  PD_continuous_cell = cell(1,length(M_vec));
+D_hybrid1_cell = cell(1,length(M_vec));  PD_hybrid1_cell = cell(1,length(M_vec));
+D_hybrid2_cell = cell(1,length(M_vec));  PD_hybrid2_cell = cell(1,length(M_vec));
+D_discrete_cell = cell(1,length(M_vec));  PD_discrete_cell = cell(1,length(M_vec));
 idx = 1;
 for ii=1:length(M_vec)
-    [D, PD] = allfitdist(rsdmNullDistributionResults(:,ii), 'PDF');
-    D_cell{idx} = D; 
-    PD_cell{idx} = PD;
+    [D, PD] = allfitdist(rsdmNullDistributionResultsContinuous(:,ii), 'PDF');
+    D_continuous_cell{idx} = D;  PD_continuous_cell{idx} = PD;
+    
+    [D, PD] = allfitdist(rsdmNullDistributionResultsHybrid1(:,ii), 'PDF');
+    D_hybrid1_cell{idx} = D;  PD_hybrid1_cell{idx} = PD;
+    
+    [D, PD] = allfitdist(rsdmNullDistributionResultsHybrid2(:,ii), 'PDF');
+    D_hybrid2_cell{idx} = D;  PD_hybrid2_cell{idx} = PD;
+    
+    [D, PD] = allfitdist(rsdmNullDistributionResultsDiscrete(:,ii), 'PDF');
+    D_discrete_cell{idx} = D;  PD_discrete_cell{idx} = PD;
+    
     idx = idx + 1;
 end
 if(~FIT_PLOTS)
@@ -975,36 +1030,92 @@ distributions = {'Beta', 'Birnbaum-Saunders', 'Exponential', ...
                  'Log-logistic', 'Lognormal', 'Nakagami', 'Normal', ...
                  'Rayleigh', 'Rician', 't location-scale', 'Weibull'};
 
-distScores = zeros(4,length(distributions));
+distScoresContinuous = zeros(4,length(distributions));
+distScoresHybrid1 = zeros(4,length(distributions));
+distScoresHybrid2 = zeros(4,length(distributions));
+distScoresDiscrete = zeros(4,length(distributions));
 for ii=1:length(distributions)
     dist = distributions{ii};
     % find this distribution in the fit and store the BIC, AIC, AICc scores
     % for all M
-    NLogL = 0;
-    BIC = 0;
-    AIC = 0;
-    AICc = 0;
+    NLogL_continuous = 0; BIC_continuous = 0; AIC_continuous = 0; AICc_continuous = 0;
+    NLogL_hybrid1 = 0; BIC_hybrid1 = 0; AIC_hybrid1 = 0; AICc_hybrid1 = 0;
+    NLogL_hybrid2 = 0; BIC_hybrid2 = 0; AIC_hybrid2 = 0; AICc_hybrid2 = 0;
+    NLogL_discrete = 0; BIC_discrete = 0; AIC_discrete = 0; AICc_discrete = 0;
+    
     for jj=1:length(M_vec)
-        D = D_cell{jj};
-        PD = PD_cell{jj};
-        
+        D = D_continuous_cell{jj};
+        PD = PD_continuous_cell{jj};
         % find the distribution
         for kk=1:length(PD)
             if(strcmpi(PD{kk}.DistributionName, dist))
                 break;
             end
         end
+        NLogL_continuous = NLogL_continuous + D(kk).NLogL;
+        BIC_continuous = BIC_continuous + D(kk).BIC;
+        AIC_continuous = AIC_continuous + D(kk).AIC;
+        AICc_continuous = AICc_continuous + D(kk).AICc;
         
-        NLogL = NLogL + D(kk).NLogL;
-        BIC = BIC + D(kk).BIC;
-        AIC = AIC + D(kk).AIC;
-        AICc = AICc + D(kk).AICc;
+        D = D_hybrid1_cell{jj};
+        PD = PD_hybrid1_cell{jj};
+        % find the distribution
+        for kk=1:length(PD)
+            if(strcmpi(PD{kk}.DistributionName, dist))
+                break;
+            end
+        end
+        NLogL_hybrid1 = NLogL_hybrid1 + D(kk).NLogL;
+        BIC_hybrid1 = BIC_hybrid1 + D(kk).BIC;
+        AIC_hybrid1 = AIC_hybrid1 + D(kk).AIC;
+        AICc_hybrid1 = AICc_hybrid1 + D(kk).AICc;
+        
+        D = D_hybrid2_cell{jj};
+        PD = PD_hybrid2_cell{jj};
+        % find the distribution
+        for kk=1:length(PD)
+            if(strcmpi(PD{kk}.DistributionName, dist))
+                break;
+            end
+        end
+        NLogL_hybrid2 = NLogL_hybrid2 + D(kk).NLogL;
+        BIC_hybrid2 = BIC_hybrid2 + D(kk).BIC;
+        AIC_hybrid2 = AIC_hybrid2 + D(kk).AIC;
+        AICc_hybrid2 = AICc_hybrid2 + D(kk).AICc;
+        
+        D = D_discrete_cell{jj};
+        PD = PD_discrete_cell{jj};
+        % find the distribution
+        for kk=1:length(PD)
+            if(strcmpi(PD{kk}.DistributionName, dist))
+                break;
+            end
+        end
+        NLogL_discrete = NLogL_discrete + D(kk).NLogL;
+        BIC_discrete = BIC_discrete + D(kk).BIC;
+        AIC_discrete = AIC_discrete + D(kk).AIC;
+        AICc_discrete = AICc_discrete + D(kk).AICc;
     end
     
-    distScores(1,ii) = NLogL;
-    distScores(2,ii) = BIC;
-    distScores(3,ii) = AIC;
-    distScores(4,ii) = AICc;
+    distScoresContinuous(1,ii) = NLogL_continuous;
+    distScoresContinuous(2,ii) = BIC_continuous;
+    distScoresContinuous(3,ii) = AIC_continuous;
+    distScoresContinuous(4,ii) = AICc_continuous;
+    
+    distScoresHybrid1(1,ii) = NLogL_hybrid1;
+    distScoresHybrid1(2,ii) = BIC_hybrid1;
+    distScoresHybrid1(3,ii) = AIC_hybrid1;
+    distScoresHybrid1(4,ii) = AICc_hybrid1;
+    
+    distScoresHybrid2(1,ii) = NLogL_hybrid2;
+    distScoresHybrid2(2,ii) = BIC_hybrid2;
+    distScoresHybrid2(3,ii) = AIC_hybrid2;
+    distScoresHybrid2(4,ii) = AICc_hybrid2;
+    
+    distScoresDiscrete(1,ii) = NLogL_discrete;
+    distScoresDiscrete(2,ii) = BIC_discrete;
+    distScoresDiscrete(3,ii) = AIC_discrete;
+    distScoresDiscrete(4,ii) = AICc_discrete;
 end
 
 % save the data
@@ -1016,25 +1127,93 @@ else
     save('/home/kiran/ownCloud/PhD/sim_results/independence/rsdmNullDistribution.mat');
 end
 
+fprintf('*************** X & Y CONTINUOUS ****************\');
 % Sort by NLogL
-[~,I] = sort(distScores(1,:), 'ascend');
+[~,I] = sort(distScoresContinuous(1,:), 'ascend');
 fprintf('NLogL\n');
 distributions{I(1)}
 
 % Sort by BIC
-[~,I] = sort(distScores(2,:), 'ascend');
+[~,I] = sort(distScoresContinuous(2,:), 'ascend');
 fprintf('BIC\n');
 distributions{I(1)}
 
 % Sort by AIC
-[~,I] = sort(distScores(3,:), 'ascend');
+[~,I] = sort(distScoresContinuous(3,:), 'ascend');
 fprintf('AIC\n');
 distributions{I(1)}
 
 % Sort by AICc
-[~,I] = sort(distScores(4,:), 'ascend');
+[~,I] = sort(distScoresContinuous(4,:), 'ascend');
 fprintf('AICc\n');
 distributions{I(1)}
+fprintf('************************************************\');
+
+fprintf('*************** X & Y HYBRID 1 ****************\');
+% Sort by NLogL
+[~,I] = sort(distScoresHybrid1(1,:), 'ascend');
+fprintf('NLogL\n');
+distributions{I(1)}
+
+% Sort by BIC
+[~,I] = sort(distScoresHybrid1(2,:), 'ascend');
+fprintf('BIC\n');
+distributions{I(1)}
+
+% Sort by AIC
+[~,I] = sort(distScoresHybrid1(3,:), 'ascend');
+fprintf('AIC\n');
+distributions{I(1)}
+
+% Sort by AICc
+[~,I] = sort(distScoresHybrid1(4,:), 'ascend');
+fprintf('AICc\n');
+distributions{I(1)}
+fprintf('************************************************\');
+
+fprintf('*************** X & Y HYBRID 2 ****************\');
+% Sort by NLogL
+[~,I] = sort(distScoresHybrid2(1,:), 'ascend');
+fprintf('NLogL\n');
+distributions{I(1)}
+
+% Sort by BIC
+[~,I] = sort(distScoresHybrid2(2,:), 'ascend');
+fprintf('BIC\n');
+distributions{I(1)}
+
+% Sort by AIC
+[~,I] = sort(distScoresHybrid2(3,:), 'ascend');
+fprintf('AIC\n');
+distributions{I(1)}
+
+% Sort by AICc
+[~,I] = sort(distScoresHybrid2(4,:), 'ascend');
+fprintf('AICc\n');
+distributions{I(1)}
+fprintf('************************************************\');
+
+fprintf('*************** X & Y DISCRETE ****************\');
+% Sort by NLogL
+[~,I] = sort(distScoresDiscrete(1,:), 'ascend');
+fprintf('NLogL\n');
+distributions{I(1)}
+
+% Sort by BIC
+[~,I] = sort(distScoresDiscrete(2,:), 'ascend');
+fprintf('BIC\n');
+distributions{I(1)}
+
+% Sort by AIC
+[~,I] = sort(distScoresDiscrete(3,:), 'ascend');
+fprintf('AIC\n');
+distributions{I(1)}
+
+% Sort by AICc
+[~,I] = sort(distScoresDiscrete(4,:), 'ascend');
+fprintf('AICc\n');
+distributions{I(1)}
+fprintf('************************************************\');
 
 %%
 
@@ -1058,8 +1237,8 @@ sigmaVec = zeros(1,length(M_vec));
 for ii=1:length(M_vec)
     M = M_vec(ii);
     % look for the Inverse Gaussian Distribution in the correct cell array
-    D = D_cell(ii);
-    PD = PD_cell(ii); PD = PD{1};
+    D = D_continuous_cell(ii);
+    PD = PD_continuous_cell(ii); PD = PD{1};
     for jj=1:length(PD)
         if(strcmpi('Generalized extreme value', PD{jj}.DistributionName))
             pd = PD{jj};
@@ -1075,7 +1254,7 @@ fontSize = 20;
 
 % do the Q-Q plot
 pd = pdObjs{5};
-h1 = subplot(2,2,1); qqplot(rsdmNullDistributionResults(:,1), pd); grid on;
+h1 = subplot(2,2,1); qqplot(rsdmNullDistributionResultsContinuous(:,1), pd); grid on;
 xlabel(sprintf('Quantiles of GEV(%0.02f,%0.02f, %0.02f)', pd.k, pd.mu, pd.sigma), 'FontSize', 20);
 ylabel('Quantiles of Input Samples', 'FontSize', fontSize);
 title('M = 500', 'FontSize', fontSize);

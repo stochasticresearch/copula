@@ -193,3 +193,6 @@ for ii=iiBegin+1:iiEnd
         warning('\t tau1=%0.04f tau2=%0.04f\n', tau1_c, tau2_c);
     end
 end
+
+%% Generate hte null distribution of ktauhat-s
+
