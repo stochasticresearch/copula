@@ -3,13 +3,6 @@ classdef ktauhat_s < handle
     %implementation of ktauhat for computing the RSDM than the naive
     %implementation given in ktauhat.m
     %
-    % TODO:
-    %  [ ] - All maps could be made faster by preallocation w/ the keys
-    %        from a call to unique(x) and unique(y). There may be a way to
-    %        get the unique elements from x and y after the sort call,
-    %        without calling unique, which attempts re-sorts the array.
-    %        WARNING: you would then need to change the call from "isKey"
-    %        to see if the value in the map is 0 or greater than 0.
     %**********************************************************************
     %* 
     %* Copyright (C) 2016  Kiran Karra <kiran.karra@gmail.com>
@@ -45,8 +38,6 @@ classdef ktauhat_s < handle
         vv;
         uMap;
         vMap;
-        uOvlpMap;
-        vOvlpMap;
         mm;
         mmGroups;
         mm_choose_2;
@@ -62,8 +53,6 @@ classdef ktauhat_s < handle
         vv_prev;
         uMap_prev;
         vMap_prev;
-        uOvlpMap_prev;
-        vOvlpMap_prev;
         mm_prev;
         mmGroups_prev;
         mm_choose_2_prev;
@@ -78,8 +67,8 @@ classdef ktauhat_s < handle
 
             uTmp = obj.u(obj.iiBegin:obj.iiEnd);
             vTmp = obj.v(obj.iiBegin:obj.iiEnd);
-            uCurrSamp = obj.u(obj.iiEnd); uPrevSamp = obj.u(obj.iiEnd-1);
-            vCurrSamp = obj.v(obj.iiEnd); vPrevSamp = obj.v(obj.iiEnd-1);
+            uCurrSamp = obj.u(obj.iiEnd);
+            vCurrSamp = obj.v(obj.iiEnd);
 
             uDiff = uCurrSamp-uTmp(end-1:-1:1);
             vDiff = vCurrSamp-vTmp(end-1:-1:1);
@@ -92,18 +81,6 @@ classdef ktauhat_s < handle
             end
             obj.K = obj.K+uAddVal;
             
-            uLastSampDiff = uCurrSamp-uPrevSamp;
-            vLastSampDiff = vCurrSamp-vPrevSamp;
-            % count overlaps -- for now, we do this in separate if/else
-            % statements to make the code clear, but in C++ this can be
-            % optimized
-            if(uLastSampDiff==0 && vLastSampDiff~=0)
-                obj.uOvlpMap(uCurrSamp) = obj.uOvlpMap(uCurrSamp) + 1;
-            end
-            if(vLastSampDiff==0 && uLastSampDiff~=0)
-                obj.vOvlpMap(vCurrSamp) = obj.vOvlpMap(vCurrSamp) + 1;
-            end
-
             obj.uMap(uCurrSamp) = obj.uMap(uCurrSamp) + 1;
             obj.uu = obj.uu + obj.uMap(uCurrSamp) - 1;
             obj.vMap(vCurrSamp) = obj.vMap(vCurrSamp) + 1;
@@ -124,53 +101,18 @@ classdef ktauhat_s < handle
             
             % hybrid scenario
             if( (uuCloseToZero && obj.vv>0) || (obj.uu>0 && vvCloseToZero) )
-                hybridFlag = 1;
-                % determine which variable is continuous, and which is
-                % discrete
-                if(uuCloseToZero)
-                    continuousRvIndicator = 0;
-                else
-                    continuousRvIndicator = 1;
-                end
-                % compute the correction factor
-                cf = obj.correctionFactor(continuousRvIndicator);
-                tt = max(obj.uu, obj.vv)-cf;
-%                 fprintf('>>> cf=%0.02f, tt=%0.02f\n', cf, tt);
-            else
-                hybridFlag = 0;
-            end
-            
-            if(hybridFlag)
+                tt = max(obj.uu, obj.vv);
                 den = sqrt(obj.mm_choose_2-tt)*sqrt(obj.mm_choose_2-tt);
             else
                 % all continuous/discrete case
                 % we assume u is independent var, v is the dependent var
                 den = sqrt(obj.mm_choose_2-obj.uu)*sqrt(obj.mm_choose_2-obj.vv);
             end
-%             fprintf('>>> K=%d uu=%d vv=%d u(closeToZero)=%d v(closeToZero)=%d\n', ...
-%                 obj.K, obj.uu, obj.vv, uuCloseToZero, vvCloseToZero);
-
+            
             if(obj.K==0 || den==0)
                 metric = 0;
             else
                 metric = obj.K/den;
-            end
-        end
-        
-        function [cf] = correctionFactor(obj,continuousRvIndicator)
-            if(continuousRvIndicator==0)
-                valVec = obj.uOvlpMap;
-            else
-                valVec = obj.vOvlpMap;
-            end
-%             continuousRvIndicator
-%             valVec
-            meanVal = floor(mean(valVec));
-            lenMap = length(valVec);
-            if(isnan(meanVal) || meanVal<2)
-                cf = 0;
-            else
-                cf = nchoosek(meanVal,2)*lenMap;
             end
         end
     end
@@ -204,14 +146,12 @@ classdef ktauhat_s < handle
             obj.vv_prev = obj.vv;
             obj.uMap_prev = obj.uMap;
             obj.vMap_prev = obj.vMap;
-            obj.uOvlpMap_prev = obj.uOvlpMap;
-            obj.vOvlpMap_prev = obj.vOvlpMap;
             obj.mm_prev = obj.mm;
             obj.mm_choose_2_prev = obj.mm_choose_2;
             obj.closeToZeroThresh_prev = obj.closeToZeroThresh;
             obj.mmGroups_prev = obj.mmGroups;
             
-            for ii=1:numPts-1
+            for ii=1:numPts
                 if(obj.iiEnd<obj.M)
                     metric = obj.consume__();
                 else
@@ -232,8 +172,6 @@ classdef ktauhat_s < handle
             obj.vv = obj.vv_prev;
             obj.uMap = obj.uMap_prev;
             obj.vMap = obj.vMap_prev;
-            obj.uOvlpMap = obj.uOvlpMap_prev;
-            obj.vOvlpMap = obj.vOvlpMap_prev;
             obj.mm = obj.mm_prev;
             obj.mm_choose_2 = obj.mm_choose_2_prev;
             obj.closeToZeroThresh = obj.closeToZeroThresh_prev;
@@ -257,8 +195,6 @@ classdef ktauhat_s < handle
             % reinitialize the maps 
             obj.uMap = zeros(1,length(obj.u));
             obj.vMap = zeros(1,length(obj.v));
-            obj.uOvlpMap = zeros(1,length(obj.u));
-            obj.vOvlpMap = zeros(1,length(obj.v));
             
             % initialize the uMap and vMap by add the first element into it
             obj.uMap(obj.u(obj.iiBegin)) = 1;
@@ -285,8 +221,6 @@ classdef ktauhat_s < handle
             % integer representation only
             obj.uMap = zeros(1,length(obj.u));
             obj.vMap = zeros(1,length(obj.v));
-            obj.uOvlpMap = zeros(1,length(obj.u));
-            obj.vOvlpMap = zeros(1,length(obj.v));
             
             % add the first sample to the maps
             obj.uMap(obj.u(obj.iiBegin)) = 1;

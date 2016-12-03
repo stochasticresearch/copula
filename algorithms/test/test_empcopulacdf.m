@@ -137,3 +137,58 @@ h2 = subplot(1,3,2); surf(U1,U2,c_est_grad); xlabel('u'); ylabel('v');
 title('$$ \hat{c}(\mathbf{u}) = \frac{\partial \hat{C}(\mathbf{u})}{d \mathbf{u}}$$','interpreter','latex'); grid on;
 h3 = subplot(1,3,3); surf(U1,U2,c_direct); xlabel('u'); ylabel('v'); 
 title('$$ \hat{c}_\beta(\mathbf{u}) $$','interpreter','latex'); grid on;
+
+%% A small test of functional dependnece
+
+clear;
+clc;
+M = 5000;
+K = 100; h = 0.1;
+minVal = 0.0; maxVal = 1.0;
+uu = linspace(minVal,maxVal,K); vv = linspace(minVal,maxVal,K);
+
+x = rand(M,1); x = sort(x);
+y = (x-0.5).^2;
+u = pobs(x); v = pobs(y);
+U = [u v];
+C = empcopulacdf(U,K,'deheuvels');
+c = empcopulapdf(U,h,K,'betak-matlab');
+CC = C'; cc = c';       % CC and cc are v/u rather than u/v oriented.
+
+% now construct the copula separately for the discordant section, and the
+% concordant section
+I = find(x<=0.5);
+x1 = x(I); y1 = y(I);
+I = find(x>0.5);
+x2 = x(I); y2 = y(I);
+u1 = pobs(x1); v1 = pobs(y1); U1 = [u1 v1];
+u2 = pobs(x2); v2 = pobs(y2); U2 = [u2 v2];
+C1 = empcopulacdf(U1,K,'deheuvels'); c1 = empcopulapdf(U1,h,K,'betak-matlab');
+CC1 = C1'; cc1 = c1';
+C2 = empcopulacdf(U2,K,'deheuvels'); c2 = empcopulapdf(U2,h,K,'betak-matlab');
+CC2 = C2'; cc2 = c2';
+
+% integrate from u=[0,uu], v=[0,1]
+tauVec = zeros(1,K);
+tauVec1 = zeros(1,K); tauVec2 = zeros(1,K);
+umaxVec = uu;
+for ii=1:K
+    matSubset = CC(:,1:ii).*cc(:,1:ii);
+    matSubset1 = CC1(:,1:ii).*cc1(:,1:ii);
+    matSubset2 = CC2(:,1:ii).*cc2(:,1:ii);
+    
+    uIntegralRange = uu(1:ii);
+    
+    tauVec(ii) = 4*trapz(vv, trapz(uIntegralRange, matSubset, 2))-1;
+    tauVec1(ii) = 4*trapz(vv, trapz(uIntegralRange, matSubset1, 2))-1;
+    tauVec2(ii) = 4*trapz(vv, trapz(uIntegralRange, matSubset2, 2))-1;
+end
+
+subplot(4,2,1); surf(uu,vv,CC); xlabel('v'); ylabel('u'); zlabel('CC');
+subplot(4,2,2); surf(uu,vv,cc); xlabel('v'); ylabel('u'); zlabel('cc');
+subplot(4,2,3); surf(uu,vv,CC.*cc); xlabel('v'); ylabel('u'); zlabel('CC*cc');
+subplot(4,2,4); plot(umaxVec, tauVec); grid on; xlabel('umax'); ylabel('Q(\tau) | y=x^2');
+subplot(4,2,5); surf(uu,vv,CC1.*cc1); xlabel('v'); ylabel('u'); zlabel('CC1*cc1');
+subplot(4,2,6); plot(umaxVec, tauVec1); grid on; xlabel('umax'); ylabel('Q(\tau) | y=x^2 -M');
+subplot(4,2,7); surf(uu,vv,CC2.*cc2); xlabel('v'); ylabel('u'); zlabel('CC2*cc2');
+subplot(4,2,8); plot(umaxVec, tauVec2); grid on; xlabel('umax'); ylabel('Q(\tau) | y=x^2 +M');

@@ -22,7 +22,7 @@ clear;
 clc;
 dbstop if error;
 
-M = 500; numDiscreteIntervals = 4;
+M = 100; numDiscreteIntervals = 4;
 
 % x = [1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9];
 % y = [5.1 4.2 3.3 2.4 1.5 2.6 3.7 4.8 5.9];
@@ -39,14 +39,14 @@ M = 500; numDiscreteIntervals = 4;
 rng(1234);
 
 testContinuous = 1;
-testHybrid1 = 0;
-testHybrid2 = 0;
+testHybrid1 = 1;
+testHybrid2 = 1;
 testDiscrete = 1;
 
 tol = 0.02;
 numTests = 9;
+CORRECTION_FACTOR_SETTING = 5;      % this corresponds to NO correction factor
 for testNum=1:numTests
-% for testNum=9
     x = rand(M,1);
     x = sort(x);
     x_discrete = discretizeRv(x,numDiscreteIntervals)';
@@ -107,8 +107,8 @@ for testNum=1:numTests
         % ktauhat_s *should* match-up
         
         if(testContinuous)
-            tau1_c = ktauhat(x_continuous_subset, y_continuous_subset);
-            tau2_c = kso_continuous.consume(2);
+            tau1_c = ktauhat(x_continuous_subset, y_continuous_subset, CORRECTION_FACTOR_SETTING);
+            tau2_c = kso_continuous.consume(1);
             
             if(abs(tau1_c-tau2_c)>tol)
                 warning('Continuous Error: ii=%d', ii);
@@ -117,8 +117,8 @@ for testNum=1:numTests
         end
         
         if(testHybrid1)
-            tau1_h1 = ktauhat(x_discrete_subset, y_hybrid1_subset);
-            tau2_h1 = kso_hybrid1.consume(2);
+            tau1_h1 = ktauhat(x_discrete_subset, y_hybrid1_subset, CORRECTION_FACTOR_SETTING);
+            tau2_h1 = kso_hybrid1.consume(1);
             if(abs(tau1_h1-tau2_h1)>tol)
                 warning('Hybrid-1 Error: ii=%d', ii);
                 warning('\t tau1=%0.04f tau2=%0.04f\n', tau1_h1, tau2_h1);
@@ -126,8 +126,8 @@ for testNum=1:numTests
         end
         
         if(testHybrid2)
-            tau1_h2 = ktauhat(x_continuous_subset, y_hybrid2_subset);
-            tau2_h2 = kso_hybrid2.consume(2);
+            tau1_h2 = ktauhat(x_continuous_subset, y_hybrid2_subset, CORRECTION_FACTOR_SETTING);
+            tau2_h2 = kso_hybrid2.consume(1);
             if(abs(tau1_h2-tau2_h2)>tol)
                 warning('Hybrid-2 Error: ii=%d', ii);
                 warning('\t tau1=%0.04f tau2=%0.04f\n', tau1_h2, tau2_h2);
@@ -135,8 +135,8 @@ for testNum=1:numTests
         end
         
         if(testDiscrete)      % circular isn't correct for discrete
-            tau1_d = ktauhat(x_discrete_subset, y_discrete_subset);
-            tau2_d = kso_discrete.consume(2);
+            tau1_d = ktauhat(x_discrete_subset, y_discrete_subset, CORRECTION_FACTOR_SETTING);
+            tau2_d = kso_discrete.consume(1);
             if(abs(tau1_d-tau2_d)>tol)
                 warning('Discrete Error: ii=%d', ii);
                 warning('\t tau1=%0.04f tau2=%0.04f\n', tau1_d, tau2_d);

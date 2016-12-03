@@ -21,6 +21,6 @@
 M = 500;
 x = rand(M,1);
 y = rand(M,1);
-cosf(x,y)
+cosdv(x,y)
 x = y;
-cosf(x,y)
+cosdv(x,y)
