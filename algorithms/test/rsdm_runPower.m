@@ -927,7 +927,7 @@ M_vec = 100:100:1000;
 xMin = 0; xMax = 1;
 yMin = 0; yMax = 1;
 
-FIT_PLOTS = 0;
+FIT_PLOTS = 1;
 
 rsdmNullDistributionResultsContinuous = zeros(nsim, length(M_vec));
 rsdmNullDistributionResultsDiscrete = zeros(nsim, length(M_vec));
@@ -1004,17 +1004,17 @@ D_hybrid2_cell = cell(1,length(M_vec));  PD_hybrid2_cell = cell(1,length(M_vec))
 D_discrete_cell = cell(1,length(M_vec));  PD_discrete_cell = cell(1,length(M_vec));
 idx = 1;
 for ii=1:length(M_vec)
-    [D, PD] = allfitdist(rsdmNullDistributionResultsContinuous(:,ii), 'PDF');
-    D_continuous_cell{idx} = D;  PD_continuous_cell{idx} = PD;
+    [D, PD_continuous] = allfitdist(rsdmNullDistributionResultsContinuous(:,ii), 'PDF');
+    D_continuous_cell{idx} = D;  PD_continuous_cell{idx} = PD_continuous;
     
-    [D, PD] = allfitdist(rsdmNullDistributionResultsHybrid1(:,ii), 'PDF');
-    D_hybrid1_cell{idx} = D;  PD_hybrid1_cell{idx} = PD;
+    [D, PD_continuous] = allfitdist(rsdmNullDistributionResultsHybrid1(:,ii), 'PDF');
+    D_hybrid1_cell{idx} = D;  PD_hybrid1_cell{idx} = PD_continuous;
     
-    [D, PD] = allfitdist(rsdmNullDistributionResultsHybrid2(:,ii), 'PDF');
-    D_hybrid2_cell{idx} = D;  PD_hybrid2_cell{idx} = PD;
+    [D, PD_continuous] = allfitdist(rsdmNullDistributionResultsHybrid2(:,ii), 'PDF');
+    D_hybrid2_cell{idx} = D;  PD_hybrid2_cell{idx} = PD_continuous;
     
-    [D, PD] = allfitdist(rsdmNullDistributionResultsDiscrete(:,ii), 'PDF');
-    D_discrete_cell{idx} = D;  PD_discrete_cell{idx} = PD;
+    [D, PD_continuous] = allfitdist(rsdmNullDistributionResultsDiscrete(:,ii), 'PDF');
+    D_discrete_cell{idx} = D;  PD_discrete_cell{idx} = PD_continuous;
     
     idx = idx + 1;
 end
@@ -1045,56 +1045,156 @@ for ii=1:length(distributions)
     
     for jj=1:length(M_vec)
         D = D_continuous_cell{jj};
-        PD = PD_continuous_cell{jj};
+        PD_continuous = PD_continuous_cell{jj};
         % find the distribution
-        for kk=1:length(PD)
-            if(strcmpi(PD{kk}.DistributionName, dist))
+        distFound = 0;
+        for kk=1:length(PD_continuous)
+            if(strcmpi(PD_continuous{kk}.DistributionName, dist))
+                distFound = 1;
                 break;
             end
         end
-        NLogL_continuous = NLogL_continuous + D(kk).NLogL;
-        BIC_continuous = BIC_continuous + D(kk).BIC;
-        AIC_continuous = AIC_continuous + D(kk).AIC;
-        AICc_continuous = AICc_continuous + D(kk).AICc;
+        if(distFound)
+            if(isreal(D(kk).NLogL))
+                NLogL_continuous = NLogL_continuous + D(kk).NLogL;
+            else
+                NLogL_continuous = 0;
+            end
+            if(isreal(D(kk).BIC))
+                BIC_continuous = BIC_continuous + D(kk).BIC;
+            else
+                BIC_continuous = 0;
+            end
+            if(isreal(D(kk).AIC))
+                AIC_continuous = AIC_continuous + D(kk).AIC;
+            else
+                AIC_continuous = 0;
+            end
+            if(isreal(D(kk).AICc))
+                AICc_continuous = AICc_continuous + D(kk).AICc;
+            else
+                AICc_continuous = 0;
+            end
+        else
+            NLogL_continuous = 0;
+            BIC_continuous = 0;
+            AIC_continuous = 0;
+            AICc_continuous = 0;
+        end
         
         D = D_hybrid1_cell{jj};
-        PD = PD_hybrid1_cell{jj};
+        PD_continuous = PD_hybrid1_cell{jj};
         % find the distribution
-        for kk=1:length(PD)
-            if(strcmpi(PD{kk}.DistributionName, dist))
+        distFound = 0;
+        for kk=1:length(PD_continuous)
+            if(strcmpi(PD_continuous{kk}.DistributionName, dist))
+                distFound = 1;
                 break;
             end
         end
-        NLogL_hybrid1 = NLogL_hybrid1 + D(kk).NLogL;
-        BIC_hybrid1 = BIC_hybrid1 + D(kk).BIC;
-        AIC_hybrid1 = AIC_hybrid1 + D(kk).AIC;
-        AICc_hybrid1 = AICc_hybrid1 + D(kk).AICc;
+        if(distFound)
+            if(isreal(D(kk).NLogL))
+                NLogL_hybrid1 = NLogL_hybrid1 + D(kk).NLogL;
+            else
+                NLogL_hybrid1 = 0;
+            end
+            if(isreal(D(kk).BIC))
+                BIC_hybrid1 = BIC_hybrid1 + D(kk).BIC;
+            else
+                BIC_hybrid1 = 0;
+            end
+            if(isreal(D(kk).AIC))
+                AIC_hybrid1 = AIC_hybrid1 + D(kk).AIC;
+            else
+                AIC_hybrid1 = 0;
+            end
+            if(isreal(D(kk).AICc))
+                AICc_hybrid1 = AICc_hybrid1 + D(kk).AICc;
+            else
+                AICc_hybrid1 = 0;
+            end
+        else
+            NLogL_hybrid1 = 0;
+            BIC_hybrid1 = 0;
+            AIC_hybrid1 = 0;
+            AICc_hybrid1 = 0;
+        end
         
         D = D_hybrid2_cell{jj};
-        PD = PD_hybrid2_cell{jj};
+        PD_continuous = PD_hybrid2_cell{jj};
         % find the distribution
-        for kk=1:length(PD)
-            if(strcmpi(PD{kk}.DistributionName, dist))
+        distFound = 0;
+        for kk=1:length(PD_continuous)
+            if(strcmpi(PD_continuous{kk}.DistributionName, dist))
+                distFound = 1;
                 break;
             end
         end
-        NLogL_hybrid2 = NLogL_hybrid2 + D(kk).NLogL;
-        BIC_hybrid2 = BIC_hybrid2 + D(kk).BIC;
-        AIC_hybrid2 = AIC_hybrid2 + D(kk).AIC;
-        AICc_hybrid2 = AICc_hybrid2 + D(kk).AICc;
+        if(distFound)
+            if(isreal(D(kk).NLogL))
+                NLogL_hybrid2 = NLogL_hybrid2 + D(kk).NLogL;
+            else
+                NLogL_hybrid2 = 0;
+            end
+            if(isreal(D(kk).BIC))
+                BIC_hybrid2 = BIC_hybrid2 + D(kk).BIC;
+            else
+                BIC_hybrid2 = 0;
+            end
+            if(isreal(D(kk).AIC))
+                AIC_hybrid2 = AIC_hybrid2 + D(kk).AIC;
+            else
+                AIC_hybrid2 = 0;
+            end
+            if(isreal(D(kk).AICc))
+                AICc_hybrid2 = AICc_hybrid2 + D(kk).AICc;
+            else
+                AICc_hybrid2 = 0;
+            end
+        else
+            NLogL_hybrid2 = 0;
+            BIC_hybrid2 = 0;
+            AIC_hybrid2 = 0;
+            AICc_hybrid2 = 0;
+        end
         
         D = D_discrete_cell{jj};
-        PD = PD_discrete_cell{jj};
+        PD_continuous = PD_discrete_cell{jj};
         % find the distribution
-        for kk=1:length(PD)
-            if(strcmpi(PD{kk}.DistributionName, dist))
+        distFound = 0;
+        for kk=1:length(PD_continuous)
+            if(strcmpi(PD_continuous{kk}.DistributionName, dist))
+                distFound = 1;
                 break;
             end
         end
-        NLogL_discrete = NLogL_discrete + D(kk).NLogL;
-        BIC_discrete = BIC_discrete + D(kk).BIC;
-        AIC_discrete = AIC_discrete + D(kk).AIC;
-        AICc_discrete = AICc_discrete + D(kk).AICc;
+        if(distFound)
+            if(isreal(D(kk).NLogL))
+                NLogL_discrete = NLogL_discrete + D(kk).NLogL;
+            else
+                NLogL_discrete = 0;
+            end
+            if(isreal(D(kk).BIC))
+                BIC_discrete = BIC_discrete + D(kk).BIC;
+            else
+                BIC_discrete = 0;
+            end
+            if(isreal(D(kk).AIC))
+                AIC_discrete = AIC_discrete + D(kk).AIC;
+            else
+                AIC_discrete = 0;
+            end
+            if(isreal(D(kk).AICc))
+                AICc_discrete = AICc_discrete + D(kk).AICc;
+            else
+                AICc_discrete = 0;
+            end
+        else
+            NLogL_discrete = 0;
+            BIC_discrete = 0;
+            AIC_discrete = 0;
+            AICc_discrete = 0;
+        end
     end
     
     distScoresContinuous(1,ii) = NLogL_continuous;
@@ -1127,7 +1227,7 @@ else
     save('/home/kiran/ownCloud/PhD/sim_results/independence/rsdmNullDistribution.mat');
 end
 
-fprintf('*************** X & Y CONTINUOUS ****************\');
+fprintf('*************** X & Y CONTINUOUS ****************\n');
 % Sort by NLogL
 [~,I] = sort(distScoresContinuous(1,:), 'ascend');
 fprintf('NLogL\n');
@@ -1147,9 +1247,9 @@ distributions{I(1)}
 [~,I] = sort(distScoresContinuous(4,:), 'ascend');
 fprintf('AICc\n');
 distributions{I(1)}
-fprintf('************************************************\');
+fprintf('************************************************\n');
 
-fprintf('*************** X & Y HYBRID 1 ****************\');
+fprintf('*************** X & Y HYBRID 1 ****************\n');
 % Sort by NLogL
 [~,I] = sort(distScoresHybrid1(1,:), 'ascend');
 fprintf('NLogL\n');
@@ -1169,9 +1269,9 @@ distributions{I(1)}
 [~,I] = sort(distScoresHybrid1(4,:), 'ascend');
 fprintf('AICc\n');
 distributions{I(1)}
-fprintf('************************************************\');
+fprintf('************************************************\n');
 
-fprintf('*************** X & Y HYBRID 2 ****************\');
+fprintf('*************** X & Y HYBRID 2 ****************\n');
 % Sort by NLogL
 [~,I] = sort(distScoresHybrid2(1,:), 'ascend');
 fprintf('NLogL\n');
@@ -1191,9 +1291,9 @@ distributions{I(1)}
 [~,I] = sort(distScoresHybrid2(4,:), 'ascend');
 fprintf('AICc\n');
 distributions{I(1)}
-fprintf('************************************************\');
+fprintf('************************************************\n');
 
-fprintf('*************** X & Y DISCRETE ****************\');
+fprintf('*************** X & Y DISCRETE ****************\n');
 % Sort by NLogL
 [~,I] = sort(distScoresDiscrete(1,:), 'ascend');
 fprintf('NLogL\n');
@@ -1213,9 +1313,11 @@ distributions{I(1)}
 [~,I] = sort(distScoresDiscrete(4,:), 'ascend');
 fprintf('AICc\n');
 distributions{I(1)}
-fprintf('************************************************\');
+fprintf('************************************************\n');
 
 %%
+clear;
+clc;
 
 if(ispc)
     load('C:\\Users\\Kiran\\ownCloud\\PhD\\sim_results\\independence\\rsdmNullDistribution.mat');
@@ -1226,55 +1328,100 @@ else
 end
 
 
-% From the above analysis, the Generalized Extreme Value distribution seems 
+% From the above analysis, the Beta distribution seems 
 % to fit best ... Q-Q Plots
 
 % QQ Plot w/ best fit for M=100 and M=1000
-pdObjs = cell(1,length(M_vec));
-kVec = zeros(1,length(M_vec));
-muVec = zeros(1,length(M_vec));
-sigmaVec = zeros(1,length(M_vec));
+pdObjsContinuous = cell(1,length(M_vec));
+alphaVecContinuous = zeros(1,length(M_vec));
+alphaVecHybrid1 = zeros(1,length(M_vec));
+alphaVecHybrid2 = zeros(1,length(M_vec));
+alphaVecDiscrete = zeros(1,length(M_vec));
+betaVecContinuous = zeros(1,length(M_vec));
+betaVecHybrid1 = zeros(1,length(M_vec));
+betaVecHybrid2 = zeros(1,length(M_vec));
+betaVecDiscrete = zeros(1,length(M_vec));
 for ii=1:length(M_vec)
     M = M_vec(ii);
     % look for the Inverse Gaussian Distribution in the correct cell array
-    D = D_continuous_cell(ii);
-    PD = PD_continuous_cell(ii); PD = PD{1};
-    for jj=1:length(PD)
-        if(strcmpi('Generalized extreme value', PD{jj}.DistributionName))
-            pd = PD{jj};
+    PD_continuous = PD_continuous_cell(ii); PD_continuous = PD_continuous{1};
+    PD_hybrid1 = PD_hybrid1_cell(ii); PD_hybrid1 = PD_hybrid1{1};
+    PD_hybrid2 = PD_hybrid2_cell(ii); PD_hybrid2 = PD_hybrid2{1};
+    PD_discrete = PD_discrete_cell(ii); PD_discrete = PD_discrete{1};
+    for jj=1:length(PD_continuous)
+        if(strcmpi('Beta', PD_continuous{jj}.DistributionName))
+            pdContinuous = PD_continuous{jj};
+            break;
         end
     end
-    pdObjs{ii} = pd;
-    kVec(ii) = pd.k;
-    muVec(ii) = pd.mu;
-    sigmaVec(ii) = pd.sigma;
+    for jj=1:length(PD_hybrid1)
+        if(strcmpi('Beta', PD_hybrid1{jj}.DistributionName))
+            pdHybrid1 = PD_hybrid1{jj};
+            break;
+        end
+    end
+    for jj=1:length(PD_hybrid2)
+        if(strcmpi('Beta', PD_hybrid2{jj}.DistributionName))
+            pdHybrid2 = PD_hybrid2{jj};
+            break;
+        end
+    end
+    for jj=1:length(PD_discrete)
+        if(strcmpi('Beta', PD_discrete{jj}.DistributionName))
+            pdDiscrete = PD_discrete{jj};
+            break;
+        end
+    end
+    
+    pdObjsContinuous{ii} = pdContinuous;
+    alphaVecContinuous(ii) = pdContinuous.a; betaVecContinuous(ii) = pdContinuous.b;
+    alphaVecHybrid1(ii) = pdHybrid1.a; betaVecHybrid1(ii) = pdHybrid1.b;
+    alphaVecHybrid2(ii) = pdHybrid2.a; betaVecHybrid2(ii) = pdHybrid2.b;
+    alphaVecDiscrete(ii) = pdDiscrete.a; betaVecDiscrete(ii) = pdDiscrete.b;
 end
 
 fontSize = 20;
 
 % do the Q-Q plot
-pd = pdObjs{5};
-h1 = subplot(2,2,1); qqplot(rsdmNullDistributionResultsContinuous(:,1), pd); grid on;
-xlabel(sprintf('Quantiles of GEV(%0.02f,%0.02f, %0.02f)', pd.k, pd.mu, pd.sigma), 'FontSize', 20);
+pdContinuous = pdObjsContinuous{1};
+h1 = subplot(2,2,1); qqplot(rsdmNullDistributionResultsContinuous(:,1), pdContinuous); grid on;
+xlabel(['Quantiles of ' sprintf('$\\beta(%0.04f, %0.04f)$', alphaVecContinuous(1), betaVecContinuous(1))], 'FontSize', 20, 'Interpreter', 'Latex');
 ylabel('Quantiles of Input Samples', 'FontSize', fontSize);
-title('M = 500', 'FontSize', fontSize);
+title({'(a)', 'M = 100'}, 'FontSize', fontSize);
 h1.FontSize = fontSize;
 
-% plot how mu and lambda change as M goes from 100 --> 1000
-h2 = subplot(2,2,2); plot(M_vec, kVec, 'LineWidth', 5);     
-grid on; xlabel('M', 'FontSize', fontSize); 
-ylabel('k', 'FontSize', fontSize);
+pdContinuous = pdObjsContinuous{10};
+h2 = subplot(2,2,2); qqplot(rsdmNullDistributionResultsContinuous(:,10), pdContinuous); grid on;
+xlabel(['Quantiles of ' sprintf('$\\beta(%0.04f, %0.04f)$', alphaVecContinuous(10), betaVecContinuous(10))], 'FontSize', 20, 'Interpreter', 'Latex');
+ylabel('Quantiles of Input Samples', 'FontSize', fontSize);
+title({'(b)', 'M = 1000'}, 'FontSize', fontSize);
 h2.FontSize = fontSize;
 
-h3 = subplot(2,2,3); plot(M_vec, muVec, 'LineWidth', 5);   
+h3 = subplot(2,2,3); 
+p3 = plot(M_vec, alphaVecContinuous, M_vec, alphaVecHybrid1, ...
+          M_vec, alphaVecHybrid2, M_vec, alphaVecDiscrete);   
 grid on; xlabel('M', 'FontSize', fontSize); 
-ylabel('\mu', 'FontSize', fontSize);
+ylabel('\alpha', 'FontSize', fontSize);
+title('(c)', 'FontSize', fontSize);
 h3.FontSize = fontSize;
+p3(1).LineWidth = 3; p3(1).Marker = 'd'; p3(1).MarkerSize = 16;
+p3(2).LineWidth = 3; p3(2).Marker = 'v'; p3(2).MarkerSize = 16;
+p3(3).LineWidth = 3; p3(3).Marker = '*'; p3(3).MarkerSize = 16;
+p3(4).LineWidth = 3; p3(4).Marker = 'x'; p3(4).MarkerSize = 16;
 
-h4 = subplot(2,2,4); plot(M_vec, sigmaVec, 'LineWidth', 5);
+h4 = subplot(2,2,4); 
+p4 = plot(M_vec, betaVecContinuous, M_vec, betaVecHybrid1, ...
+          M_vec, betaVecHybrid2, M_vec, betaVecDiscrete);
 grid on; xlabel('M', 'FontSize', fontSize); 
-ylabel('\lambda', 'FontSize', fontSize);
+ylabel('\beta', 'FontSize', fontSize);
+title('(d)', 'FontSize', fontSize);
 h4.FontSize = fontSize;
+p4(1).LineWidth = 3; p4(1).Marker = 'd'; p4(1).MarkerSize = 16;
+p4(2).LineWidth = 3; p4(2).Marker = 'v'; p4(2).MarkerSize = 16;
+p4(3).LineWidth = 3; p4(3).Marker = '*'; p4(3).MarkerSize = 16;
+p4(4).LineWidth = 3; p4(4).Marker = 'x'; p4(4).MarkerSize = 16;
+
+legend({'Continuous', 'Hybrid-1', 'Hybrid-2', 'Discrete'});
 
 %% Generate curves which show the effect of sample size for statistical for only CoS and cCorr
 % TODO: merge these results back in w/ the other power vs sample-size

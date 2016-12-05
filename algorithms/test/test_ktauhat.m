@@ -443,6 +443,16 @@ else
     save('/home/kiran/ownCloud/PhD/sim_results/independence/ktauhat_biasData');
 end
 
+%% A continuiation of the above section
+
+if(ispc)
+    load('C:\\Users\\Kiran\\ownCloud\\PhD\\sim_results\\independence\\ktauhat_biasData.mat');
+elseif(ismac)
+    load('/Users/kiran/ownCloud/PhD/sim_results/independence/ktauhat_biasData');
+else
+    load('/home/kiran/ownCloud/PhD/sim_results/independence/ktauhat_biasData');
+end
+
 f = figure(1);
 
 % plot the data
@@ -450,7 +460,7 @@ metricsToPlot = [7 6 4];        % 7 = tau-b, 6 = tau, 4 = tau-h
 % manually looking, CF4 seems to work best, plot against tau and tau-b
 legendCell = {'\tau_b', '\tau_{CJ}', '\tau_h' };     % put tau-h last, it is the best performing but the bounds
                                                 % are harder to see if we put it first
-cmap = winter(3);
+cmap = [1 0 0; 0 1 0; 0 0 1];
 transparencyFactor = 0.15;
 
 % Gaussian Copula Data
@@ -547,7 +557,7 @@ groupnames = {'Linear', 'Quadratic', 'Exponential'};
 bw_title = 'Monotonic Dependency';
 bw_xlabel = [];
 bw_ylabel = '{\boldmath$|E[\hat{\tau}-\tau]|$}';
-bw_colormap = winter(3);
+bw_colormap = cmap;
 gridstatus = 'xy';
 bw_legend = legendCell;
 error_sides = 2;        % change to 1 if you want 1-sided error-bars, but doesn't seem to work properly
@@ -614,6 +624,7 @@ for ii=1:nsim
     end
 end
 
+% TODO: change axis label and legend size
 % plot distribution of ktauhat under the null distribution 
 legendCell = cell(1,length(M_vec));
 subplot(2,2,1);
@@ -624,7 +635,7 @@ for ii=1:length(M_vec)
 end
 grid on;
 legend(legendCell);
-title('~ ktauhat, X-C,Y-C');
+title('X-Continuous Y-Continuous', 'FontSize', 20);
 
 subplot(2,2,2);
 for ii=1:length(M_vec)
@@ -634,7 +645,7 @@ for ii=1:length(M_vec)
 end
 grid on;
 legend(legendCell);
-title('~ ktauhat, X-D,Y-C');
+title('X-Discrete Y-Continuous', 'FontSize', 20);
 
 subplot(2,2,3);
 for ii=1:length(M_vec)
@@ -644,7 +655,7 @@ for ii=1:length(M_vec)
 end
 grid on;
 legend(legendCell);
-title('~ ktauhat, X-C,Y-D');
+title('X-Continuous Y-Discrete', 'FontSize', 20);
 
 subplot(2,2,4);
 for ii=1:length(M_vec)
@@ -654,7 +665,7 @@ for ii=1:length(M_vec)
 end
 grid on;
 legend(legendCell);
-title('~ ktauhat, X-D,Y-D');
+title('X-Discrete Y-Discrete', 'FontSize', 20);
 
 D_continuous_cell = cell(1,length(M_vec));  PD_continuous_cell = cell(1,length(M_vec));
 D_hybrid1_cell = cell(1,length(M_vec));  PD_hybrid1_cell = cell(1,length(M_vec));
@@ -662,17 +673,17 @@ D_hybrid2_cell = cell(1,length(M_vec));  PD_hybrid2_cell = cell(1,length(M_vec))
 D_discrete_cell = cell(1,length(M_vec));  PD_discrete_cell = cell(1,length(M_vec));
 idx = 1;
 for ii=1:length(M_vec)
-    [D, PD] = allfitdist(ktauhatNullDistributionResultsContinuous(:,ii), 'PDF');
-    D_continuous_cell{idx} = D;  PD_continuous_cell{idx} = PD;
+    [D, PD_continuous] = allfitdist(ktauhatNullDistributionResultsContinuous(:,ii), 'PDF');
+    D_continuous_cell{idx} = D;  PD_continuous_cell{idx} = PD_continuous;
     
-    [D, PD] = allfitdist(ktauhatNullDistributionResultsHybrid1(:,ii), 'PDF');
-    D_hybrid1_cell{idx} = D;  PD_hybrid1_cell{idx} = PD;
+    [D, PD_continuous] = allfitdist(ktauhatNullDistributionResultsHybrid1(:,ii), 'PDF');
+    D_hybrid1_cell{idx} = D;  PD_hybrid1_cell{idx} = PD_continuous;
     
-    [D, PD] = allfitdist(ktauhatNullDistributionResultsHybrid2(:,ii), 'PDF');
-    D_hybrid2_cell{idx} = D;  PD_hybrid2_cell{idx} = PD;
+    [D, PD_continuous] = allfitdist(ktauhatNullDistributionResultsHybrid2(:,ii), 'PDF');
+    D_hybrid2_cell{idx} = D;  PD_hybrid2_cell{idx} = PD_continuous;
     
-    [D, PD] = allfitdist(ktauhatNullDistributionResultsDiscrete(:,ii), 'PDF');
-    D_discrete_cell{idx} = D;  PD_discrete_cell{idx} = PD;
+    [D, PD_continuous] = allfitdist(ktauhatNullDistributionResultsDiscrete(:,ii), 'PDF');
+    D_discrete_cell{idx} = D;  PD_discrete_cell{idx} = PD_continuous;
     
     idx = idx + 1;
 end
@@ -702,56 +713,156 @@ for ii=1:length(distributions)
     NLogL_discrete = 0; BIC_discrete = 0; AIC_discrete = 0; AICc_discrete = 0;
     for jj=1:length(M_vec)
         D = D_continuous_cell{jj};
-        PD = PD_continuous_cell{jj};
+        PD_continuous = PD_continuous_cell{jj};
         % find the distribution
-        for kk=1:length(PD)
-            if(strcmpi(PD{kk}.DistributionName, dist))
+        distFound = 0;
+        for kk=1:length(PD_continuous)
+            if(strcmpi(PD_continuous{kk}.DistributionName, dist))
+                distFound = 1;
                 break;
             end
         end
-        NLogL_continuous = NLogL_continuous + D(kk).NLogL;
-        BIC_continuous = BIC_continuous + D(kk).BIC;
-        AIC_continuous = AIC_continuous + D(kk).AIC;
-        AICc_continuous = AICc_continuous + D(kk).AICc;
+        if(distFound)
+            if(isreal(D(kk).NLogL))
+                NLogL_continuous = NLogL_continuous + D(kk).NLogL;
+            else
+                NLogL_continuous = 0;
+            end
+            if(isreal(D(kk).BIC))
+                BIC_continuous = BIC_continuous + D(kk).BIC;
+            else
+                BIC_continuous = 0;
+            end
+            if(isreal(D(kk).AIC))
+                AIC_continuous = AIC_continuous + D(kk).AIC;
+            else
+                AIC_continuous = 0;
+            end
+            if(isreal(D(kk).AICc))
+                AICc_continuous = AICc_continuous + D(kk).AICc;
+            else
+                AICc_continuous = 0;
+            end
+        else
+            NLogL_continuous = 0;
+            BIC_continuous = 0;
+            AIC_continuous = 0;
+            AICc_continuous = 0;
+        end
         
         D = D_hybrid1_cell{jj};
-        PD = PD_hybrid1_cell{jj};
+        PD_continuous = PD_hybrid1_cell{jj};
         % find the distribution
-        for kk=1:length(PD)
-            if(strcmpi(PD{kk}.DistributionName, dist))
+        distFound = 0;
+        for kk=1:length(PD_continuous)
+            if(strcmpi(PD_continuous{kk}.DistributionName, dist))
+                distFound = 1;
                 break;
             end
         end
-        NLogL_hybrid1 = NLogL_hybrid1 + D(kk).NLogL;
-        BIC_hybrid1 = BIC_hybrid1 + D(kk).BIC;
-        AIC_hybrid1 = AIC_hybrid1 + D(kk).AIC;
-        AICc_hybrid1 = AICc_hybrid1 + D(kk).AICc;
+        if(distFound)
+            if(isreal(D(kk).NLogL))
+                NLogL_hybrid1 = NLogL_hybrid1 + D(kk).NLogL;
+            else
+                NLogL_hybrid1 = 0;
+            end
+            if(isreal(D(kk).BIC))
+                BIC_hybrid1 = BIC_hybrid1 + D(kk).BIC;
+            else
+                BIC_hybrid1 = 0;
+            end
+            if(isreal(D(kk).AIC))
+                AIC_hybrid1 = AIC_hybrid1 + D(kk).AIC;
+            else
+                AIC_hybrid1 = 0;
+            end
+            if(isreal(D(kk).AICc))
+                AICc_hybrid1 = AICc_hybrid1 + D(kk).AICc;
+            else
+                AICc_hybrid1 = 0;
+            end
+        else
+            NLogL_hybrid1 = 0;
+            BIC_hybrid1 = 0;
+            AIC_hybrid1 = 0;
+            AICc_hybrid1 = 0;
+        end
         
         D = D_hybrid2_cell{jj};
-        PD = PD_hybrid2_cell{jj};
+        PD_continuous = PD_hybrid2_cell{jj};
         % find the distribution
-        for kk=1:length(PD)
-            if(strcmpi(PD{kk}.DistributionName, dist))
+        distFound = 0;
+        for kk=1:length(PD_continuous)
+            if(strcmpi(PD_continuous{kk}.DistributionName, dist))
+                distFound = 1;
                 break;
             end
         end
-        NLogL_hybrid2 = NLogL_hybrid2 + D(kk).NLogL;
-        BIC_hybrid2 = BIC_hybrid2 + D(kk).BIC;
-        AIC_hybrid2 = AIC_hybrid2 + D(kk).AIC;
-        AICc_hybrid2 = AICc_hybrid2 + D(kk).AICc;
+        if(distFound)
+            if(isreal(D(kk).NLogL))
+                NLogL_hybrid2 = NLogL_hybrid2 + D(kk).NLogL;
+            else
+                NLogL_hybrid2 = 0;
+            end
+            if(isreal(D(kk).BIC))
+                BIC_hybrid2 = BIC_hybrid2 + D(kk).BIC;
+            else
+                BIC_hybrid2 = 0;
+            end
+            if(isreal(D(kk).AIC))
+                AIC_hybrid2 = AIC_hybrid2 + D(kk).AIC;
+            else
+                AIC_hybrid2 = 0;
+            end
+            if(isreal(D(kk).AICc))
+                AICc_hybrid2 = AICc_hybrid2 + D(kk).AICc;
+            else
+                AICc_hybrid2 = 0;
+            end
+        else
+            NLogL_hybrid2 = 0;
+            BIC_hybrid2 = 0;
+            AIC_hybrid2 = 0;
+            AICc_hybrid2 = 0;
+        end
         
         D = D_discrete_cell{jj};
-        PD = PD_discrete_cell{jj};
+        PD_continuous = PD_discrete_cell{jj};
         % find the distribution
-        for kk=1:length(PD)
-            if(strcmpi(PD{kk}.DistributionName, dist))
+        distFound = 0;
+        for kk=1:length(PD_continuous)
+            if(strcmpi(PD_continuous{kk}.DistributionName, dist))
+                distFound = 1;
                 break;
             end
         end
-        NLogL_discrete = NLogL_discrete + D(kk).NLogL;
-        BIC_discrete = BIC_discrete + D(kk).BIC;
-        AIC_discrete = AIC_discrete + D(kk).AIC;
-        AICc_discrete = AICc_discrete + D(kk).AICc;
+        if(distFound)
+            if(isreal(D(kk).NLogL))
+                NLogL_discrete = NLogL_discrete + D(kk).NLogL;
+            else
+                NLogL_discrete = 0;
+            end
+            if(isreal(D(kk).BIC))
+                BIC_discrete = BIC_discrete + D(kk).BIC;
+            else
+                BIC_discrete = 0;
+            end
+            if(isreal(D(kk).AIC))
+                AIC_discrete = AIC_discrete + D(kk).AIC;
+            else
+                AIC_discrete = 0;
+            end
+            if(isreal(D(kk).AICc))
+                AICc_discrete = AICc_discrete + D(kk).AICc;
+            else
+                AICc_discrete = 0;
+            end
+        else
+            NLogL_discrete = 0;
+            BIC_discrete = 0;
+            AIC_discrete = 0;
+            AICc_discrete = 0;
+        end
     end
     
     distScoresContinuous(1,ii) = NLogL_continuous;
@@ -784,29 +895,29 @@ else
     save('/home/kiran/ownCloud/PhD/sim_results/independence/ktauhatNullDistribution.mat');
 end
 
-fprintf('*************** X & Y CONTINUOUS ****************\');
+fprintf('*************** X & Y CONTINUOUS ****************\n');
 % Sort by NLogL
-[~,I] = sort(distScoresContinuous(1,:), 'ascend');
+[~,I] = sort(real(distScoresContinuous(1,:)), 'ascend');
 fprintf('NLogL\n');
 distributions{I(1)}
 
 % Sort by BIC
-[~,I] = sort(distScoresContinuous(2,:), 'ascend');
+[~,I] = sort(real(distScoresContinuous(2,:)), 'ascend');
 fprintf('BIC\n');
 distributions{I(1)}
 
 % Sort by AIC
-[~,I] = sort(distScoresContinuous(3,:), 'ascend');
+[~,I] = sort(real(distScoresContinuous(3,:)), 'ascend');
 fprintf('AIC\n');
 distributions{I(1)}
 
 % Sort by AICc
-[~,I] = sort(distScoresContinuous(4,:), 'ascend');
+[~,I] = sort(real(distScoresContinuous(4,:)), 'ascend');
 fprintf('AICc\n');
 distributions{I(1)}
-fprintf('************************************************\');
+fprintf('************************************************\n');
 
-fprintf('*************** X & Y HYBRID 1 ****************\');
+fprintf('*************** X & Y HYBRID 1 ****************\n');
 % Sort by NLogL
 [~,I] = sort(distScoresHybrid1(1,:), 'ascend');
 fprintf('NLogL\n');
@@ -826,9 +937,9 @@ distributions{I(1)}
 [~,I] = sort(distScoresHybrid1(4,:), 'ascend');
 fprintf('AICc\n');
 distributions{I(1)}
-fprintf('************************************************\');
+fprintf('************************************************\n');
 
-fprintf('*************** X & Y HYBRID 2 ****************\');
+fprintf('*************** X & Y HYBRID 2 ****************\n');
 % Sort by NLogL
 [~,I] = sort(distScoresHybrid2(1,:), 'ascend');
 fprintf('NLogL\n');
@@ -848,9 +959,9 @@ distributions{I(1)}
 [~,I] = sort(distScoresHybrid2(4,:), 'ascend');
 fprintf('AICc\n');
 distributions{I(1)}
-fprintf('************************************************\');
+fprintf('************************************************\n');
 
-fprintf('*************** X & Y DISCRETE ****************\');
+fprintf('*************** X & Y DISCRETE ****************\n');
 % Sort by NLogL
 [~,I] = sort(distScoresDiscrete(1,:), 'ascend');
 fprintf('NLogL\n');
@@ -870,4 +981,111 @@ distributions{I(1)}
 [~,I] = sort(distScoresDiscrete(4,:), 'ascend');
 fprintf('AICc\n');
 distributions{I(1)}
-fprintf('************************************************\');
+fprintf('************************************************\n');
+
+%% From teh above, it is clear that the normal distribution is the best fit for all 4 types ...
+clear;
+clc;
+
+if(ispc)
+    load('C:\\Users\\Kiran\\ownCloud\\PhD\\sim_results\\independence\\ktauhatNullDistribution.mat');
+elseif(ismac)
+    load('/Users/Kiran/ownCloud/PhD/sim_results/independence/ktauhatNullDistribution.mat');
+else
+    load('/home/kiran/ownCloud/PhD/sim_results/independence/ktauhatNullDistribution.mat');
+end
+
+% From the above analysis, the Normal distribution seems 
+% to fit best ... Q-Q Plots
+
+% QQ Plot w/ best fit for M=100 and M=1000
+pdObjsContinuous = cell(1,length(M_vec));
+muVecContinuous = zeros(1,length(M_vec));
+muVecHybrid1 = zeros(1,length(M_vec));
+muVecHybrid2 = zeros(1,length(M_vec));
+muVecDiscrete = zeros(1,length(M_vec));
+sigmaVecContinuous = zeros(1,length(M_vec));
+sigmaVecHybrid1 = zeros(1,length(M_vec));
+sigmaVecHybrid2 = zeros(1,length(M_vec));
+sigmaVecDiscrete = zeros(1,length(M_vec));
+for ii=1:length(M_vec)
+    M = M_vec(ii);
+    % look for the Inverse Gaussian Distribution in the correct cell array
+    PD_continuous = PD_continuous_cell(ii); PD_continuous = PD_continuous{1};
+    PD_hybrid1 = PD_hybrid1_cell(ii); PD_hybrid1 = PD_hybrid1{1};
+    PD_hybrid2 = PD_hybrid2_cell(ii); PD_hybrid2 = PD_hybrid2{1};
+    PD_discrete = PD_discrete_cell(ii); PD_discrete = PD_discrete{1};
+    for jj=1:length(PD_continuous)
+        if(strcmpi('Normal', PD_continuous{jj}.DistributionName))
+            pdContinuous = PD_continuous{jj};
+            break;
+        end
+    end
+    for jj=1:length(PD_hybrid1)
+        if(strcmpi('Normal', PD_hybrid1{jj}.DistributionName))
+            pdHybrid1 = PD_hybrid1{jj};
+            break;
+        end
+    end
+    for jj=1:length(PD_hybrid2)
+        if(strcmpi('Normal', PD_hybrid2{jj}.DistributionName))
+            pdHybrid2 = PD_hybrid2{jj};
+            break;
+        end
+    end
+    for jj=1:length(PD_discrete)
+        if(strcmpi('Normal', PD_discrete{jj}.DistributionName))
+            pdDiscrete = PD_discrete{jj};
+            break;
+        end
+    end
+
+    pdObjsContinuous{ii} = pdContinuous;
+    muVecContinuous(ii) = pdContinuous.mu; sigmaVecContinuous(ii) = pdContinuous.sigma;
+    muVecHybrid1(ii) = pdHybrid1.mu; sigmaVecHybrid1(ii) = pdHybrid1.sigma;
+    muVecHybrid2(ii) = pdHybrid2.mu; sigmaVecHybrid2(ii) = pdHybrid2.sigma;
+    muVecDiscrete(ii) = pdDiscrete.mu; sigmaVecDiscrete(ii) = pdDiscrete.sigma;
+end
+
+fontSize = 20;
+
+% do the Q-Q plot
+pdContinuous = pdObjsContinuous{1};
+h1 = subplot(2,2,1); qqplot(ktauhatNullDistributionResultsContinuous(:,1), pdContinuous); grid on;
+xlabel(['Quantiles of ' sprintf('$\\mathcal{N}(%0.04f, %0.04f)$', muVecContinuous(1), sigmaVecContinuous(1))], 'FontSize', 20, 'Interpreter', 'Latex');
+ylabel('Quantiles of Input Samples', 'FontSize', fontSize);
+title({'(a)', 'M = 100'}, 'FontSize', fontSize);
+h1.FontSize = fontSize;
+
+pdContinuous = pdObjsContinuous{10};
+h2 = subplot(2,2,2); qqplot(ktauhatNullDistributionResultsContinuous(:,10), pdContinuous); grid on;
+xlabel(['Quantiles of ' sprintf('$\\mathcal{N}(%0.04f, %0.04f)$', muVecContinuous(10), sigmaVecContinuous(10))], 'FontSize', 20, 'Interpreter', 'Latex');
+ylabel('Quantiles of Input Samples', 'FontSize', fontSize);
+title({'(b)', 'M = 1000'}, 'FontSize', fontSize);
+h2.FontSize = fontSize;
+
+h3 = subplot(2,2,3); 
+p3 = plot(M_vec, muVecContinuous, M_vec, muVecHybrid1, ...
+     M_vec, muVecHybrid2, M_vec, muVecDiscrete);
+grid on; xlabel('M', 'FontSize', fontSize); 
+ylabel('\mu', 'FontSize', fontSize);
+title('(c)', 'FontSize', fontSize);
+h3.FontSize = fontSize;
+p3(1).LineWidth = 3; p3(1).Marker = 'd'; p3(1).MarkerSize = 16;
+p3(2).LineWidth = 3; p3(2).Marker = 'v'; p3(2).MarkerSize = 16;
+p3(3).LineWidth = 3; p3(3).Marker = '*'; p3(3).MarkerSize = 16;
+p3(4).LineWidth = 3; p3(4).Marker = 'x'; p3(4).MarkerSize = 16;
+
+h4 = subplot(2,2,4); 
+p4 = plot(M_vec, sigmaVecContinuous, M_vec, sigmaVecHybrid1, ...
+     M_vec, sigmaVecHybrid2, M_vec, sigmaVecDiscrete);
+grid on; xlabel('M', 'FontSize', fontSize); 
+ylabel('\lambda', 'FontSize', fontSize);
+title('(d)', 'FontSize', fontSize);
+h4.FontSize = fontSize;
+p4(1).LineWidth = 3; p4(1).Marker = 'd'; p4(1).MarkerSize = 16;
+p4(2).LineWidth = 3; p4(2).Marker = 'v'; p4(2).MarkerSize = 16;
+p4(3).LineWidth = 3; p4(3).Marker = '*'; p4(3).MarkerSize = 16;
+p4(4).LineWidth = 3; p4(4).Marker = 'x'; p4(4).MarkerSize = 16;
+
+legend({'Continuous', 'Hybrid-1', 'Hybrid-2', 'Discrete'});
