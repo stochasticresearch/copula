@@ -137,3 +137,69 @@ finalOutputFile = fullfile(folder, outputFilename);
 clearvars f1name f2name outputFilename
 clearvars folder f1 f2
 save(finalOutputFile);
+
+%% Merge cosdv power into power_all
+
+clear;
+clc;
+dbstop if error;
+
+f1name = 'CoSPower_M_25_1500.mat';
+f2name = 'power_all.mat';
+outputFilename = 'power_all.mat';
+
+if(ispc)
+    folder = 'C:\\Users\\Kiran\\ownCloud\\PhD\sim_results\\independence';
+elseif(ismac)
+    folder = '/Users/Kiran/ownCloud/PhD/sim_results/independence';
+else % assume unix
+    folder = '/home/kiran/ownCloud/PhD/sim_results/independence';
+end
+
+f1 = fullfile(folder, f1name);
+f2 = fullfile(folder, f2name);
+
+load(f1);
+cosdvPower = cosPower;
+load(f2);
+cosfpower = cosPower;       % save off old simulations for cosf
+cosPower = cosdvPower;      % overwrite old cosf w/ cosdv simulations
+
+finalOutputFile = fullfile(folder, outputFilename);
+clearvars f1name f2name outputFilename
+clearvars folder f1 f2
+save(finalOutputFile);
+
+%% Merge the cosdv power into power_M_500 (i.e. extract the relevant vector)
+
+clear;
+clc;
+dbstop if error;
+
+f1name = 'power_all.mat';
+f2name = 'power_M_500.mat';
+outputFilename = 'power_M_500.mat';
+
+if(ispc)
+    folder = 'C:\\Users\\Kiran\\ownCloud\\PhD\sim_results\\independence';
+elseif(ismac)
+    folder = '/Users/Kiran/ownCloud/PhD/sim_results/independence';
+else % assume unix
+    folder = '/home/kiran/ownCloud/PhD/sim_results/independence';
+end
+
+f1 = fullfile(folder, f1name);
+f2 = fullfile(folder, f2name);
+
+load(f1);
+clearvars -except cosPower f1name f2name outputFilename folder f1 f2
+cosdvPower = cosPower;
+load(f2);
+cosfpower = cosPower;   % save off old simulations for cosf
+cosPower = squeeze(cosdvPower(:,:,20));  % overwrite old cosf w/ cosdv simulations, grab M=500 data
+clearvars cosdvPower    % no need to store redundant information, makes for confusion later :D
+
+finalOutputFile = fullfile(folder, outputFilename);
+clearvars f1name f2name outputFilename
+clearvars folder f1 f2
+save(finalOutputFile);
