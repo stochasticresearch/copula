@@ -295,7 +295,7 @@ numTotalConfigurations = 8; % 8 entries, 1-5 are the different correction factor
                                         
 % TODO: put monotonoic and comonotonic dependencies in here!
 dependenciesVec = {'Gaussian', 'Frank', 'Gumbel', 'Clayton'};
-subDependenciesVec = [linspace(0.01,0.99,10); ...
+subDependenciesVec = [linspace(-0.99,0.99,10); ...
                        1:10; ...
                        1:10; ...
                        1:10];
@@ -466,12 +466,12 @@ end
 f = figure(1);
 
 % plot the data
-metricsToPlot = [7 6 4 8];        % 7 = tau-b, 6 = tau, 4 = tau-h 8=tau-h (streaming-mode)
+metricsToPlot = [7 6 4];        % 7 = tau-b, 6 = tau, 4 = tau-h 8=tau-h (streaming-mode)
 % manually looking, CF4 seems to work best, plot against tau and tau-b
-legendCell = {'\tau_b', '\tau_{CJ}', '\tau_h', '\tau_h (S)' };     % put tau-h last, it is the best performing but the bounds
+legendCell = {'\tau_b', '\tau_{CJ}', '\tau_{KL}'};     % put tau-h last, it is the best performing but the bounds
                                                 % are harder to see if we put it first
-% cmap = [1 0 0; 0 1 0; 0 0 1];
-cmap = jet(4);
+cmap = [1 0 0; 0 1 0; 0 0 1];
+% cmap = jet(4);
 transparencyFactor = 0.15;
 
 % Gaussian Copula Data
@@ -487,7 +487,7 @@ end
 boundedline(x,y,e, 'cmap', cmap, 'transparency', transparencyFactor);
 grid on; xlabel('{\boldmath$\rho$}', 'Interpreter', 'Latex', 'FontSize', 20); 
 ylabel('{\boldmath$E[\hat{\tau}-\tau]$}', 'Interpreter', 'Latex', 'FontSize', 20); 
-title('Gaussian Copula', 'FontSize', 24);
+title({'Gaussian Copula','(a)'}, 'FontSize', 24);
 a = get(h1,'XTickLabel');
 set(h1,'XTickLabel',a,'FontSize',20)
 a = get(h1,'YTickLabel');
@@ -506,7 +506,7 @@ end
 boundedline(x,y,e,'cmap', cmap, 'transparency', transparencyFactor);
 grid on; xlabel('{\boldmath$\alpha$}', 'Interpreter', 'Latex', 'FontSize', 20); 
 ylabel('{\boldmath$E[\hat{\tau}-\tau]$}', 'Interpreter', 'Latex', 'FontSize', 20); 
-title('Frank Copula', 'FontSize', 24); 
+title({'Frank Copula', '(b)'}, 'FontSize', 24); 
 a = get(h2,'XTickLabel');
 set(h2,'XTickLabel',a,'FontSize',20)
 a = get(h2,'YTickLabel');
@@ -525,7 +525,7 @@ end
 boundedline(x,y,e,'cmap', cmap, 'transparency', transparencyFactor);
 grid on; xlabel('{\boldmath$\alpha$}', 'Interpreter', 'Latex', 'FontSize', 20); 
 ylabel('{\boldmath$E[\hat{\tau}-\tau]$}', 'Interpreter', 'Latex', 'FontSize', 20); 
-title('Gumbel Copula', 'FontSize', 24); 
+title({'Gumbel Copula', '(c)'}, 'FontSize', 24); 
 a = get(h3,'XTickLabel');
 set(h3,'XTickLabel',a,'FontSize',20)
 a = get(h3,'YTickLabel');
@@ -544,7 +544,7 @@ end
 boundedline(x,y,e,'cmap', cmap, 'transparency', transparencyFactor);
 grid on; xlabel('{\boldmath$\alpha$}', 'Interpreter', 'Latex', 'FontSize', 20); 
 ylabel('{\boldmath$E[\hat{\tau}-\tau]$}', 'Interpreter', 'Latex', 'FontSize', 20); 
-title('Clayton Copula', 'FontSize', 24); 
+title({'Clayton Copula', '(d)'}, 'FontSize', 24); 
 a = get(h4,'XTickLabel');
 set(h4,'XTickLabel',a,'FontSize',20)
 a = get(h4,'YTickLabel');
@@ -565,7 +565,7 @@ stddevXY = sqrt(varValsMonotonicXY);
 width = 1;
 % groupnames = {'Linear', 'Quadratic', 'Exponential', '-1*Linear', '-1*Quadratic', '-1*Exponential'};
 groupnames = {'Linear', 'Quadratic', 'Exponential'};
-bw_title = 'Monotonic Dependency';
+bw_title = {'Co-monotonic Dependency', '(e)'};
 bw_xlabel = [];
 bw_ylabel = '{\boldmath$|E[\hat{\tau}-\tau]|$}';
 bw_colormap = cmap;
@@ -587,7 +587,7 @@ varValsComonotonicXY = squeeze(resultsXYFunctional_var(2,:,metricsToPlot));
 biasValsComonotonicXY(biasValsComonotonicXY==0) = minVal;
 stddevXY = sqrt(varValsComonotonicXY);
 
-bw_title = 'Comonotonic Dependency';
+bw_title = {'Counter-monotonic Dependency', '(f)'};
 barweb(biasValsComonotonicXY,stddevXY,width,groupnames,bw_title, bw_xlabel, bw_ylabel, ...
        bw_colormap, gridstatus, bw_legend, error_sides, legend_type, ...
        legendTextSize, labelTextSize, groupTextSize);
