@@ -38,10 +38,6 @@ classdef ktauhat_s < handle
         vv;
         uMap;
         vMap;
-        uOvlpMap;
-        vOvlpMap;
-        v_uMinMax;
-        u_vMinMax;
         mm;
         mmGroups;
         mm_choose_2;
@@ -57,8 +53,6 @@ classdef ktauhat_s < handle
         vv_prev;
         uMap_prev;
         vMap_prev;
-        uOvlpMap_prev;
-        vOvlpMap_prev;
         mm_prev;
         mmGroups_prev;
         mm_choose_2_prev;
@@ -73,8 +67,8 @@ classdef ktauhat_s < handle
 
             uTmp = obj.u(obj.iiBegin:obj.iiEnd);
             vTmp = obj.v(obj.iiBegin:obj.iiEnd);
-            uCurrSamp = obj.u(obj.iiEnd); uPrevSamp = obj.u(obj.iiEnd-1);
-            vCurrSamp = obj.v(obj.iiEnd); vPrevSamp = obj.v(obj.iiEnd-1);
+            uCurrSamp = obj.u(obj.iiEnd);
+            vCurrSamp = obj.v(obj.iiEnd);
 
             uDiff = uCurrSamp-uTmp(end-1:-1:1);
             vDiff = vCurrSamp-vTmp(end-1:-1:1);
@@ -92,69 +86,10 @@ classdef ktauhat_s < handle
             obj.vMap(vCurrSamp) = obj.vMap(vCurrSamp) + 1;
             obj.vv = obj.vv + obj.vMap(vCurrSamp) - 1;
             
-            % update the min/max for when u is the continuous variable
-            if(obj.v_uMinMax(1,vCurrSamp)==0)
-                obj.v_uMinMax(1,vCurrSamp) = uCurrSamp;
-                obj.v_uMinMax(2,vCurrSamp) = uCurrSamp;
-            else
-                if(uCurrSamp < obj.v_uMinMax(1,vCurrSamp))
-                    obj.v_uMinMax(1,vCurrSamp) = uCurrSamp;
-                elseif(uCurrSamp > obj.v_uMinMax(2,vCurrSamp))
-                    obj.v_uMinMax(2,vCurrSamp) = uCurrSamp;
-                end
+            if(obj.K==0)
+                metric = 0;
+                return;
             end
-            % update the min/max for when u is the continuous variable
-            if(obj.u_vMinMax(1,uCurrSamp)==0)
-                obj.u_vMinMax(1,uCurrSamp) = vCurrSamp;
-                obj.u_vMinMax(2,uCurrSamp) = vCurrSamp;
-            else
-                if(vCurrSamp < obj.u_vMinMax(1,uCurrSamp))
-                    obj.u_vMinMax(1,uCurrSamp) = vCurrSamp;
-                elseif(vCurrSamp > obj.u_vMinMax(2,uCurrSamp))
-                    obj.u_vMinMax(2,uCurrSamp) = vCurrSamp;
-                end
-            end
-            
-            obj.v_uMinMax
-            
-            % count the overlaps for when u is the continuous variable
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %%%%%%%%%%%%%%%%%%%%%%%%%ALGORITHM%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            % Whenevr we add a new sample to the v_uMinMax and u_vMinMax
-            % vectors, we compare to see if that min/max value (if it
-            % changed), is now less/greater respectively, and for each
-            % index, that value of the overlap map gets incremented if it
-            % is within the bounds.
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            % we can optimize the loop below for C++ environment, but it is
-            % written for clarity at the moment.
-            for ii=1:length(obj.v_uMinMax(1,:))
-                if(ii~=vCurrSamp)
-                    if(obj.v_uMinMax(1,ii)>= obj.v_uMinMax(1,vCurrSamp) && ...
-                       obj.v_uMinMax(2,ii)<= obj.v_uMinMax(2,vCurrSamp))
-                        obj.uOvlpMap(vCurrSamp) = obj.uOvlpMap(vCurrSamp) + 1;
-                    end
-                end
-            end
-            
-            obj.uOvlpMap
-            
-            % count the overlaps for when v is the continuous variable
-            % TODO: replicate after verification of above
-            
-            % THE BELOW WORKS FOR MONOTONIC HYBRID, BUT NOT OVERLAPPING
-            % HYBRID RANDOM VARIABLES
-%             uLastSampDiff = uCurrSamp-uPrevSamp;
-%             vLastSampDiff = vCurrSamp-vPrevSamp;
-%             % count overlaps -- for now, we do this in separate if/else
-%             % statements to make the code clear, but in C++ this can be
-%             % optimized
-%             if(uLastSampDiff==0 && vLastSampDiff~=0)
-%                 obj.uOvlpMap(vCurrSamp) = obj.uOvlpMap(vCurrSamp) + 1;
-%             end
-%             if(vLastSampDiff==0 && uLastSampDiff~=0)
-%                 obj.vOvlpMap(uCurrSamp) = obj.vOvlpMap(uCurrSamp) + 1;
-%             end
 
             % attempt to automatically determine if we have hybrid-data or
             % all discrete/continuous
@@ -180,10 +115,14 @@ classdef ktauhat_s < handle
                 else
                     continuousRvIndicator = 1;
                 end
+                
                 % compute the correction factor
-                cf = obj.correctionFactor(continuousRvIndicator);
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%% OPTIMIZE THIS FOR STREAMING MODE %%%%%%%%%%%%%
+                numOvlpVec = obj.countOverlaps(continuousRvIndicator);
+                cf = obj.correctionFactor(numOvlpVec);
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 tt = max(obj.uu, obj.vv)-cf;
-                fprintf('>>> cf=%0.02f, tt=%0.02f\n', cf, tt);    
             end
             
             if(hybridFlag)
@@ -194,23 +133,52 @@ classdef ktauhat_s < handle
                 den = sqrt(obj.mm_choose_2-obj.uu)*sqrt(obj.mm_choose_2-obj.vv);
             end
             
-            if(obj.K==0 || den==0)
+            if(den==0)
                 metric = 0;
             else
                 metric = obj.K/den;
             end
         end
         
-        function [cf] = correctionFactor(obj,continuousRvIndicator)
+        function [numOverlapPtsVec] = countOverlaps(obj, continuousRvIndicator)
+            % this function is only called for hybrid data, attempts to correct for
+            % overestimation of the number of ties in hybrid data
+            
             if(continuousRvIndicator==0)
-                valVec = obj.uOvlpMap;
+                % U is the continuous RV
+                continuousOutcomes = obj.u(obj.iiBegin:obj.iiEnd);
+                discreteOutcomes = obj.v(obj.iiBegin:obj.iiEnd);
+                % get the number of unique discrete outcomes
+                uniqueDiscreteOutcomes = unique(obj.v(obj.iiBegin:obj.iiEnd));
             else
-                valVec = obj.vOvlpMap;
+                % V is the continuous RV
+                continuousOutcomes = obj.v(obj.iiBegin:obj.iiEnd);
+                discreteOutcomes = obj.u(obj.iiBegin:obj.iiEnd);
+                % get the number of unique discrete outcomes
+                uniqueDiscreteOutcomes = unique(obj.u(obj.iiBegin:obj.iiEnd));
             end
-            I = valVec~=0; 
-            valVec = valVec(I);
-            continuousRvIndicator
-            valVec
+
+            % for each unique outcome .. count the overlapping elements.
+            numOverlapPtsVec = zeros(1,length(uniqueDiscreteOutcomes)-1);
+            for discreteOutcomesIdx=1:length(uniqueDiscreteOutcomes)-1
+                % find the min/max values of the continuous values for this idx and the
+                % next
+                I = discreteOutcomes==uniqueDiscreteOutcomes(discreteOutcomesIdx);
+                relevantContinuousOutcomes_curIdx = continuousOutcomes(I);
+                I = discreteOutcomes==uniqueDiscreteOutcomes(discreteOutcomesIdx+1);
+                relevantContinuousOutcomes_nextIdx = continuousOutcomes(I);
+
+                % compute the number of points which are overlapping
+                minCur = min(relevantContinuousOutcomes_curIdx);
+                maxCur = max(relevantContinuousOutcomes_curIdx);
+
+                numOverlapPoints = length(find(relevantContinuousOutcomes_nextIdx>=minCur & ...
+                                               relevantContinuousOutcomes_nextIdx<=maxCur));
+                numOverlapPtsVec(discreteOutcomesIdx) = numOverlapPoints/length(relevantContinuousOutcomes_nextIdx)*(obj.mm/length(uniqueDiscreteOutcomes));
+            end
+        end
+        
+        function [cf] = correctionFactor(obj,valVec)
             meanVal = floor(mean(valVec));
             lenMap = length(valVec);
             if(isempty(valVec) || meanVal<2)
@@ -251,8 +219,6 @@ classdef ktauhat_s < handle
             obj.vv_prev = obj.vv;
             obj.uMap_prev = obj.uMap;
             obj.vMap_prev = obj.vMap;
-            obj.uOvlpMap_prev = obj.uOvlpMap;
-            obj.vOvlpMap_prev = obj.vOvlpMap;
             obj.mm_prev = obj.mm;
             obj.mm_choose_2_prev = obj.mm_choose_2;
             obj.closeToZeroThresh_prev = obj.closeToZeroThresh;
@@ -279,8 +245,6 @@ classdef ktauhat_s < handle
             obj.vv = obj.vv_prev;
             obj.uMap = obj.uMap_prev;
             obj.vMap = obj.vMap_prev;
-            obj.uOvlpMap = obj.uOvlpMap_prev;
-            obj.vOvlpMap = obj.vOvlpMap_prev;
             obj.mm = obj.mm_prev;
             obj.mm_choose_2 = obj.mm_choose_2_prev;
             obj.closeToZeroThresh = obj.closeToZeroThresh_prev;
@@ -304,16 +268,10 @@ classdef ktauhat_s < handle
             % reinitialize the maps 
             obj.uMap = zeros(1,length(obj.u));
             obj.vMap = zeros(1,length(obj.v));
-            obj.uOvlpMap = zeros(1,length(obj.u));
-            obj.vOvlpMap = zeros(1,length(obj.v));
             
             % initialize the uMap and vMap by add the first element into it
             obj.uMap(obj.u(obj.iiBegin)) = 1;
             obj.vMap(obj.v(obj.iiBegin)) = 1;
-            obj.v_uMinMax(1, obj.v(obj.iiBegin)) = obj.u(obj.iiBegin);
-            obj.v_uMinMax(2, obj.v(obj.iiBegin)) = obj.u(obj.iiBegin);
-            obj.u_vMinMax(1, obj.u(obj.iiBegin)) = obj.v(obj.iiBegin);
-            obj.u_vMinMax(2, obj.u(obj.iiBegin)) = obj.v(obj.iiBegin);
         end
         
         function [] = resetState(obj)
@@ -336,18 +294,10 @@ classdef ktauhat_s < handle
             % integer representation only
             obj.uMap = zeros(1,length(obj.u));
             obj.vMap = zeros(1,length(obj.v));
-            obj.uOvlpMap = zeros(1,length(obj.u));
-            obj.vOvlpMap = zeros(1,length(obj.v));
-            obj.v_uMinMax = zeros(2,length(obj.u));
-            obj.u_vMinMax = zeros(2,length(obj.v));
             
             % add the first sample to the maps
             obj.uMap(obj.u(obj.iiBegin)) = 1;
             obj.vMap(obj.v(obj.iiBegin)) = 1;
-            obj.v_uMinMax(1, obj.v(obj.iiBegin)) = obj.u(obj.iiBegin);
-            obj.v_uMinMax(2, obj.v(obj.iiBegin)) = obj.u(obj.iiBegin);
-            obj.u_vMinMax(1, obj.u(obj.iiBegin)) = obj.v(obj.iiBegin);
-            obj.u_vMinMax(2, obj.u(obj.iiBegin)) = obj.v(obj.iiBegin);
         end
         
     end

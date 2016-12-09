@@ -1,4 +1,4 @@
-function [ tau ] = ktauhat( X, Y, correctionFlagOpt )
+function [ tau ] = ktauhat( X, Y, correctionFlagOpt, dataSortedFlag )
 %ktaucj - computes a rescaled version of Kendall's tau that preserves
 %         the definition of Kendall's tau, but assures that in the 
 %         scenario of perfect concordance or discordance for discrete
@@ -37,22 +37,29 @@ X = X(:);
 Y = Y(:);
 
 if(nargin<3)
-    correctionFlagSelect = 4;       % default correction factor processing
-else
-    correctionFlagSelect = correctionFlagOpt;
+    correctionFlagOpt = 4;       % default correction factor processing
+    dataSortedFlag = 0;
+end
+if(nargin<4)
+    dataSortedFlag = 0;
 end
 
 % TOOD: compare the 2 ways to generate ranks ... wonder if that affects the
 % results?
 % rank the data, do not account for ties
-data_sorted = sort(X);
-[~, U] = ismember(X,data_sorted);
+if(~dataSortedFlag)
+    data_sorted = sort(X);
+    [~, U] = ismember(X,data_sorted);
 
-data_sorted = sort(Y);
-[~, V] = ismember(Y,data_sorted);
+    data_sorted = sort(Y);
+    [~, V] = ismember(Y,data_sorted);
+    
+    % U = tiedrank(X);
+    % V = tiedrank(Y);
+else
+    U = X; V = Y;
+end
 
-% U = tiedrank(X);
-% V = tiedrank(Y);
 
 % compute the numerator the tau_hat
 K = 0;
@@ -116,9 +123,11 @@ if( (uuCloseToZero && v>0) || (u>0 && vvCloseToZero) )
         continuousRvIndicator = 1;
     end
     numOverlapPtsVec = countOverlaps(U, V, continuousRvIndicator);
-    continuousRvIndicator
-    numOverlapPtsVec
-    switch(correctionFlagSelect)
+    
+    %continuousRvIndicator
+    %numOverlapPtsVec
+    
+    switch(correctionFlagOpt)
         case 1
             correctionFactor = correctionFactor1(numOverlapPtsVec);
         case 2
@@ -134,7 +143,8 @@ if( (uuCloseToZero && v>0) || (u>0 && vvCloseToZero) )
     end
     t = max(u,v)-correctionFactor;
     tau = K/( sqrt(nchoosek(len,2)-t)*sqrt(nchoosek(len,2)-t) );
-    fprintf('<<< cf=%0.02f, tt=%0.02f\n', correctionFactor, t);    
+    
+%     fprintf('<<< cf=%0.02f, tt=%0.02f\n', correctionFactor, t);    
 else
     % case of either all continuous or all discrete data
     tau = K/( sqrt(nchoosek(len,2)-u)*sqrt(nchoosek(len,2)-v) );
@@ -208,6 +218,8 @@ function [numOverlapPtsVec] = countOverlaps(U, V, continuousRvIndicator)
 % this function is only called for hybrid data, attempts to correct for
 % overestimation of the number of ties in hybrid data
 
+M = length(U);
+
 if(continuousRvIndicator==0)
     % U is the continuous RV
     continuousOutcomes = U;
@@ -221,6 +233,7 @@ else
     % get the number of unique discrete outcomes
     uniqueDiscreteOutcomes = unique(U);
 end
+uniqueDiscreteOutcomes = sort(uniqueDiscreteOutcomes);  % probably already comes sorted?
 
 % for each unique outcome .. count the overlapping elements.
 numOverlapPtsVec = zeros(1,length(uniqueDiscreteOutcomes)-1);
@@ -239,9 +252,13 @@ for discreteOutcomesIdx=1:length(uniqueDiscreteOutcomes)-1
     numOverlapPoints = length(find(relevantContinuousOutcomes_nextIdx>=minCur & ...
                                    relevantContinuousOutcomes_nextIdx<=maxCur));
                                
-    numOverlapPtsVec(discreteOutcomesIdx) = numOverlapPoints;
-%     numOverlapPtsVec(discreteOutcomesIdx) = numOverlapPoints/length(relevantContinuousOutcomes_nextIdx)*(M/length(uniqueDiscreteOutcomes));
+%     numOverlapPtsVec(discreteOutcomesIdx) = numOverlapPoints;
+    numOverlapPtsVec(discreteOutcomesIdx) = numOverlapPoints/length(relevantContinuousOutcomes_nextIdx)*(M/length(uniqueDiscreteOutcomes));
 
 end
+
+% continuousRvIndicator
+% uniqueDiscreteOutcomes'
+% numOverlapPtsVec
 
 end

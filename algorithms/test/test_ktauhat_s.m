@@ -22,7 +22,7 @@ clear;
 clc;
 dbstop if error;
 
-M = 100; numDiscreteIntervals = 4;
+M = 1000; numDiscreteIntervals = 4;
 
 % x = [1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9];
 % y = [5.1 4.2 3.3 2.4 1.5 2.6 3.7 4.8 5.9];
@@ -45,7 +45,7 @@ testDiscrete = 1;
 
 tol = 0.02;
 numTests = 9;
-CORRECTION_FACTOR_SETTING = 5;      % this corresponds to NO correction factor
+CORRECTION_FACTOR_SETTING = 4;
 for testNum=1:numTests
     x = rand(M,1);
     x = sort(x);
@@ -202,7 +202,7 @@ dbstop if error;
 rng(123);
 
 orientation = 1;
-M = 25;
+M = 50;
 U = copularnd('Gaussian', 0.8, M);
 
 pd1 = makedist('Normal');
@@ -226,6 +226,7 @@ x = X(:,1); y = X(:,2);
 % x = [16 7 4 11 2 15 1 3 17 10 13 14 9 8 16 5 11 15 9 10 5 12 6 3 4];
 % y = [3 2 2 3 1 4 1 2 4 3 3 3 3 2 4 2 2 3 2 2 1 3 2 1 1];
 CORRECTION_FACTOR = 4;
+ALREADY_SORTED = 1;
 
 M = length(x);
 
@@ -243,13 +244,14 @@ v = vv(I); v = sortSubblocks(u, v);
 kso = ktauhat_s(u, v);
 
 for ii=2:M
-    fprintf('************************************************\n');
+%     fprintf('************************************************\n');
     u_subset = u(1:ii); v_subset = v(1:ii);
-    fprintf('u_subset --->\n');
-    u_subset'
-    fprintf('v_subset --->\n');
-    v_subset'
-    tau1 = ktauhat(u_subset, v_subset, CORRECTION_FACTOR);
+%     fprintf('u_subset --->\n');
+%     u_subset'
+%     fprintf('v_subset --->\n');
+%     v_subset'
+    tau1 = ktauhat(u_subset, v_subset, CORRECTION_FACTOR, ALREADY_SORTED);
     tau2 = kso.consume(1);
-    fprintf('************************************************\n');
+    fprintf('tau1=%0.02f tau2=%0.02f\n', tau1, tau2);
+%     fprintf('************************************************\n');
 end
