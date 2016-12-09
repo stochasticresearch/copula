@@ -288,7 +288,11 @@ M = 500;
 numDiscreteIntervals = 4;
 
 correctionFactors = [1 2 3 4 5];
-numTotalConfigurations = 7; % 7 entries, 1-5 are the different correction factors, 6 is matlab's built in tau, 7 is tau-b
+numTotalConfigurations = 8; % 8 entries, 1-5 are the different correction factors, 
+                                         % 6 is matlab's built in tau, 
+                                         % 7 is tau-b
+                                         % 8 ktauhat_s, which should closely mimic correctionFactor=4
+                                        
 % TODO: put monotonoic and comonotonic dependencies in here!
 dependenciesVec = {'Gaussian', 'Frank', 'Gumbel', 'Clayton'};
 subDependenciesVec = [linspace(0.01,0.99,10); ...
@@ -345,6 +349,8 @@ for dependencyIdx=1:length(dependenciesVec)
                 end
                 tau_hat_vec(6,simnum) = corr(x,y,'type','kendall');
                 tau_hat_vec(7,simnum) =  ktaub([x y], 0.05, 0);
+                kso = ktauhat_s(x, y);
+                tau_hat_vec(8,simnum) = kso.consumeAll();
 
             end
             
@@ -355,10 +361,12 @@ for dependencyIdx=1:length(dependenciesVec)
             % print the result
             fprintf('%s -- %0.02f -- %d\n', ...
                     dependency, subDependency, xyOrientation);
-            fprintf('\t Bias >> [%0.02f %0.02f %0.02f %0.02f %0.02f]\n', ...
-                tau_hat_bias(1), tau_hat_bias(2), tau_hat_bias(3), tau_hat_bias(4), tau_hat_bias(5));
-            fprintf('\t Var  >> [%0.02f %0.02f %0.02f %0.02f %0.02f]\n', ...
-                tau_hat_var(1), tau_hat_var(2), tau_hat_var(3), tau_hat_var(4), tau_hat_var(5));
+            fprintf('\t Bias >> [%0.02f %0.02f %0.02f %0.02f %0.02f %0.02f %0.02f %0.02f]\n', ...
+                tau_hat_bias(1), tau_hat_bias(2), tau_hat_bias(3), tau_hat_bias(4), ...
+                tau_hat_bias(5), tau_hat_bias(6), tau_hat_bias(7), tau_hat_bias(8));
+            fprintf('\t Var  >> [%0.02f %0.02f %0.02f %0.02f %0.02f %0.02f %0.02f %0.02f]\n', ...
+                tau_hat_var(1), tau_hat_var(2), tau_hat_var(3), tau_hat_var(4), ...
+                tau_hat_var(5), tau_hat_var(6), tau_hat_var(7), tau_hat_var(8));
             
             if(xyOrientation)
                 resultsXYCopula_bias(dependencyIdx, subDependencyIdx, 1:numTotalConfigurations) = tau_hat_bias;
@@ -416,6 +424,8 @@ for dependencyIdx=1:length(dependenciesVec_Functional)
                 end
                 tau_hat_vec(6,simnum) = corr(x,y,'type','kendall');
                 tau_hat_vec(7,simnum) =  ktaub([x y], 0.05, 0);
+                kso = ktauhat_s(x, y);
+                tau_hat_vec(8,simnum) = kso.consumeAll();
             end
             
             tau_hat_bias = mean(tau_hat_vec,2)-tauTrue;
@@ -456,11 +466,12 @@ end
 f = figure(1);
 
 % plot the data
-metricsToPlot = [7 6 4];        % 7 = tau-b, 6 = tau, 4 = tau-h
+metricsToPlot = [7 6 4 8];        % 7 = tau-b, 6 = tau, 4 = tau-h 8=tau-h (streaming-mode)
 % manually looking, CF4 seems to work best, plot against tau and tau-b
-legendCell = {'\tau_b', '\tau_{CJ}', '\tau_h' };     % put tau-h last, it is the best performing but the bounds
+legendCell = {'\tau_b', '\tau_{CJ}', '\tau_h', '\tau_h (S)' };     % put tau-h last, it is the best performing but the bounds
                                                 % are harder to see if we put it first
-cmap = [1 0 0; 0 1 0; 0 0 1];
+% cmap = [1 0 0; 0 1 0; 0 0 1];
+cmap = jet(4);
 transparencyFactor = 0.15;
 
 % Gaussian Copula Data

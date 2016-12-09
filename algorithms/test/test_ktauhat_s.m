@@ -194,5 +194,62 @@ for ii=iiBegin+1:iiEnd
     end
 end
 
-%% Generate hte null distribution of ktauhat-s
+%% Test the overlap counting versus CORRECTION_FACTOR = 4
+clear;
+clc;
+dbstop if error;
 
+rng(123);
+
+orientation = 1;
+M = 25;
+U = copularnd('Gaussian', 0.8, M);
+
+pd1 = makedist('Normal');
+pd2 = makedist('Multinomial','Probabilities',[0.25 0.25 0.25 0.25]);
+
+% Generate the data
+X = zeros(M,2);
+if(orientation==1)
+    for ii=1:M
+        X(ii,1) = pd1.icdf(U(ii,1));
+        X(ii,2) = pd2.icdf(U(ii,2));
+    end
+else
+    for ii=1:M
+        X(ii,2) = pd1.icdf(U(ii,1));
+        X(ii,1) = pd2.icdf(U(ii,2));
+    end
+end
+x = X(:,1); y = X(:,2);
+
+% x = [16 7 4 11 2 15 1 3 17 10 13 14 9 8 16 5 11 15 9 10 5 12 6 3 4];
+% y = [3 2 2 3 1 4 1 2 4 3 3 3 3 2 4 2 2 3 2 2 1 3 2 1 1];
+CORRECTION_FACTOR = 4;
+
+M = length(x);
+
+% sort the data so we can compare ktauhat and ktauhat_s sequentially
+u = sort(x); [~,uu] = ismember(x,u);
+v = sort(y); [~,vv] = ismember(y,v);
+[u,I] = sort(uu);
+v = vv(I); v = sortSubblocks(u, v);
+
+% % sanity check plots
+% subplot(1,3,1); scatter(x, y); xlabel('x'); ylabel('y');
+% subplot(1,3,2); scatter(pobs(x), pobs(y)); xlabel('pobs(x)'); ylabel('pobs(y)');
+% subplot(1,3,3); scatter(u, v); xlabel('v'); ylabel('v');
+
+kso = ktauhat_s(u, v);
+
+for ii=2:M
+    fprintf('************************************************\n');
+    u_subset = u(1:ii); v_subset = v(1:ii);
+    fprintf('u_subset --->\n');
+    u_subset'
+    fprintf('v_subset --->\n');
+    v_subset'
+    tau1 = ktauhat(u_subset, v_subset, CORRECTION_FACTOR);
+    tau2 = kso.consume(1);
+    fprintf('************************************************\n');
+end

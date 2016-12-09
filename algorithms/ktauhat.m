@@ -105,17 +105,19 @@ for ii=1:length(uniqueV)
     v = v + addVal;
 end
 
-if( (closeToZero(u, len) && v>0) || (u>0 && closeToZero(v, len)) )
+uuCloseToZero = closeToZero(u, len);
+vvCloseToZero = closeToZero(v, len);
+if( (uuCloseToZero && v>0) || (u>0 && vvCloseToZero) )
     
     % special case of hybrid data
-    if(closeToZero(u,len))
+    if(uuCloseToZero)
         continuousRvIndicator = 0;
     else
         continuousRvIndicator = 1;
     end
     numOverlapPtsVec = countOverlaps(U, V, continuousRvIndicator);
-%     continuousRvIndicator
-%     numOverlapPtsVec
+    continuousRvIndicator
+    numOverlapPtsVec
     switch(correctionFlagSelect)
         case 1
             correctionFactor = correctionFactor1(numOverlapPtsVec);
@@ -132,7 +134,7 @@ if( (closeToZero(u, len) && v>0) || (u>0 && closeToZero(v, len)) )
     end
     t = max(u,v)-correctionFactor;
     tau = K/( sqrt(nchoosek(len,2)-t)*sqrt(nchoosek(len,2)-t) );
-%     fprintf('<<< cf=%0.02f, tt=%0.02f\n', correctionFactor, t);    
+    fprintf('<<< cf=%0.02f, tt=%0.02f\n', correctionFactor, t);    
 else
     % case of either all continuous or all discrete data
     tau = K/( sqrt(nchoosek(len,2)-u)*sqrt(nchoosek(len,2)-v) );
@@ -206,8 +208,6 @@ function [numOverlapPtsVec] = countOverlaps(U, V, continuousRvIndicator)
 % this function is only called for hybrid data, attempts to correct for
 % overestimation of the number of ties in hybrid data
 
-M = length(U);
-
 if(continuousRvIndicator==0)
     % U is the continuous RV
     continuousOutcomes = U;
@@ -238,9 +238,9 @@ for discreteOutcomesIdx=1:length(uniqueDiscreteOutcomes)-1
     
     numOverlapPoints = length(find(relevantContinuousOutcomes_nextIdx>=minCur & ...
                                    relevantContinuousOutcomes_nextIdx<=maxCur));
-    
-%     numOverlapPtsVec(discreteOutcomesIdx) = numOverlapPoints;
-    numOverlapPtsVec(discreteOutcomesIdx) = numOverlapPoints/length(relevantContinuousOutcomes_nextIdx)*(M/length(uniqueDiscreteOutcomes));
+                               
+    numOverlapPtsVec(discreteOutcomesIdx) = numOverlapPoints;
+%     numOverlapPtsVec(discreteOutcomesIdx) = numOverlapPoints/length(relevantContinuousOutcomes_nextIdx)*(M/length(uniqueDiscreteOutcomes));
 
 end
 
