@@ -18,8 +18,6 @@ function [ pdf, combos ] = hist_discrete( X )
 %* You should have received a copy of the GNU General Public License
 %* along with this program.  If not, see <http://www.gnu.org/licenses/>.
 %**************************************************************************
-%
-% TODO: merge with gencontingencytable
 
 
 M = size(X,1);

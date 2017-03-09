@@ -4,7 +4,6 @@ Contains many tools useful for copula modeling in Matlab that do not exist direc
   - Empirical copula function estimation for any D>=2
   - Sampling from calculated empirical copula for D>=2
   - Clayton/Frank/Gumbel copula PDF and sampling for D>=2
-  - Hybrid Copula Bayesian Network construction
 
 ### Directory Structure
   - **algorithms/** - contains the core copula algorithms.
@@ -24,24 +23,12 @@ Contains many tools useful for copula modeling in Matlab that do not exist direc
   | *frankcopularnd.m* | Samples from a D>=2 Frank Copula |
   | *gumbelcopulapdf.m* | Computes the Gumbel Copula's PDF for D>=2 |
   | *gumbelcopularnd.m* | Samples from a D>=2 Gumbel Copula |
-  | *hyperFunctionError.m* | Computes error between two functions in the same arbitrary dimensional plane |
+  | *hyperFunctionError.m* | Computes error between two hyper functions of the same dimensionality |
   | *log1mexp.m* | Convenience function for log(1-exp(a)) |
   | *logserrnd.m* | Samples from the Log-Series distribution |
   | *pobs.m* | Computes pseudo-observations for a given (multivariate) random vector |
   | *stable1rnd.m* | Samples from the Stable Distribution |
   | *etstablernd.m* | Samples from the Exponentially Tilted Distribution |
   | *logrnd.m* | Samples from the Log Distribution |
-
-  - **clg/** - contains code for building Conditional Linear Gaussian Bayesian Networks
-    
-  | File | Description |
-  | --- | --- |
-  | *clg.m* | Main class definition of CLG Model |
-
-  - **hcbn/** - contains code for building Hybrid Copula Bayesian Networks (HCBN)
-    
-  | File | Description |
-  | --- | --- |
-  | *hcbn.m* | Main class definition of HCBN Model |
 
 - **simulations/** - contains simulation code which uses the algorithms developed

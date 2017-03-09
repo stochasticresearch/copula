@@ -17,7 +17,6 @@
 %* 
 %**************************************************************************
 
-% Script which tests the gencontingencytable function
 
 %% Test 1 -- simple all discrete
 clear;
