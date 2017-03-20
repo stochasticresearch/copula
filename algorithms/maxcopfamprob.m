@@ -1,4 +1,4 @@
-function [optimOut] = maxcopfamprob(copModel,copParams,x,rvEmpInfoObjs,missingIdxs,intIdxs)
+function [optimOut,fval] = maxcopfamprob(copModel,copParams,x,rvEmpInfoObjs,missingIdxs,intIdxs)
 %OPTIMFAMPROB Maximizes a copula family's probability, given the copula
 %model, the data, and the missing data indices
 % Inputs:
@@ -66,24 +66,43 @@ optimArgs = xx(missingIdxs);
 % put the remaining parameters needed by the optimization routine into
 % their own vector
 params = xx(remainingIdxs);
-f = @(optimArgs)optimf(optimArgs,params,missingIdxs,remainingIdxs,...
-                       rvEmpInfoObjs,copModel,copParams);
+f = @(zz)optimf(zz,params,missingIdxs,remainingIdxs,...
+                rvEmpInfoObjs,copModel,copParams);
 
+lb = zeros(1,length(missingIdxs)); ub = zeros(1,length(missingIdxs));
+for ii=1:length(missingIdxs)
+    jj = missingIdxs(ii);
+    lb(ii) = min(rvEmpInfoObjs{jj}.domain);
+    ub(ii) = max(rvEmpInfoObjs{jj}.domain);
+end
+            
 % determine if any of the missing indices are integer, if so, we use the
 % mixed integer optimization provided by "ga", otherwise, we use
 % "fminsearch"
 mixedOpt = any(ismember(missingIdxs,intIdxs));
 if(mixedOpt)
-    % TODO!
-    error('Not yet implemented!');
+    % determine which of the indices we should constrain to integer values
+    IntCon = zeros(1,length(missingIdxs));
+    for ii=1:length(missingIdxs)
+        if(any(ismember(missingIdxs(ii),intIdxs)))
+            IntCon(ii) = ii;
+        end
+    end
+    IntCon(IntCon==0) = [];
+    [optimOut,fval] = ga(f,length(missingIdxs),[],[],[],[],...
+                  lb,ub,[],IntCon);
 else
-    % TODO: give it lower and upper bounds?
-    optimOut = fminsearch(f,optimArgs);
+    if(length(missingIdxs)==1)
+        [optimOut,fval] = fminbnd(f,lb,ub);
+    else
+        A = []; b = [];
+        Aeq = []; Beq = [];
+        [optimOut,fval] = fmincon(f,optimArgs,A,b,Aeq,Beq,lb,ub);
+    end
+    
 end
 
 end
-
-
 
 % create the optimization function.
 function val = optimf(optimArgs,params,missingIdxs,remainingIdxs,...
@@ -94,27 +113,6 @@ function val = optimf(optimArgs,params,missingIdxs,remainingIdxs,...
     [~,I] = sort(idxsJoined);
     xxJoined = [optimArgs params];
     xxJoined = xxJoined(I);
-
-    % compute the pseudo-observations of xx
-    uu = zeros(1,length(xxJoined));
-    for ii=1:length(xxJoined)
-        uu(ii) = rvEmpInfoObjs{ii}.cdf(xxJoined(ii));
-    end
-    % compute the product of the marginal densities
-    pi = 1;
-    for ii=1:length(xxJoined)
-        pi = pi * rvEmpInfoObjs{ii}.pdf(xxJoined(ii));
-    end
     
-    if(strcmpi(copModel,'frank'))
-        copval = frankcopulapdf(uu, copParams);
-    elseif(strcmpi(copModel,'gumbel'))
-        copval = gumbelcopulapdf(uu, copParams);
-    elseif(strcmpi(copModel,'clayton'))
-        copval = claytoncopulapdf(uu, copParams);
-    elseif(strcmpi(copModel,'gaussian'))
-        copval = copulapdf('Gaussian', uu, copParams);
-    end
-    val = pi*copval*-1;     % we multiply by negative one so this turns
-                            % into a maximization rather than minimization
+    val = copfamprob(xxJoined,rvEmpInfoObjs,copModel,copParams);
 end
