@@ -72,7 +72,7 @@ for ii=1:5
     
     clf(f);
     plot(valVec,Z); grid on; hold on;
-    plot(optimOut,fval,'r*','MarkerSize',14);
+    plot(optimOut,-1*fval,'r*','MarkerSize',14);
     pause;
 end
 
@@ -107,7 +107,7 @@ for ii=1:5
     
     clf(f);
     surf(X,Y,Z); grid on; hold on;
-    plot(optimOut,fval,'r*','MarkerSize',14);
+    plot(optimOut,-1*fval,'r*','MarkerSize',14);
     pause;
 end
 close(f);

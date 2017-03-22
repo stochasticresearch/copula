@@ -95,9 +95,7 @@ else
     if(length(missingIdxs)==1)
         [optimOut,fval] = fminbnd(f,lb,ub);
     else
-        A = []; b = [];
-        Aeq = []; Beq = [];
-        [optimOut,fval] = fmincon(f,optimArgs,A,b,Aeq,Beq,lb,ub);
+        [optimOut,fval] = fmincon(f,optimArgs,[],[],[],[],lb,ub);
     end
     
 end
@@ -114,5 +112,5 @@ function val = optimf(optimArgs,params,missingIdxs,remainingIdxs,...
     xxJoined = [optimArgs params];
     xxJoined = xxJoined(I);
     
-    val = copfamprob(xxJoined,rvEmpInfoObjs,copModel,copParams);
+    val = copfamprob(xxJoined,rvEmpInfoObjs,copModel,copParams)*-1;
 end

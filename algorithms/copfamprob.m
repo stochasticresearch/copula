@@ -21,7 +21,6 @@ elseif(strcmpi(copModel,'clayton'))
 elseif(strcmpi(copModel,'gaussian'))
     copval = copulapdf('Gaussian', uu, copParams);
 end
-val = pi*copval*-1;     % we multiply by negative one so this turns
-                        % into a maximization rather than minimization
+val = pi*copval;
                             
 end
