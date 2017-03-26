@@ -132,7 +132,7 @@ c = c./max(c(:));
 c_est_grad = c_est_grad./max(c_est_grad(:));
 c_direct = c_direct./max(c_direct(:));
 
-h1 = subplot(1,3,1); surf(U1,U2,c); xlabel('u'); ylabel('v'); title('c_{actual}'); grid on;
+h1 = subplot(1,3,1); surf(U1,U2,c); xlabel('u'); ylabel('v'); title('$$c_{actual} (\mathbf{u})$$', 'interpreter', 'latex'); grid on;
 h2 = subplot(1,3,2); surf(U1,U2,c_est_grad); xlabel('u'); ylabel('v'); 
 title('$$ \hat{c}(\mathbf{u}) = \frac{\partial \hat{C}(\mathbf{u})}{d \mathbf{u}}$$','interpreter','latex'); grid on;
 h3 = subplot(1,3,3); surf(U1,U2,c_direct); xlabel('u'); ylabel('v'); 
