@@ -3,3 +3,4 @@
 r_playground/testfiles
 *.mex*
 *.pyc
+*.DS_Store
