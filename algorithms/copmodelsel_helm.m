@@ -1,5 +1,5 @@
-function [optimalModel, modelParams] = copulamodelselect(U, varargin)
-%COPULAMNSIG - uses a model selection algorithm to determine the optimal
+function [optimalModel, modelParams] = copmodelsel_helm(U, varargin)
+%COPMODELSEL_HELM - uses a model selection algorithm to determine the optimal
 %copula to fit the data U based on the algorithm in the paper described
 %below.
 % Inputs:
@@ -150,7 +150,7 @@ end
 
 function [sig] = bivariateSignature(U, K)
 
-ADD_PROB = 0.001;
+ADD_PROB = 0.0001;
 
 % Computes the bivariate multinomial signature
 

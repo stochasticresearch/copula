@@ -23,23 +23,94 @@
 clear;
 clc;
 
-Rho = [1 0.4; 0.4 1];
-alpha = 3;
+r = 0.8;
+Rho = [1 r; r 1];
+alpha = 5;
 M = 1000;
 
 U_Gaussian = copularnd('Gaussian', Rho, M);
-U_Frank = frankcopularnd(M, 2, alpha);
+% U_Frank = frankcopularnd(M, 2, alpha);
 U_Gumbel = gumbelcopularnd(M, 2, alpha);
 U_Clayton = claytoncopularnd(M, 2, alpha);
 
+% fprintf('----------------------------------------------------\n');
+% [modelType, modelParams] = copmodelsel_helm(U_Gaussian)
+% fprintf('----------------------------------------------------\n');
+% [modelType, modelParams] = copmodelsel_helm(U_Frank)
+% fprintf('----------------------------------------------------\n');
+% [modelType, modelParams] = copmodelsel_helm(U_Gumbel)
+% fprintf('----------------------------------------------------\n');
+% [modelType, modelParams] = copmodelsel_helm(U_Clayton)
+% fprintf('----------------------------------------------------\n');
+
 fprintf('----------------------------------------------------\n');
-[modelType, modelParams] = copulamodelselect(U_Gaussian)
+modelType = copmodelsel_td(U_Gaussian)
 fprintf('----------------------------------------------------\n');
-[modelType, modelParams] = copulamodelselect(U_Frank)
+modelType = copmodelsel_td(U_Gumbel)
 fprintf('----------------------------------------------------\n');
-[modelType, modelParams] = copulamodelselect(U_Gumbel)
-fprintf('----------------------------------------------------\n');
-[modelType, modelParams] = copulamodelselect(U_Clayton)
+modelType = copmodelsel_td(U_Clayton)
 fprintf('----------------------------------------------------\n');
 
-%% 3-D tests
+%% Classification Accuracy test for copmodelsel_td
+clear;
+clc;
+
+M = 500;
+r = 0.1:0.1:.9;
+alpha = 1:1:9;
+numMCSims = 100;
+
+GaussAccuracy = zeros(1,length(r));
+GumbelAccuracy = zeros(1,length(alpha));
+ClaytonAccuracy = zeros(1,length(alpha));
+for ii=1:length(r)
+    rho = r(ii);
+    fprintf('Processing Gaussian @ r=%0.02f\n', rho);
+    classCorrect = 0;
+    for jj=1:numMCSims
+        U = copularnd('Gaussian',rho,M);
+%         model = copmodelsel_td(U);
+        model = copmodelsel_helm(U);  
+        if(strcmpi(model,'Gaussian'))
+            classCorrect = classCorrect + 1;
+        end
+    end
+    GaussAccuracy(ii) = classCorrect/numMCSims;
+end
+
+for ii=1:length(alpha)
+    theta = alpha(ii);
+    fprintf('Processing Gumbel @ alpha=%0.02f\n', rho);
+    classCorrect = 0;
+    for jj=1:numMCSims
+        U = copularnd('Gumbel',theta,M);
+%         model = copmodelsel_td(U);
+        model = copmodelsel_helm(U);
+        if(strcmpi(model,'Gumbel'))
+            classCorrect = classCorrect + 1;
+        end
+    end
+    GumbelAccuracy(ii) = classCorrect/numMCSims;
+end
+
+for ii=1:length(alpha)
+    theta = alpha(ii);
+    fprintf('Processing Gumbel @ Clayton=%0.02f\n', rho);
+    classCorrect = 0;
+    for jj=1:numMCSims
+        U = copularnd('Clayton',theta,M);
+%         model = copmodelsel_td(U);
+        model = copmodelsel_helm(U);
+        if(strcmpi(model,'Clayton'))
+            classCorrect = classCorrect + 1;
+        end
+    end
+    ClaytonAccuracy(ii) = classCorrect/numMCSims;
+end
+
+plot(r,GaussAccuracy,alpha/10,GumbelAccuracy,alpha/10,ClaytonAccuracy);
+xlabel('\rho / \alpha');
+ylabel('Accuracy');
+legend('Gaussian', 'Gumbel', 'Clayton');
+grid on;
+

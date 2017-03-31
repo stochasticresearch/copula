@@ -1,3 +1,13 @@
+function [ kl_val ] = kldivergence( p, q, x)
+%KLDIVERGENC Computes the KL-Divergence between P and Q
+% Inputs:
+%  p - the "reference" UNIVARIATE distribution
+%  q - the "estimating" UNIVARIATE distribution
+%  x - the domain over which p and q are defined (they should be the same
+%                                                 for p and q)
+%      if x is not provided, we approximate integration w/ a sum.  If x is
+%      provided, then we use trapz to perform numerical integration
+%
 %**************************************************************************
 %* 
 %* Copyright (C) 2016  Kiran Karra <kiran.karra@gmail.com>
@@ -16,16 +26,6 @@
 %* along with this program.  If not, see <http://www.gnu.org/licenses/>.
 %* 
 %**************************************************************************
-
-function [ kl_val ] = kldivergence( p, q, x)
-%KLDIVERGENC Computes the KL-Divergence between P and Q
-% Inputs:
-%  p - the "reference" UNIVARIATE distribution
-%  q - the "estimating" UNIVARIATE distribution
-%  x - the domain over which p and q are defined (they should be the same
-%                                                 for p and q)
-%      if x is not provided, we approximate integration w/ a sum.  If x is
-%      provided, then we use trapz to perform numerical integration
 
 p = p(:);
 q = q(:);
