@@ -1,4 +1,4 @@
-function [ F, xi ] = empcdf( x, isdiscrete )
+function [ F, xi ] = empcdf( x, isdiscrete, nbin )
 %EMPCDF - Computes the empirical cdf
 % Inputs:
 %  x - the data from which the empirical cdf should be estimated
@@ -39,6 +39,11 @@ if(isdiscrete)
     xi = x; xi(1) = xi(2)-subtractAmt;
 else
     [F, xi] = ksdensity(x,'function','cdf');
+    if(nargin>2)
+        % resample so that we get the desired number of bins
+        F = resample(F,nbin,100);
+        xi = resample(xi,nbin,100);
+    end
 end
 
 F = F(:);

@@ -1,4 +1,4 @@
-function [ f, xi ] = emppdf( x, isdiscrete )
+function [ f, xi ] = emppdf( x, isdiscrete, nbin )
 %EMPPDF - Computes the empirical pdf
 % Inputs:
 %  x - the data from which the empirical cdf should be estimated
@@ -39,6 +39,11 @@ if(isdiscrete)
     end
 else
     [f,xi] = ksdensity(x);
+    if(nargin>2)
+        % resample so that we get the desired number of bins
+        f = resample(f,nbin,100);
+        xi = resample(xi,nbin,100);
+    end
 end
 
 f = f(:);
