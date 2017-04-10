@@ -114,3 +114,32 @@ ylabel('Accuracy');
 legend('Gaussian', 'Gumbel', 'Clayton');
 grid on;
 
+%% Generate Confusion Matrix for Copula Model Selection w/ Gridding Approach
+copulaFamilies = {'Gaussian','Frank','Gumbel','Clayton'};
+numMCSims = 1000;
+M = 1000;
+K = 8;      % binning for identifying model
+srhoVec = .25:.05:.95;
+results = cell(1,length(srhoVec));
+for ii=1:length(srhoVec)
+    srho = srhoVec(ii);
+    confusionMat = zeros(length(copulaFamilies));
+    for jj=1:numMCSims
+        % choose a copula family randomely
+        copFamIdx = randi(length(copulaFamilies));
+        cop_family = copulaFamilies{copFamIdx};
+        cop_param = copulaparam(cop_family, srho, 'Type', 'Spearman');
+        U = copularnd(cop_family, cop_param, M);
+        selectedModel = copmodelsel_helm(U,K);
+        
+        foundIdx = find(cellfun(@(s) ~isempty(strfind(selectedModel, copulaFamilies)), x));
+        confusionMat(copFamIdx,foundIdx) = confusionMat(copFamIdx,foundIdx) + 1;
+    end
+    % normalize the confusion matrix
+    normVec = sum(confusionMat,2);
+    confusionMat = confusionMat./normVec;
+    % store into overall results cell
+    results{ii} = confusionMat;
+end
+save('/tmp/helm_confusion_matrix.mat');
+% do some analysis
