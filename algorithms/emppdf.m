@@ -26,6 +26,7 @@ function [ f, xi ] = emppdf( x, isdiscrete, nbin )
 %* 
 %**************************************************************************
 
+TOL = 1e-3;
 M = size(x,1);
 
 if(isdiscrete)
@@ -50,5 +51,8 @@ f = f(:);
 xi = xi(:);
 f = f';
 xi = xi';
+
+f(f<0) = TOL;     % account for errors due to resample call
+f(f>1) = 1-TOL;     % account for errors due to resample call
 
 end

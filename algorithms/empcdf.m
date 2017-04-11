@@ -26,6 +26,8 @@ function [ F, xi ] = empcdf( x, isdiscrete, nbin )
 %* 
 %**************************************************************************
 
+TOL = 1e-3;
+
 if(isdiscrete)
     [F,x] = ecdf(x);
     diffOutput = diff(x);
@@ -50,5 +52,8 @@ F = F(:);
 xi = xi(:);
 F = F';
 xi = xi';
+
+F(F<0) = TOL;   % ensure distribution is bounded below by 0
+F(F>1) = 1-TOL; % ensure distribution is bounded above by 1
 
 end
