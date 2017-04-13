@@ -42,9 +42,12 @@ if(isdiscrete)
 else
     [f,xi] = ksdensity(x);
     if(nargin>2)
+        if(nbin>100 || mod(100,nbin))
+            error('nbin unsupported -- must be divisible by 100 and <=100');
+        end
         % resample so that we get the desired number of bins
-        f = resample(f,nbin,100);
-        xi = resample(xi,nbin,100);
+        f = downsample(f,100/nbin);
+        xi = downsample(xi,100/nbin);
     end
 end
 

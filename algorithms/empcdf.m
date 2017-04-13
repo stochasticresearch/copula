@@ -43,8 +43,11 @@ else
     [F, xi] = ksdensity(x,'function','cdf');
     if(nargin>2)
         % resample so that we get the desired number of bins
-        F = resample(F,nbin,100);
-        xi = resample(xi,nbin,100);
+        if(nbin>100 || mod(100,nbin))
+            error('nbin unsupported -- must be divisible by 100 and <=100');
+        end
+        F = downsample(F,100/nbin);
+        xi = downsample(xi,100/nbin);
     end
 end
 
