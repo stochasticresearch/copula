@@ -27,6 +27,7 @@ function [ f, xi ] = emppdf( x, isdiscrete, nbin )
 %**************************************************************************
 
 TOL = 1e-3;
+
 M = size(x,1);
 
 if(isdiscrete)
