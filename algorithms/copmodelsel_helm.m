@@ -35,7 +35,7 @@ function [optimalModel, modelParams] = copmodelsel_helm(U, varargin)
 %* along with this program.  If not, see <http://www.gnu.org/licenses/>
 %* 
 %**************************************************************************
-
+ALPHA_MAX = 200;
 D = size(U,2);
 
 K = 4+1;        % we do a +1 b/c of the way linspace works
@@ -78,7 +78,21 @@ else
         for ii=1:D
             if(ii<jj)
                 U_splice = [U(:,ii) U(:,jj)];
-                alphaHat = copulafit(optimalModel, U_splice);
+                try
+                    alphaHat = copulafit(optimalModel, U_splice);
+                catch ME
+                    if(strcmp(ME.identifier,'stats:copulafit:NoUpperBnd'))
+                        alphaHat = ALPHA_MAX;
+                    elseif(strcmp(ME.identifier,'stats:copulafit:NoLowerBnd'))
+                        if(strcmpi(optimalModel,'frank'))
+                            alphaHat = -1*ALPHA_MAX;
+                        elseif(strcmpi(optimalModel,'gumbel'))
+                            alphaHat = 1;
+                        elseif(strcmpi(optimalModel,'clayton'))
+                            alphaHat = 0;
+                        end 
+                    end
+                end
                 alphaVec(alphaVecIdx) = alphaHat;
                 alphaVecIdx = alphaVecIdx + 1;
             end
