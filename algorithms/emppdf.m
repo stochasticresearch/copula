@@ -59,4 +59,7 @@ xi = xi';
 f(f<0) = TOL;     % account for errors due to resample call
 f(f>1) = 1-TOL;     % account for errors due to resample call
 
+% re-normalize the density
+f = f./sum(f)-TOL;
+
 end

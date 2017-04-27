@@ -58,5 +58,6 @@ xi = xi';
 
 F(F<0) = TOL;   % ensure distribution is bounded below by 0
 F(F>1) = 1-TOL; % ensure distribution is bounded above by 1
+F(end) = 1-TOL; % ensure the last point is the highest probability
 
 end
