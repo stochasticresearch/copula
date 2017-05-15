@@ -40,14 +40,14 @@ if(isdiscrete)
     
     xi = x; xi(1) = xi(2)-subtractAmt;
 else
-    [F, xi] = ksdensity(x,'function','cdf');
+    % make sure ksdensity only spreads mass over the support of the data
+    pmVal = min(TOL,var(x)*TOL);
+    supportVec = [min(x)-pmVal,max(x)+pmVal];
+    
     if(nargin>2)
-        % resample so that we get the desired number of bins
-        if(nbin>100 || mod(100,nbin))
-            error('nbin unsupported -- must be divisible by 100 and <=100');
-        end
-        F = downsample(F,100/nbin);
-        xi = downsample(xi,100/nbin);
+        [F, xi] = ksdensity(x,'function','cdf','support',supportVec,'NumPoints',nbin);
+    else
+        [F, xi] = ksdensity(x,'function','cdf','support',supportVec);
     end
 end
 
