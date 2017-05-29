@@ -25,7 +25,7 @@ elseif(ismac)
     saveProfile(myCluster);
 elseif(isunix)
     myCluster = parcluster('local');
-    myCluster.NumWorkers = 3;
+    myCluster.NumWorkers = 8;
     saveProfile(myCluster);
 end
 
