@@ -174,21 +174,29 @@ edges = ndgrid(linspace(0,1,K));
 [~,~,multinomialBinnedIdxs] = histcounts(U, edges);
 
 % count how many times each combination occurs
-combos = combvec(1:K-1,1:K-1); combos = combos';
-numCombos = size(combos,1);
-sig = zeros(1,numCombos);
+%combos = combvec(1:K-1,1:K-1); combos = combos';
+%numCombos = size(combos,1);
+%sig = zeros(1,numCombos);
+%M = size(multinomialBinnedIdxs,1);
+%for comboIdx=1:numCombos
+%    combo = combos(comboIdx,:);
+%    % count number of times this combination occurs
+%    count = 0;
+%    for mm=1:M
+%        if(isequal(multinomialBinnedIdxs(mm,:),combo))
+%            count = count + 1;
+%        end
+%    end
+%    sig(comboIdx) = count/M;
+%end
+
+sig = zeros(K);
 M = size(multinomialBinnedIdxs,1);
-for comboIdx=1:numCombos
-    combo = combos(comboIdx,:);
-    % count number of times this combination occurs
-    count = 0;
-    for mm=1:M
-        if(isequal(multinomialBinnedIdxs(mm,:),combo))
-            count = count + 1;
-        end
-    end
-    sig(comboIdx) = count/M;
+for mm=1:M
+    sig(multinomialBinnedIdxs(mm, 1), multinomialBinnedIdxs(mm, 2)) = ...
+        sig(multinomialBinnedIdxs(mm, 1), multinomialBinnedIdxs(mm, 2)) + 1;
 end
+sig = reshape(sig./M, 1, K^2);
 
 % ensure there is no 0 probability
 zeroIdxs = find(sig==0);
@@ -196,7 +204,8 @@ nonZeroIdxs = find(sig~=0);
 
 addProb = length(zeroIdxs)*ADD_PROB;
 if(addProb>0)
-    subtractProb = length(nonZeroIdxs)/addProb;
+    %subtractProb = length(nonZeroIdxs)/addProb;
+    subtractProb = addProb/length(nonZeroIdxs);
     sig(zeroIdxs) = ADD_PROB;
     sig(nonZeroIdxs) = sig(nonZeroIdxs) - subtractProb;
 end
